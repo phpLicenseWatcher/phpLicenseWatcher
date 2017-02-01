@@ -165,7 +165,7 @@ if ( $_GET['listing'] == 1 ) {
 	if ( isset($_GET['multiple_servers']) ){
 		$current_server = $_GET['multiple_servers'];
 	} else {
-		$current_server = split(",", $_GET['server']);
+		$current_server = explode(",", $_GET['server']);
 	}
 
 	# We'll need timestamp class to get a human readable time difference
@@ -198,7 +198,7 @@ if ( $_GET['listing'] == 1 ) {
 
 				# Look for features in the output. You will see stuff like
 				# Users of Allegro_Viewer: (Total of 5 licenses available
-				if ( preg_match('/(Users of) (.*)(\(Total of) (\d+) (.*) (Total of) (\d+) /i', $line, $out) && !eregi("No such feature exists", $line) ) {
+				if ( preg_match('/(Users of) (.*)(\(Total of) (\d+) (.*) (Total of) (\d+) /i', $line, $out) && !preg_match("/No such feature exists/i", $line) ) {
 					$i++;
 					$license_array[$i]["feature"] = $out[2];
 					$license_array[$i]["num_licenses"] = $out[4];
@@ -214,7 +214,7 @@ if ( $_GET['listing'] == 1 ) {
 				}
 
 				# Count the number of licenses. Each used license has ", start" string in it
-				if ( eregi(", start", $line ) ){
+				if ( preg_match("/, start/i", $line ) ){
 					$users[$current_server[$n]][$i][] = $line;
 				}
 			}
@@ -263,7 +263,7 @@ if ( $_GET['listing'] == 1 ) {
 							# jdoe machine1 /dev/pts/4 (v4.0) (licenserver/27000 444), start Thu 12/5 9:57
 							# the date after start is when license was checked out
 							################################################################
-							$line = split(", start ", $users[$current_server[$n]][$j][$k]);
+							$line = explode(", start ", $users[$current_server[$n]][$j][$k]);
 							preg_match("/(.+?) (.+?) (\d+):(\d+)/i", $line[1], $line2);
 				
 							# Convert the date and time ie 12/5 9:57 to UNIX time stamp

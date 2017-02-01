@@ -37,7 +37,7 @@ for ( $i = 0 ; $i < sizeof($servers); $i++ ) {
 
         # Look for features in the output. You will see stuff like
         # Users of Allegro_Viewer: (Total of 5 licenses available
-        if ( eregi("^Users of (.*)Total ", $line ) )  {
+        if ( preg_match("/^Users of (.*)Total /i", $line ) )  {
                 $out = explode(" ", $line);
 		# Remove the : in the end of the string
 		$feature = str_replace(":", "", $out[2]);

@@ -16,7 +16,7 @@ function build_license_expiration_array($lmutil_loc, $server, &$expiration_array
     
     $line = fgets ($file, 1024);
 
-    if ( eregi("INCREMENT .*", $line, $out ) || eregi("FEATURE .*", $line, $out ) ) {
+    if ( preg_match("/INCREMENT .*/i", $line, $out ) || preg_match("/FEATURE .*/i", $line, $out ) ) {
         $license = explode(" ", $out[0]);
 
 	if ( $license[4] )  {
@@ -170,7 +170,7 @@ function num_licenses_available($myfeature) {
 
         # Look for features in the output. You will see stuff like
 	# Users of Allegro_Viewer: (Total of 5 licenses available
-	if ( eregi("^Users of", $line ) )  {
+	if ( preg_match("/^Users of/i", $line ) )  {
 		$out = explode(" ", $line);
                 pclose($fp);
                 # Return the number
@@ -205,7 +205,7 @@ function num_licenses_used($myfeature) {
 
         # Look for features in the output. You will see stuff like
 	# Users of Allegro_Viewer: (Total of 5 licenses available
-	if ( eregi(", start", $line ) )
+	if ( preg_match("/, start/i", $line ) )
             $num_licenses++;
 
    }

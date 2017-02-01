@@ -70,21 +70,21 @@ for ( $k = 0 ; $k < sizeof($log_file) ; $k++ ) {
             # Look for the time stamp. Time stamp is actually current date
             # which is logged only when FlexLM starts the log or at midnight.
             ###################################################            
-            if (eregi ("TIMESTAMP (.*)", $line, $out2)) {
+            if (preg_match ("/TIMESTAMP (.*)/i", $line, $out2)) {
 
                 $timestamp_date =  convert_to_mysql_date($out2[1]);
 
             } else 
 
             # if ($timestamp_date && in_array($timestamp_date, $mydate) && eregi('(.*) \((.*)\) DENIED: "(.*)" (.*)  (.*)', $line, $out2)) {
-            if (isset($timestamp_date) && eregi('(.*) \((.*)\) (IN:|OUT:|DENIED:) "(.*)" (.*)', $line, $out2)) {
+            if (isset($timestamp_date) && preg_match('/(.*) \((.*)\) (IN:|OUT:|DENIED:) "(.*)" (.*)/i', $line, $out2)) {
             
                 # Strip :
                 $log_event = substr($out2[3],0, strpos($out2[3],":"));
                 # Strip username from the username@hostname
                 $username = substr($out2[5],0, strpos($out2[5],"@"));
                 
-				eregi('(.*) \((.*)\) (OUT:|DENIED:) "(.*)" (.*)  (.*)', $line, $out3);
+				preg_match('/(.*) \((.*)\) (OUT:|DENIED:) "(.*)" (.*)  (.*)/i', $line, $out3);
 					
 				if ( !isset( $out3[6] ) ) 
 						$out2[6] = "";

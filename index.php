@@ -64,7 +64,7 @@ $table->setColAttributes(1,"align=\"center\"");
 
 # Define a table header
 $headerStyle = "";
-$colHeaders = array("License port@server","Description", "Status", "Current Usage", "Available features/license","Master", "LM Hostname", "lmgrd version");
+$colHeaders = array("","License port@server","Description", "Status", "Current Usage", "Available features/license","Master", "LM Hostname", "lmgrd version");
 $table->addRow($colHeaders, $headerStyle, "TH");
 
 for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
@@ -77,14 +77,21 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 	while ( !feof ($fp) ) {
 		$line = fgets ($fp, 1024);
 		/* Look for an expression like this ie. kalahari: license server UP (MASTER) v6.1 */
-		if ( eregi (": license server UP \(MASTER\) ", $line) ) {
+		if ( preg_match ("/: license server UP \(MASTER\)/i", $line) ) {
 			$status_string = "UP";
 			$class = "up";
-			$lmgrdversion = eregi_replace(".*license server UP \(MASTER\) ", "", $line);
+			$lmgrdversion = preg_replace("/.*license server UP \(MASTER\)/i ", "", $line);
 			$lmmaster = substr($line,0,strpos($line,':',0));
 		}
 
-		if ( eregi ("Cannot connect to license server", $line, $out) ) {
+		if ( preg_match ("/: license server UP/i", $line) ) {
+			$status_string = "UP";
+			$class = "up";
+			$lmgrdversion = preg_replace("/.*license server UP/i ", "", $line);
+			$lmmaster = substr($line,0,strpos($line,':',0));
+		}
+
+		if ( preg_match ("/Cannot connect to license server/i", $line, $out) ) {
 			$status_string = "DOWN";
 			$class = "down";
 			$lmgrdversion = "unknown" ;
@@ -94,7 +101,7 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 			break;
 		}
 
-		if ( eregi ("Cannot read data", $line, $out) ) {
+		if ( preg_match ("/Cannot read data/i", $line, $out) ) {
 			$status_string = "DOWN";
 			$class = "down";
 			$lmgrdversion = "unknown" ;
@@ -104,7 +111,7 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 			break;
 		}
 
-		if ( eregi ("Error getting status", $line, $out) ) {
+		if ( preg_match ("/Error getting status/i", $line, $out) ) {
 			$status_string = "DOWN";
 			$class = "down";
 			$lmgrdversion = "unknown" ;
@@ -115,7 +122,7 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 		}
 
 		/* Checking if vendor daemon has died evenif lmgrd is still running */
-		if ( eregi ("vendor daemon is down", $line, $out) ) {
+		if ( preg_match ("/vendor daemon is down/i", $line, $out) ) {
 			$status_string = "VENDOR DOWN";
 			$class = "warning";
 			$lmgrdversion = eregi_replace(".*license server UP \(MASTER\) ", "", $line);
@@ -167,7 +174,7 @@ $table->display();
 
 
 # Check whether we are monitoring LUM servers. 
-if ( isset ($i4blt_loc) ) {
+if ( isset ($i4blt_loc) && $i4blt_loc != "" ) {
 
 echo ("<h2>LUM Servers</h2>");
 $tableStyle = "border=\"1\" cellpadding=\"1\" cellspacing=\"2\" ";
@@ -190,7 +197,7 @@ $table->addRow($colHeaders, $headerStyle, "TH");
 
 # If no license server is running, lum outputs:
 # ADM-10037: There are no active license servers
-		if ( eregi ("ADM-10037: There are no active license servers", $line) ) {
+		if ( preg_match ("/ADM-10037: There are no active license servers/i", $line) ) {
 			$servername = "unknown" ;
 			$targetid = "unknown" ;
 			$targettype = "unknown" ;
@@ -225,7 +232,7 @@ $table->addRow($colHeaders, $headerStyle, "TH");
 //                           ==========================
 //                           === End of Server List ===
 //                           ==========================
-		if ( eregi ("Server Name:", $line) ) {
+		if ( preg_match ("/Server Name:/i", $line) ) {
 			$servername = eregi_replace(".*Server Name:\ *", "", $line) ;
 			$targetid = eregi_replace(".*Target ID:\ *", "", fgets ($fp, 1024));  // Next line: TargetID
 			$targettype = eregi_replace(".*Target Type:\ *", "", fgets ($fp, 1024));  // Next line: TargetType

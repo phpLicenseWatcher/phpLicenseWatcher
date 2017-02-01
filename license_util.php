@@ -37,10 +37,10 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 
 	# Look for features in the output. You will see stuff like
 	# Users of Allegro_Viewer: (Total of 5 licenses available
-	if ( eregi("^(Users of) (.*)",$line, $out ) )  {
+	if ( preg_match("/^(Users of) (.*)/i",$line, $out ) )  {
 
 
-          if ( eregi("(Total of) (.*) (license[s]? issued;  Total of) (.*) (license[s]? in use)", $line, $items ) ) {
+          if ( preg_match("/(Total of) (.*) (license[s]? issued;  Total of) (.*) (license[s]? in use)/i", $line, $items ) ) {
 	  			$license_array[] = array ( 
 				"feature" => substr($out[2],0,strpos($out[2],":")), 
 					"licenses_used" => $items[4] ) ;

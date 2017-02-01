@@ -71,7 +71,7 @@ while ( !feof ($fp) ) {
   $line = fgets ($fp, 1024);
 
 
-  if ( eregi ("Vendor Name:", $line) ) {
+  if ( preg_match ("/Vendor Name:/i", $line) ) {
     $vendorname = eregi_replace(".*Vendor Name:\ *", "", $line) ;
     $vendorid = fgets ($fp, 1024);  // Next line: vendorid
     $productname = eregi_replace(".*Product Name:\ *", "", fgets ($fp, 1024));  // Next line: product name

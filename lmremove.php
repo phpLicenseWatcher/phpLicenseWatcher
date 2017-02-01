@@ -29,7 +29,7 @@ TD { font-size: 14 pt; text-align: center }
 <?php
 
 
-$args=split(" ", $_GET['arg']);
+$args=explode(" ", $_GET['arg']);
 
 ######################################################################
 # Due to laziness feature contains colon (:) at the end. We need
@@ -60,7 +60,7 @@ while ( !feof ($fp) ) {
     $line = fgets ($fp, 1024);
     
     
-    if ( eregi ("$args[0] $args[1] $args[2] ", $line, $matchedline ) ) {
+    if ( preg_match ("/$args[0] $args[1] $args[2] /i", $line, $matchedline ) ) {
 
         # Make 
         $commandline = ($lmutil_loc . " lmremove -c " . $servers[$_GET['server']] . " " . $featurename 
