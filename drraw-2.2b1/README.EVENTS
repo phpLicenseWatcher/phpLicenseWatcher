@@ -1,0 +1,19 @@
+Round Robin Databases are a system to store and display time-series data
+(i.e. network bandwidth, machine-room temperature, server load average).
+Every now and then, something significant happens that may result in a
+noticeable discontinuity on such graphs.  Displaying such events on the
+graphs may be very useful to provide additional information to the viewer.
+
+For this reason, drraw now supports a very simple interface for events.
+Since these cannot be stored in RRD files, extra files are needed.  These
+files should contain one event per line, from the oldest to the most recent,
+in the following format:
+
+<timestamp> <description>
+
+For Example, here is an excerpt of an event file for a NetApp toaster:
+
+1045060191 Version: NetApp Release 6.3.1: Wed Nov 20 13:03:17 PST 2002
+1045274622 Version: NetApp Release 6.4: Fri Feb  7 01:16:52 PST 2003
+
+$Id: README.EVENTS,v 1.2 2004-08-01 02:02:26 kalt Exp $

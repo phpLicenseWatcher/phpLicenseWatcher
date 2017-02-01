@@ -1,0 +1,516 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=iso-8859-1">
+  <title>PHPLicenseWatcher HOWTO</title>
+  <meta name="GENERATOR" content="OpenOffice.org 1.0.1  (Linux)">
+  <meta name="CREATED" content="20021114;19260200">
+  <meta name="CHANGED" content="20021121;11055000">
+  <style>
+	<!--
+		@page { size: 21.59cm 27.94cm; margin-left: 3.18cm; margin-right: 3.18cm; margin-top: 2.54cm; margin-bottom: 2.54cm }
+	-->
+	</style>
+</head>
+<body style="color: rgb(0, 0, 0);" link="#0000ee" alink="#0000ee"
+ lang="en-US" vlink="#551a8b">
+<h1 align="center">PHPLicensewatcher installation HOWTO</h1>
+<hr>
+This document has been initially written by Glenn Zenker. It has been
+edited, revised and complemented by Vladimir Vuksan. If you have any
+recommendations, additions and changes please send me an e-mail to <br>
+<br>
+<a href="mailto:vuksan-feedback@veus.hr">vuksan-php@veus.hr</a><br>
+<hr style="width: 100%; height: 2px;">
+<h2>Document Index</h2>
+<ul>
+  <li><a href="#already_installed">If you have a database and Apache
+installed</a><br>
+  </li>
+  <li><a href="#creating_databases">Creating database</a></li>
+  <li><a href="#configuring_phplicensewatcher">Configuring
+PHPlicensewatcher</a></li>
+  <li><a href="#crontab_setup">Crontab setup</a></li>
+  <ul>
+    <li><a href="#license_alerts">License Alerts E-mail</a></li>
+    <li><a href="#license_utilization">License Utilization</a></li>
+    <li><a href="#license_denials">License denials / per user usage</a><br>
+    </li>
+  </ul>
+  <li><a href="#additional_configuration">Additional configuration
+options</a><br>
+  </li>
+  <li><a href="#troubleshooting">Troubleshooting</a><br>
+  </li>
+</ul>
+<hr style="width: 100%; height: 2px;">
+<h2>Where can PHPLicensewatcher run</h2>
+PHPlicensewatcher can run on any machine that has network access to
+your license server(s). FlexLM allows you to query license servers
+remotely. In most cases all you have to do is download FlexLM binaries
+for your platform. You can download binaries from <a
+ href="http://www.macrovision.com/services/support/flexlm/lmgrd.shtml">http://www.macrovision.com/services/support/flexlm/lmgrd.shtml</a>.
+Once you download the binaries you can query any FlexLM server
+regardless of the platform ie. our license servers run on Solaris,
+Linux and Windows and PHPlicensewatcher runs under Linux. To test
+whether you have the proper binaries execute<br>
+<a href="http://www.globetrotter.com/flexlm/lmgrd.shtml"><br>
+</a>
+<hr style="width: 100%; height: 2px;">
+<pre style="color: rgb(0, 0, 153);">lmstat -c port@licenseserv.domain.com</pre>
+<hr style="width: 100%; height: 2px;"><br>
+You should get something like this<br>
+<br>
+<hr style="width: 100%; height: 2px;">
+<pre><span style="color: rgb(0, 0, 153);">lmstat - Copyright (C) 1989-2001 Globetrotter Software, Inc.</span><br
+ style="color: rgb(0, 0, 153);"><span style="color: rgb(0, 0, 153);">Flexible License Manager status on Thu 12/5/2002 11:15</span><br
+ style="color: rgb(0, 0, 153);"><br style="color: rgb(0, 0, 153);"><span
+ style="color: rgb(0, 0, 153);">License server status: 27000@licenseserv</span><br
+ style="color: rgb(0, 0, 153);"><span style="color: rgb(0, 0, 153);">    License file(s) on licenseserv: /licenses/license.dat:</span><br
+ style="color: rgb(0, 0, 153);"><br style="color: rgb(0, 0, 153);"><span
+ style="color: rgb(0, 0, 153);">   licenserv: license server UP (MASTER) v8.0</span><br
+ style="color: rgb(0, 0, 153);"><br style="color: rgb(0, 0, 153);"><span
+ style="color: rgb(0, 0, 153);">Vendor daemon status (on licenseserv):</span><br
+ style="color: rgb(0, 0, 153);"><br style="color: rgb(0, 0, 153);"><span
+ style="color: rgb(0, 0, 153);">   snpslmd: UP v6.1</span><br></pre>
+<hr style="width: 100%; height: 2px;"><br>
+If you don't you have a problem and PHPlicensewatcher will not work.
+Try to resolve it then continue reading this document.<br>
+<br>
+<h2><a name="already_installed"></a>If you have a database and Apache
+installed<br>
+</h2>
+If you already have a database and apache installed you will need to
+check whether you have everything that's necessary installed.<br>
+<br>
+Create a PHP file somewhere on your web server with following line in
+it <br>
+<div style="margin-left: 40px;">
+<pre>&lt;?php phpinfo(); ?&gt;</pre>
+</div>
+View the page in your browser. You will get a long page with all of PHP
+settings. Third row in the table at the start should say "<b>Configure
+Command</b>" and under it something like this <br>
+<br>
+&nbsp;'./configure' '--with-mysql' '--with-apxs' '--enable-track-vars'
+'--with-gd' '--enable-gd-imgstrttf' '--with-ttf' '--with-ldap'
+'--enable-gd-native-ttf' '--with-pgsql'<br>
+<br>
+You will have to have at least these options<br>
+<ul>
+  <li>--with-gd &nbsp;- This is a GD library required for making
+graphs. If you don't already have it go to <a
+ href="http://www.boutell.com/gd/">http://www.boutell.com/gd/</a> and
+download it. Most Linux distributions come with it preinstalled. If not
+install a gd package ie. gd*.rpm</li>
+  <li>--enable-gd-imgstrttf&nbsp; or (--enable-gd-native-ttf) - This
+enables TrueType string function in gd</li>
+  <li>--with-mysql (MySQL) or --with-pgsql (PostgresSQL) or --with-oci8
+(Oracle) - whatever database you are using has to be supported by PHP</li>
+</ul>
+If this checks out &nbsp;<a
+ href="file:///export/home/web/html/apps/phplicensewatcher-0.9.3/INSTALL.html#creating_databases">jump
+to creating databases</a><br>
+<hr style="width: 100%; height: 2px;">
+<h2>RedHat/Fedora Linux installation instructions<br>
+</h2>
+<h3>RedHat 9.x<br>
+</h3>
+This assumes you are installing Apache/PHP/MySQL from RedHat 8.0 CD/DVD<br>
+<br>
+Install following packages<br>
+<pre style="margin-left: 40px; background-color: rgb(238, 238, 238);">rpm -ivh /mnt/cdrom/RedHat/RPMS/httpd-*.i386.rpm<br>rpm -ivh /mnt/cdrom/RedHat/RPMS/php-mysql-*.i386.rpm<br>rpm -ivh /mnt/cdrom/RedHat/RPMS/php-pear-*.i386.rpm<br>rpm -ivh /mnt/cdrom/RedHat/RPMS/php-[4-5]*.i386.rpm<br>rpm -ivh /mnt/cdrom/RedHat/RPMS/mysql-[3-5]*.i386.rpm<br>rpm -ivh /mnt/cdrom/RedHat/RPMS/mysql-server-*.i386.rpm<br></pre>
+You also need to install these two PEAR packages<br>
+<div style="margin-left: 40px;">
+<pre style="background-color: rgb(238, 238, 238);">pear install HTML_Common<br>pear install HTML_Table<br></pre>
+</div>
+<br>
+Reboot or type <br>
+<pre style="margin-left: 40px; background-color: rgb(238, 238, 238);">/etc/rc.d/init.d/httpd restart (restart since it may already be running)<br>/etc/rc.d/init.d/mysqld restart (restart since it may already be running)<br>/sbin/chkconfig httpd on<br>/sbin/chkconfig mysqld on<br></pre>
+Now &nbsp;<a href="#creating_databases">jump to creating databases</a><br>
+<br>
+<hr style="width: 100%; height: 2px;">
+<h2>Generic instructions</h2>
+<p style="margin-bottom: 0cm;">These are generic UNIX instructions ie.
+if you don't have MySQL, Apache or PHP installed.&nbsp;</p>
+<p style="margin-bottom: 0cm;">What you need:</p>
+&lt;&gt;
+<ul>
+  <li>apache (I used latest stable v1.3.x)</li>
+  <li>php4 or php5 (I used latest stable)</li>
+  <li>mysql (I used latest stable binary)</li>
+  <li>lmutil/lmstat (lastest from their website listed below)</li>
+  <li>phplicensewatcher-x.tar.gz </li>
+</ul>
+<p style="margin-bottom: 0cm;">Basic Install Process</p>
+<ul>
+  <li>
+    <p style="margin-bottom: 0cm;">This is assuming that you are on a
+UNIX/LINUX machine *</p>
+  </li>
+</ul>
+<h3>Compiling Apache</h3>
+<p style="margin-bottom: 0cm;">Get an Apache version from
+<a href="http://www.apache.org/">www.apache.org</a>. These
+instructions assume Apache 1.3.x. When compiling apache, you need to
+compile it so it can use mod_so. This allows other modules to be
+loaded (php) when you start the httpd server.</p>
+<p
+ style="margin-bottom: 0cm; margin-left: 40px; background-color: rgb(238, 238, 238);">./configure
+&#8211;enable-module=so
+&amp;&amp; make</p>
+<p style="margin-bottom: 0cm;">before you do a make install, you
+should be able to find the httpd in the ./src directory.<br>
+<br>
+</p>
+<div style="margin-left: 40px; background-color: rgb(238, 238, 238);">Run
+<b>./src/httpd -l </b></div>
+<p style="margin-bottom: 0cm;">you should get a list that shows you
+all the modules...the one we are looking for the most is, mod_so.c.
+If that is there, we are good to go for now.</p>
+<h3>Compiling php4</h3>
+<p style="margin-bottom: 0cm;">When compiling php4, you need to have
+in your $PATH where apxs is installed. It should be under the
+$PREFIX/apache/bin/apxs. If you don't have this, go back and
+reinstall apache.</p>
+<p
+ style="margin-bottom: 0cm; margin-left: 40px; background-color: rgb(238, 238, 238);">./configure
+&#8211;with-mysql=/usr/local/mysql &#8211;with-apxs
+--enable-track-vars --with-gd --enable-gd-imgstrttf --with-ttf'
+&#8211;with-ldap &#8211;enable-gd -native-ttf --with-pgsql &amp;&amp;
+make &amp;&amp; make install</p>
+<h3>Compiling mysql</h3>
+<p style="margin-bottom: 0cm;">I downloaded the binary for it and
+simply untar'd it in a directory. The binary is available for all
+platforms so you don't need to compile it.</p>
+<p style="margin-bottom: 0cm; margin-left: 40px;"><a
+ href="http://dev.mysql.com/downloads/">http://dev.mysql.com/downloads/</a><br>
+</p>
+<p style="margin-bottom: 0cm;">One thing I did notice about the binary
+was when I tried to run ./bin/safe_mysqld &#8211;user=mysql it gave
+me an error about no libexec directory or var directory. After
+further review, the ./bin/safe_mysqld, which is a shell script, had
+some incorrect data. Simply edit safe_mysqld, and look for <u>libexec</u>
+and substitue it for <u>bin</u>, then look for <u>var</u> and
+substitue it for <u>data</u>.</p>
+<p style="margin-bottom: 0cm;">To continue:</p>
+<p style="margin-bottom: 0cm;">AS ROOT: (assuming you are installing
+in /usr/local)</p>
+<p style="margin-bottom: 0cm;">This is documentation quoted directly
+from the INSTALL-BINARY by mysql.<br>
+<br>
+</p>
+<div style="margin-left: 40px; background-color: rgb(238, 238, 238);">
+groupadd mysql<br>
+useradd -g mysql mysql<br>
+cd /usr/local<br>
+gunzip &lt; /path/to/mysql-VERSION-OS.tar.gz | tar xvf -<br>
+ln -s mysql-VERSION-OS mysql<br>
+cd mysql<br>
+scripts/mysql_install_db<br>
+chown -R root /usr/local/mysql<br>
+chown -R mysql /usr/local/mysql/data<br>
+chgrp -R mysql /usr/local/mysql<br>
+chown -R root /usr/local/mysql/bin<br>
+bin/safe_mysqld --user=mysql &amp;<br>
+<span style="color: rgb(255, 0, 0);">** my note ** Don't give
+the
+database a password just yet.</span>
+</div>
+<p style="margin-bottom: 0cm;">Getting lmutil/lmstat:</p>
+<p style="margin-bottom: 0cm;">You can download the binaries at the
+address below. They are available for almost any platform. <span
+ style="text-decoration: underline;"><br>
+</span></p>
+<p style="margin-bottom: 0cm;"><span style="text-decoration: underline;"><a
+ href="http://www.macrovision.com/services/support/flexlm/lmgrd.shtml">http://www.macrovision.com/services/support/flexlm/lmgrd.shtml</a><br>
+</span></p>
+<br>
+Download lmutil since that is the "super binary" that implements a lot
+of the other binaries ie. lmcksum and lmstat<br>
+<br>
+<div style="margin-left: 40px; background-color: rgb(238, 238, 238);">
+mv lmutil /usr/local/bin/<br>
+chmod 755 /usr/local/bin/lmutil<br>
+ln -s /usr/local/bin/lmutil /usr/local/bin/lmstat<br>
+</div>
+<p style="margin-bottom: 0cm;">Working with phplicensewatcher</p>
+<p style="margin-bottom: 0cm;">Ok, now you have a working apache,
+php4, mysqld, lmutil and you're ready to get what you've been wanting
+for over about an hour now.</p>
+<p style="margin-bottom: 0cm;">Making sure that safe_mysqld is
+running:</p>
+<p style="margin-bottom: 0cm;"><b>ps -ef | grep mysqld |grep -v grep</b><br>
+<br>
+If you get something, you should be
+alright.</p>
+<hr style="width: 100%; height: 2px;">
+<h3><a name="creating_databases"></a>Creating databases</h3>
+<p style="margin-bottom: 0cm;">Become the mysql user (or root) then<br>
+<br>
+</p>
+<div style="margin-left: 40px; background-color: rgb(238, 238, 238);"><b>mysqladmin
+create licenses</b></div>
+<p style="margin-bottom: 0cm;">This creates the database called
+licenses. </p>
+<p style="margin-bottom: 0cm;">Then run<br>
+<br>
+</p>
+<div style="margin-left: 40px; background-color: rgb(238, 238, 238);"><b>mysql
+-f licenses &lt;
+phplicensewatcher.sql</b></div>
+<p style="margin-bottom: 0cm;">Please ignore "<span
+ style="color: rgb(255, 0, 0);">Unknown table</span>" errors (if tables
+with same name are found they are dropped). This populates the
+database with tables and such.<br>
+</p>
+<p style="margin-bottom: 0cm;">I recommend creating a MySQL user with
+only INSERT or SELECT privileges to the tables. To create a user called
+lic_user with password secretpass type<br>
+<br>
+</p>
+<div style="margin-left: 40px; background-color: rgb(238, 238, 238);"><span
+ style="font-weight: bold;">mysql mysql</span></div>
+<p style="margin-bottom: 0cm;">Then type or paste following<br>
+<br>
+</p>
+<div style="margin-left: 40px; background-color: rgb(238, 238, 238);">GRANT
+SELECT,INSERT ON licenses.* TO lic_user@"%";<br>
+GRANT SELECT,INSERT ON licenses.* TO lic_user@localhost;<br>
+SET PASSWORD FOR lic_user@"%" = PASSWORD("newpass");<br>
+SET PASSWORD FOR lic_user@localhost = PASSWORD("newpass");<br>
+</div>
+<p style="margin-bottom: 0cm;">Ok, now we are
+ready to set the password on the mysql database and in this case,
+you actually want to use the apostrophe with new-password being your
+new password and not the word new-password.<br>
+<br>
+</p>
+<div
+ style="margin-left: 40px; font-weight: bold; background-color: rgb(238, 238, 238);">mysqladmin
+-u root password 'new-password'<br>
+mysqladmin -u root -h $HOSTNAME password 'new-password'
+</div>
+<hr style="width: 100%; height: 2px;">
+<h3><a name="configuring_phplicensewatcher"></a>Configuring
+PHPlicensewatcher<br>
+</h3>
+<p style="margin-bottom: 0cm;">There is a sample-config.php in the
+phplicensewatcher directory. Copy it to config.php ie .<br>
+</p>
+<hr style="width: 100%; height: 2px;">
+<pre style="color: rgb(0, 0, 153);">cp sample-config.php config.php</pre>
+<hr style="width: 100%; height: 2px;">
+<p style="margin-bottom: 0cm;">then edit it in your favorite editor.
+You want to keep
+an eye on the following:<br>
+</p>
+<br>
+<hr style="width: 100%; height: 2px;">
+<pre style="color: rgb(0, 0, 153);">$lm_home = "/usr/local/bin"; // location of lmutil and lmstat</pre>
+<pre style="color: rgb(0, 0, 153);">$servers[] = "27000@hostname";<br>$description[] = "Synopsys License";</pre>
+<hr style="width: 100%; height: 2px;">
+<p style="margin-bottom: 0cm;">If you have more
+then one host, or more then one port active, just keep adding a
+$servers line and a $description line.</p>
+<hr style="width: 100%; height: 2px;">
+<pre style="color: rgb(0, 0, 153);">$servers[] = "5280@hostname";<br>$description[] = "Cadence Licenses"; // and so on and so on<br></pre>
+<hr style="width: 100%; height: 2px;">
+<pre>By default you will be warned 10 days ahead of time whether licenses are expiring. If you want to prolong that or shorten that adjust the $lead_time variable ie.<br></pre>
+<hr style="width: 100%; height: 2px;">
+<pre><span style="color: rgb(0, 0, 153);">$lead_time = 10;</span><br></pre>
+<hr style="width: 100%; height: 2px;">
+<p>You now have to configure your database settings. This assumes you
+are using MySQL. You could use other databases but you would need to
+modify the <br>
+</p>
+<hr style="width: 100%; height: 2px;">
+<pre><span style="color: rgb(0, 0, 153);">$db_hostname = "localhost"; // localhost should work if it is in /etc/hosts</span><br
+ style="color: rgb(0, 0, 153);"><span style="color: rgb(0, 0, 153);">$db_username = "mysql"; // name of the user who starts the safe_mysqld</span><br
+ style="color: rgb(0, 0, 153);"><span style="color: rgb(0, 0, 153);">$db_password = "mysecretpassword"; // whatever you changed your password to</span><br
+ style="color: rgb(0, 0, 153);"><span style="color: rgb(0, 0, 153);">$db_database = "licenses"; // name of the database.</span><br
+ style="color: rgb(0, 0, 153);"><span style="color: rgb(0, 0, 153);"># Leave $dsn as it is if you are using MySQL.</span><br
+ style="color: rgb(0, 0, 153);"><span style="color: rgb(0, 0, 153);">$dsn = "mysql://$db_username:$db_password@$db_hostname/$db_database";</span><br
+ style="color: rgb(0, 0, 153);"><span style="color: rgb(0, 0, 153);"># Uncomment following if you are using PostGresSQL and comment out one with MySQL</span><br
+ style="color: rgb(0, 0, 153);"><span style="color: rgb(0, 0, 153);"># $dsn = "pgsql://$db_username:$db_password@$db_hostname/$db_database";</span><br></pre>
+<hr style="width: 100%; height: 2px;">
+<p style="margin-bottom: 0cm;">PHPLicensewatcher will record
+utilization for all the licenses listed on the servers you are
+watching. However in most cases you will want to keep an eye on couple.
+That is why you need to specify couple features you want graphed on the
+utilization page. To do that you have to add $license_feature and
+$feature_description pairs. License feature is the actual name of the
+feature as used on the license server ie. Al_viewer while feature
+description is a more detailed description of the feature<br>
+</p>
+<hr style="width: 100%; height: 2px;">
+<pre><span style="color: rgb(0, 0, 153);">$license_feature[] = "Al_viewer";</span><br
+ style="color: rgb(0, 0, 153);"><span style="color: rgb(0, 0, 153);">$feature_description[] = "Allegro Viewer";</span><br></pre>
+<hr style="width: 100%; height: 2px;">
+If you want license denials and checkout statistics you need to define
+where FlexLM logs are kept ie. <br>
+<hr style="width: 100%; height: 2px;">
+<pre style="color: rgb(0, 0, 153);">$log_file[] = "/mnt/flexlm/27000-at-licenserv.log";</pre>
+<p style="margin-bottom: 0cm;">
+</p>
+<hr style="width: 100%; height: 2px;">
+There is a number of other options you can change.
+Read through the comments in the config.php. When you are done you can
+check your installation for common configuration errors by opening up
+check_installation.php page ie.<br>
+<p style="margin-bottom: 0cm;"><a
+ href="http://localhost/phplicensewatcher/check_installation.php">http://localhost/phplicensewatcher/check_installation.php</a></p>
+<p style="margin-bottom: 0cm;">If everything worked without errors,
+then you should be able to point your browser to
+<a href="http://localhost/phplicensewatcher/index.php">http://localhost/phplicensewatcher/index.php</a>.<br>
+</p>
+<br>
+<hr style="width: 100%; height: 2px;">
+<h2><a name="crontab_setup"></a>Crontab setup</h2>
+<h3><b><a name="license_alerts"></a>License alerts e-mail</b></h3>
+<p>This is probably the most important part of managing licenses :-).
+Being
+notified when licenses are due to expire. E-mails come as HTML mail
+since
+I wanted to use tables and colors.</p>
+<p>The way I use it is to run license_alert.php report every night at 2
+a.m.
+This report will query all specified license servers and figure out
+which
+licenses are due to expire. There are two ways to run license_alert.php
+script.
+You can use PHP interpreter directly if you have it installed in on
+your
+machine ie. RedHat distributes php interpreter as php-*.rpm packages.
+You
+can then have one of the following entries in your crontab</p>
+<pre style="margin-bottom: 0.5cm; color: rgb(0, 0, 153);">0 2 * * * php /var/www/html/phplicensewatcher/license_alert.php &gt;&gt; /dev/null</pre>
+<p> The other way to invoke it is to use wget which is a web retrieval
+tool.
+You can also use curl if you prefer that</p>
+<pre style="margin-bottom: 0.5cm; color: rgb(0, 0, 153);">0 2 * * * wget -O - http://your.apachehost.com/phplicensewatcher/license_alert.php &gt;&gt; /dev/null</pre>
+<h3><a name="license_utilization"></a>License utilization</h3>
+To get license utilization stats you need to set up data collection
+crontabs. There are two
+scripts that need to be executed ie. license_util.php and
+license_cache.php.
+<ul>
+  <li>License_util.php is used to get current license usage. It should
+be run periodically throughout the day ie. every 15 minutes.</li>
+  <li>
+    <p>License_cache.php stores the total number of available licenses
+on
+particular day. This script is necessary because you may have temporary
+keys that may expire on a particular day and you want to capture that.
+It
+should be run once a day preferably soon after the midnight after which
+license server should invalidate all the expired keys.</p>
+  </li>
+</ul>
+<p>My crontab looks like this<br>
+</p>
+<hr style="width: 100%; height: 2px;">
+<pre style="color: rgb(0, 0, 153);">0,15,30,45 * * * * wget -O - http://your.apachehost.com/phplicensewatcher/license_util.php &gt;&gt; /dev/null<br>15 0 * * *  wget -O - http://your.apachehost.com/phplicensewatcher/license_cache.php &gt;&gt; /dev/null</pre>
+<hr style="width: 100%; height: 2px;">
+<h3><a name="license_denials"></a> License denials / per user usage<br>
+</h3>
+<p>An important metric in evaluating your licenses is license denials
+ie.
+how many people were denied access to a certain feature because we were
+out
+of licenses. To do that we have to analyze FlexLM logs. FlexLM logs are
+enabled
+during FlexLM start up. For example we start our FlexLM servers with
+following
+options<br>
+</p>
+<hr style="width: 100%; height: 2px;">
+<pre style="color: rgb(0, 0, 153);">su nobody -c '/tools/lmgrd -l /usr/tmp/27000-at-licenserv.log -c /tools/license/license.dat'</pre>
+<hr style="width: 100%; height: 2px;">
+<p>This will create /usr/tmp/27000-at-licenserv.log which will contain
+information
+such as when the license has been checked out, when it was checked in
+plus
+any time a license has been denied ie.</p>
+<pre style="margin-bottom: 0.5cm;">16:01:20 (daemond) DENIED: "viewer" jack@server  (Licensed number of users already reached (-4,342))</pre>
+<p>We want to capture this information since a high number of denials
+would
+indicate that we should consider getting additional licenses since a
+lot
+of people are being denied access.&nbsp;<br>
+</p>
+<p>Same log file contains check out and check in information that we
+also store in the database so we can retrieve it later.<br>
+</p>
+<p>FlexLM logs can be very large so it may take a long time to analyze
+them.
+I run the analysis scripts around 2 a.m. every morning. To run them put
+something
+like this in your crontab</p>
+<hr style="width: 100%; height: 2px;">
+<pre style="margin-bottom: 0.5cm;"><span style="color: rgb(0, 0, 153);">0 2 * * *  wget -O - http://your.apachehost.com/phplicensewatcher/parselog.php &gt;&gt; /dev/null</span><br></pre>
+<hr style="width: 100%; height: 2px;">
+<h2><a name="additional_configuration"></a>Additional configuration
+options</h2>
+<h3>General<br>
+</h3>
+<h3>$disable_autorefresh<br>
+</h3>
+<div style="margin-left: 40px;"> On the current usage page there is a
+drop down box that will allow people to select auto refresh a page. By
+default refresh is enabled. However that could introduce overhead on
+your server so you may want to turn it off. Set $disable_autorefresh
+to&nbsp; 1 to disable<br>
+</div>
+<h3>$disable_license_removal</h3>
+<div style="margin-left: 40px;">Disable ability to remove licenses from
+the web interface.&nbsp; Set to $disable_license_removal&nbsp; 1 to
+disable<br>
+</div>
+<h3>$adminusername and $adminpassword</h3>
+<div style="margin-left: 40px;">By default Admin page ie. admin.php is
+not password protected so anyone can access it. If that is not what you
+want you can set admin username and password. You need to specify those
+two variables to enable authentication ie. <br>
+<div style="margin-left: 40px;"><br>
+$adminusername="admin";<br>
+$adminpassword="mypassword";<br>
+</div>
+<br>
+If you do you should also change permissions on config.php to be only
+readable to the web user (if you have not already done that).<br>
+</div>
+<h3>Graphing</h3>
+<h3><span style="font-weight: bold;">$smallgraph and $largegraph</span></h3>
+<div style="margin-left: 40px;">&nbsp;Defines sizes of the graph. XY
+size ie. 300,200.<br>
+</div>
+<h3>$collection_interval</h3>
+<div style="margin-left: 40px;">Time interval between data collections
+ie. 15 minutes<br>
+</div>
+<h3>$xlegendpoints</h3>
+<div style="margin-left: 40px;">How many point on the X axis you want
+for a 24 hr period ie. show legend every for every 2 hours = 12 so you
+will see 2,4,6,8,10 etc.<br>
+</div>
+<br>
+<hr style="width: 100%; height: 2px;">
+<h2><a name="troubleshooting"></a>Troubleshooting<br>
+</h2>
+<p style="margin-bottom: 0cm;">1. I go to license utilization page and
+I can't see any graphs ie. not even the grid shows up<br>
+</p>
+<p style="margin-bottom: 0cm;">There couple reasons<br>
+</p>
+<ul>
+  <li><a href="#already_installed">GD library hasn't been compiled in</a></li>
+</ul>
+<p style="margin-bottom: 0cm;">2. DB Error: connect failed<br>
+</p>
+<p style="margin-bottom: 0cm;">Either lic_user doesn't have appropriate
+privileges or you are pointing to the wrong database<br>
+</p>
+</body>
+</html>

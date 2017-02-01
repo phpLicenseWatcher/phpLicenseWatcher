@@ -1,0 +1,51 @@
+2001-09-24 16:14  dirk
+
+	* test.php, test1.png, class/diagram.php: ZeroLine Bug Fix
+
+2001-09-23 01:34  dirk
+
+	* ChangeLog: Changelog
+
+2001-09-23 01:31  dirk
+
+	* diagramm.php, test.php, class/CDiagramm.php, class/diagram.php:
+	Bug Fix Minor Version 0.21
+
+2001-08-01 01:36  dirk
+
+	* COPYING, ChangeLog, README: added GPL-Stuff
+
+2001-07-25 20:23  dirk
+
+	* diagramm.php, test1.png, class/CDiagramm.php: ItemData eingebaut
+
+2001-06-08 02:00  dirk
+
+	* diagramm.php, test1.png, class/CDiagramm.php: SetGraphColor
+
+2001-05-30 22:33  dirk
+
+	* diagramm.php, test1.png, class/CDiagramm.php: CutData
+
+2001-05-30 22:09  dirk
+
+	* diagramm.php, test1.png, class/CDiagramm.php: diskrete Werte
+
+2001-05-29 22:51  steffen
+
+	* diagramm.php: added new files
+
+2001-05-28 20:56  dirk
+
+	* diagramm.php, test1.png, class/CDiagramm.php: Last Change
+
+2001-05-28 01:15  dirk
+
+	* diagramm.php, test.png, test1.png, class/CDiagramm.php: Initial
+	Check in Class Diagramm
+
+2001-05-28 01:15  dirk
+
+	* diagramm.php, test.png, test1.png, class/CDiagramm.php: Initial
+	revision
+

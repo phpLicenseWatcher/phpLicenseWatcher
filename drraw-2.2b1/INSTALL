@@ -1,0 +1,89 @@
+-- drraw NEWS
+
+Version 2.2 adds full support for the new features found in RRDtool 1.2 and
+above.  It is important to note that RRDtool 1.2 and above deprecate a number
+of graph commands previously available.  drraw handles this in the following
+way:
+
+* deprecated syntax is not allowed when creating new graphs.
+* deprecated syntax from old saved graphs is converted (when possible) when
+  drawing these graphs.
+* deprecated syntax from old saved graphs is never converted when editing
+  these graphs, this has to be done manually.
+
+-- drraw dependencies
+
+drraw requires:
+
+* a working perl with the CGI module.  It was originally written and tested
+  using version 5.6.1.  It is known to run fine on UNIX (with Apache) as
+  well as Windows (with Apache and IIS).
+  Note that on Windows, ActivePerl 5.8.0 is required but that earlier versions
+  may work as long as you comment out lines with calls to alarm().
+* The RRDtool Perl module "RRDs" is also (unsurprisingly) needed.
+  It is strongly recommended to use version 1.0.47 or above if possible,
+  and version 1.0.36 at the very least.
+
+-- drraw installation notes
+
+drraw is a standalone CGI script with a separate configuration file.
+The file drraw.cgi should be installed as a CGI script for your web server,
+and the drraw.conf file should be copied to the same directory.
+
+******************************************************************************
+** To get going, the only configuration required is %datadirs in drraw.conf **
+******************************************************************************
+
+While all the configurable options are located in the drraw.conf file, you
+will need to edit drraw.cgi if
+(a) you want to put the drraw.conf file somewhere else,
+(b) the RRDs.pm perl module was not installed in a directory mentioned
+    in your perl's @INC,
+(c) UNIX: /usr/bin/perl doesn't exist or isn't the perl you want to use
+    OTHERS: Typically, web servers running on non UNIX platforms will ignore
+            the first line of the script and are instead configured to use
+            Perl (for example).  Microsoft IIS is an example of such a server.
+            To get drraw working on such a server you have three choices:
+            (1) Remove the -T option on the first line.  !!!NOT RECOMMENDED!!!
+            (2) Configure the server to run Perl scripts with taint mode on.
+                (This will affect _all_ Perl scripts.)
+            (3) Work around the problem by creating a second special extension
+                such as tcgi or tgi which is associated with taint mode Perl.
+
+-- drraw security
+
+Don't believe that because drraw is open source, it is secure.  This is just
+stupid anti Microsoft propaganda.  To my knowledge, noone has ever thoroughly
+reviewed drraw's code, meaning that while some care was taken to write a safe
+tool, it comes with NO GUARANTEE at all.  Run it at your own risk.
+
+This said, drraw uses Perl's "taint mode", and has a simple (and optional)
+security system built-in to allow restricting read-write access.  In other
+words, you should be fine (but don't take my word on it).
+
+-- drraw contact
+
+If you want to be informed about important news about drraw, such as new
+releases, subscribe to the drraw-announce mailing list, either by sending a
+mail including the "subscribe" keyword to drraw-announce-request@taranis.org,
+or simply visit the following web page:
+	http://web.taranis.org/mailman/listinfo/drraw-announce
+
+For more discussions, subscribe to the drraw-users mailing list, either by
+sending a mail including the "subscribe" keyword to
+drraw-users-request@taranis.org, or simply visit the following web page:
+	http://web.taranis.org/mailman/listinfo/drraw-users
+
+Send bug reports to `drraw-bugs@taranis.org'.  A bug report is an adequate
+description of the environment (versions of this package, the OS, Perl, the
+CGI module and RRDtool) and of the problem: your input, what you expected,
+what you got, and why you believe it to be wrong.  Diffs are welcome, but
+they only describe a solution, from which the problem might be difficult
+to infer.
+
+Your feedback will help to make a better and more portable package.
+Consider documentation errors as bugs, and report them as such.  If you
+develop anything pertaining to `drraw' or have suggestions, share your
+findings by writing to `drraw@taranis.org'.
+
+-- $Id: INSTALL 1389 2008-02-16 23:36:44Z kalt $

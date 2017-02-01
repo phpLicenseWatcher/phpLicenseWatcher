@@ -1,0 +1,69 @@
+h1{
+	text-align: center;
+}
+
+.a_centre{
+	text-align: center;
+	margin: 0 auto;
+}
+
+img{
+	border: none;
+}
+
+body{
+	background: #ffffff;
+}
+
+table{
+	background: #ffffff;
+	margin: 0 auto;
+	font-size: 9pt;
+}
+
+th{
+	background: #dddddd;
+}
+
+td{
+	/*font-size: 14pt;*/
+	text-align: center;
+}
+
+td.already_expired{
+	background: #ffb0a0;
+}
+td.expires_soon{
+	background: #ffa0a0;
+}
+
+td.up{
+	background: lightgreen;
+}
+
+td.down{
+	background: red;
+}
+
+td.warning{
+	background: red;
+}
+a.version{
+	font-style: italic;
+}
+
+.error
+      {
+         padding   : 10px;
+         border    : 5px solid red;
+      }
+.warning
+      {
+         padding   : 10px;
+         border    : 5px solid yellow;
+      }
+.ok
+      {
+         padding   : 10px;
+         border    : 5px solid green;
+      }

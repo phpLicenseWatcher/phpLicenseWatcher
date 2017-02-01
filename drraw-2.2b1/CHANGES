@@ -1,0 +1,256 @@
+$Id: CHANGES 1523 2008-10-06 16:59:31Z kalt $
+
+Changes since 2.2a5 [2008-05-03]:
+- Added trend display pages.
+- Dashboard style display for templates lacked links.
+- Suppressed undefined variable warnings (courtesy of Martin Schuster).
+- Replace "missing" graphs with "unknown" icon (courtesy of R.P. Aditya).
+- Rcs module now(?) needs more to be untainted (reported by "Matt Perry).
+
+Changes since 2.2a4 [2007-05-30]:
+- Various dates displayed now follow the ISO 8601 format.
+- Graph start date, end date and creation dates can now be added to the image.
+- Data Source Templates have been enhanced:
+  - Dynamic elements can now be stacked on top of previous graph element not
+    just on top of themselves (courtesy of François Deppierraz),
+  - Number of elements can be used in dynamic element CDEFs, and Formula field,
+  - Builtin formulas allow calculating the AVERAGE and STDDEV,
+  - Old files and files without values are automatically skipped (courtesy of
+    R.P. Aditya).
+- Orange look, still ugly though :)
+- New Data Source rows are now properly disabled on load.
+- Allow &DBFinder() to follow symlinks.
+- Switched to /usr/bin/perl (from /usr/local/bin/perl).
+
+Changes since 2.2a3 [2007-03-17]:
+- Fixed support for SHIFT graph command.
+- Updated RRDs::fetch usage again (courtesy of Andy Mayhew).
+- Saving dashboards could generate bad index entries (reported by Fabien
+  Wernli).
+- Added "Invisible" color (suggested by John Rouillard).
+- Dashboard style display for templates broke custom time display of templates
+  (reported by Mark Noworolski).
+- Two typos caused forms to use POST instead of GET (courtesy of Fabien Wernli).
+- The graph editor no longer allowed stacking CDEFs or VDEFs (reported by John
+  Rouillard).
+
+Changes since 2.2a2 [2007-01-14]:
+- Improved default color assignment (courtesy of David Nolan).
+- Allow configuring a custom set of colors (courtesy of David Nolan).
+- Updated RRDs::fetch usage for newer RRDtool versions (courtesy of John Milton)
+
+Changes since 2.2a1 [2006-07-20]:
+- Added a dashboard style display for templates (with multiple selections).
+- New "Format" parameter can be used in graph URL to override saved setting.
+- PDF and SVG formats are now properly embedded in HTML.
+- Added warning and check to avoid obscure error caused by misconfiguration.
+- Minor JavaScript enhancements to the graph editor.
+- Added notice about CGI.pm incompatibility.
+
+Changes since 2.1.3 [2005-06-19]:
+- Various improvements for the graph editor:
+  + Extensive code rewrite/cleanup.
+  + Added simple HTML tooltips to provide (some) contextual help.
+  + Extended JavaScript automation.
+  + Clarified creation of new Data Sources.
+- rrdtool 1.2.x support:
+  + Three new image formats: SVG, EPS and PDF.
+  + GIF is no longer supported, automatically switch to PNG.
+  + Removed support for deprecated --overlay parameter.
+  + Added support for --no-gridfit.
+  + Added support for new VDEF, TICK and SHIFT graph commands.
+  + Deprecated use of HRULE, STACK and old style GPRINT graph command.
+
+Changes since 2.1 [2004-10-14]:
+- Fixed misleading typo in drraw.conf (courtesy of Rodney Beede).
+- Disable fields for new (marked for deletion) DS in editor.
+- Fixed yet another File::Find (although unlikely) taint problem.
+- GPRINTs were not handled correctly for CDEFs (courtesy of Jim Pirzyk).
+- Fixed "None" choice for "Y Grid" graph option (courtesy of Darryl Dunkin).
+- Fixed CGI parameter collision (courtesy of John Milton).
+- Disabled generation of hidden .submit and .cgifields.
+- Added $drefresh configuration setting.
+- Win32's inability to rename opened files broke caching (reported by Patrick
+  Varney).
+- The cache was unlikely to ever be thoroughly purged, fixed logic.
+- Addition of $ERRLOG configuration setting.
+- Fixed relaying of cached images for portability (reported by Patrick Varney).
+- More error checking (and logging) about some cache operations.
+- Fixed regular expression used for finding files in %datadirs (reported
+  by John Milton).
+
+Changes since 2.0 [2004-06-24]:
+
+- Authentication code improvements (courtesy of David Nolan).
+  NOTE: The $level and %guests configuration setting are now obsolete;
+  NOTE: Use %users instead.
+- warn() when unable to load Rcs.pm (courtesy of David Nolan).
+- Non standard views now include start and end dates.
+- Fixed spurious cloning when subsequently saving the same item in editor.
+- Use stricter regular expression when finding files in %datadirs.
+- Fixed handling of DashBoard filtering.
+- Minor HTML changes for Mozilla.
+- Added $IndexMax configuration setting.
+- Added "missing" Update button after Start/End fields in Graph/Template editor.
+- Added refresh countdown on display pages.
+- Enhanced Graph/Template/Dashboard editor using JavaScript.
+- Main page Graph/Template/Dashboard browser is now customizable.
+- Event timestamp format now depends on how long ago the first event occured.
+- Added time to pages with graphs.
+- Dashboard pages now have a dynamic refresh time.
+
+Changes since 2.0b3 [2004-04-27]:
+
+- Quieted harmless Perl warning related to cache purging.
+- Fixed typo resulting in occasional deletion of cache files being generated.
+
+Changes since 2.0b2 [2004-04-15]:
+
+- ':' characters in all labels are now escaped prior to calling RRDs::graph().
+  NOTE: This will break graph definitions where ':' were manually escaped.
+- Fixed ':' characters escaping for events prior to calling RRDs::graph().
+- BR setting was ignored for events (courtesy of Jesper Dangaard Brouer).
+- Fixed labeled event filtering.
+
+Changes since 2.0b1 [2004-04-09]:
+
+- Fixed "Graph Title" validation for templates.
+- &DBFinder's die message was fairly useless, who knew it'd ever show up.
+- Successful drraw reporting needn't be logged.
+
+Changes since 1.2 [2004-01-05]:
+
+- Templates are now required to have a "Graph Title".
+- Dashboards may now be filtered.
+- Quieted harmless (but annoying) Perl warning related to template edition.
+- Handle HTTP 'If-Modified-Since' headers.
+- Don't bother specifying events outside time boundaries when producing graphs.
+- Fixed File::Find Win32 taint problem (reported by Ben Swaby).
+- Produced images are now cached.
+- HTTP 'Expires' and 'Last-Modified' headers are now generated.
+- Allow customizing remote username determination (suggested by David Nolan).
+- Added $header and $footer configuration settings (courtesy of David Nolan).
+- Fixed minor locking bug.
+- Improved timeout error message.
+- Added simple logging of saves and deletes.
+- Minor style (CSS) changes.
+- Added "rrdtool info" hook.
+- Saved definitions may now be kept under revision control (using RCS).
+- Fixed templates to work with multiple %datadirs directories.
+- Base choices are now scrolling list in "empty" template and dashboard viewers.
+- Base parameters may contain spaces and therefore need to be quoted.
+- Not all generated pages had style (reported by Craig Van Rij).
+- Dashboard "base" was lost by Start/End entries (reported by Steffen Plotner).
+
+Changes since 1.1 [2003-11-10]:
+
+- Dashboard template choices should be sorted (reported by Steffen Plotner).
+- Only do work in &TMPLFind() if a filter is actually given.
+- Quieted harmless Perl warning (reported by Edgar Whipple).
+- self_url() URLs aren't usable through proxies (reported by Abfalterer Roland).
+- Fixed logic checking whether &mydatafnsort() is defined.
+- RRDs::fetch result check needs to be stricter (reported by Jon A. Tankersley).
+
+Changes since 1.0 [2003-10-31]:
+
+- Use NUL: instead of /dev/null on Windows (reported by Moore Macauley).
+- ':' characters need to be escaped from filenames (reported by Moore Macauley).
+- It is now possible to pass any (even unsupported by drraw) option to rrdgraph.
+- Added support for rrdgraph's --units-exponent (courtesy of John P. Rouillard).
+- Added $title and $gformat configuration settings (courtesy of Edgar Whipple).
+- Labels are now automatically padded.
+
+Changes since 0.11b [2003-09-16]:
+
+- Added a default overlay.
+- Pages that are refreshed must be GET'd, fixed couple typos related to this.
+
+Changes since 0.10b [2003-07-25]:
+
+- Added default icons to the distribution.
+- Suppressed spurious warnings related to $overlay (reported by Edgar Whipple).
+- Fixed handling of "Formula" DS Templates graph.
+- STACKing of DS Templates is now properly configurable.
+- Cleaned up use of styles.
+- Help links now have a (non blank) "target".
+- Improved documentation of dashboard configuration options.
+- Fixed handling of grouped dashboards when using default "Row Name".
+- Finally (briefly) documented DS Templates.
+- DS Configuration drop down lists are now optional to avoid massive forms
+  (reported by Didier Colin).
+
+Changes since 0.8b [2003-07-15]:
+
+- Minor documentation updates.
+- Improved handling of stale references when editing dashboards.
+- Fixed refresh of custom views.
+- Miscellaneous minor code cleanups.
+- Added timezone to configuration (suggested by Edgar Whipple).
+- Moved icon and style definitions to configuration file.
+- Fixed view links on dashboard template pages (reported by Taylor Steil).
+
+Changes since 0.7a [2003-03-12]:
+
+- Code allowing old template definitions to work has been removed.
+  NOTE: Yes, this means that backward compatibility is no longer supported!
+- Added link to drraw compatibility report page.
+- Moved option configuration to a separate file.
+- Fixed handling of template based graph cloning.
+- Fixed dashboard index corruption.
+- Improved online help (somewhat).
+
+Changes since 0.6a [2003-03-10]:
+
+- Added RRDtool error reporting.
+- Enhanced auto-generation of graph DS.
+- $ can be used as an alias for the DS variable in associated CDEF strings.
+- Check if overlay files exists before passing to RRDtool.
+- Fixed CDEFs which were broken.
+
+Changes since 0.5a [2003-02-17]:
+
+- Graph DS may now be generated on the fly, along with associated CDEF.
+- Added graph type ("Nothing") to simplify defining a DS without plotting it.
+- Graph/Template editor now allows changing DS files for events as well.
+- New more flexible template syntax supports perl-like string substitutions.
+  NOTE: Old definitions should still work (but expect support for these to be
+      > removed before 1.0 release) but will be shown as erroneous (e.g. in
+      > red) in the edition page.
+- Added $dsfilter_def configuration setting (suggested by Kim Taylor).
+- RRD and DB file lists may now be filtered.
+- %rranames is now used in editing pages.
+- Sorting of RRD/EVT filenames is now configurable (suggested by Kim Taylor).
+
+Changes since 0.4a [2002-12-28]:
+
+- Graph/Template editor now allows changing a DS file.
+- Added validation checks for $tmp_dir and $saved_dir configuration settings.
+- Cache refresh timer is now configurable ($crefresh configuration setting).
+- Template file generation slightly enhanced (** in addition to *).
+- Added support for "event files" allowing easy generation of VRULE elements.
+- Enhanced dashboards to allow for "dashboard templates".
+- Optionally limit how long a CGI may run ($maxtime configuration setting).
+- Fixed error reporting to only output HTML code when producing an HTML page.
+- Various changes to the UI to improve user experience/friendliness.
+- Added "/bin" to the PATH for File::Find (reported by Bill Bradley).
+
+Changes since 0.3a [2002-11-19]:
+
+- Updated code to run with taint mode enabled.
+- Added support for user authentication.
+- Fixed edition bug for graphs cloned from a template.
+- Implemented basic dashboards.
+- STDOUT needs to be unbuffered (reported by Daniel Dulac).
+- Added a quick way to switch between targets when viewing a template.
+
+Changes since 0.2a [2002-11-11]:
+
+- Added basic inline help.
+- Added 'Start' and 'End' textboxes to the graph editor page.
+- Added 'Start' and 'End' textboxes to the multi-view page.
+- Minor cosmetic changes.
+
+Changes since 0.1a [2002-11-03]:
+
+- Fixed "Make Template" which was broken.
+- Templating now ignores CDEFs.
