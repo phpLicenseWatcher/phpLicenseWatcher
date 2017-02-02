@@ -2,7 +2,7 @@
 
 define("RRDTOOL", "/usr/bin/rrdtool");
 
-$rrd_dir="/var/www/html/phplicensewatcher/rrd";
+$rrd_dir="/var/www/html/licenses/rrd";
 $metricname = "msimlevsimvlog";
 $vlabel = "Licenses";
 $subtitle = "Modelsim";
@@ -88,9 +88,9 @@ $fudge += $height;
 #   "--width $width --height $fudge $upper_limit $lower_limit ".
 #   "--title '$title' $vertical_label $extras $background ".
 #   $series;
-$command = RRDTOOL . " graph - --start='end-3 day' --end=now --imgformat=PNG --width=500 --base=1000 --height=120 --interlaced DEF:a=/var/www/html/phplicensewatcher/rrd//msimlevsimvlog.rrd:msimlevsimvlog:MAX AREA:a#800000:ModelSim";
+$command = RRDTOOL . " graph - --start='end-3 day' --end=now --imgformat=PNG --width=500 --base=1000 --height=120 --interlaced DEF:a=/var/www/html/licenses/rrd/$metric_name.rrd:msimlevsimvlog:MAX AREA:a#800000:ModelSim";
 
-$debug=0;
+$debug=1;
 
 # Did we generate a command?   Run it.
 if($command)
