@@ -4,10 +4,10 @@ require_once("./common.php");
 print_header("Per Feature License Utilization");
 
 ?>
-</head><body>
+
 
 <h1>Per Feature License Utilization</h1>
-<p style="a_centre"><a href="utilization.php"><img src="back.jpg" alt="up page"/></a></p>
+
 <hr/>
 
 <p>Data is taken every <?php echo($collection_interval); ?> minutes. It shows usage for past 7 days with a graph for each day.</p>
@@ -119,4 +119,4 @@ $recordset->free();
 
 $db->disconnect();
 ?>
-</body></html>
+<?php echo footer(); ?>

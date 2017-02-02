@@ -4,7 +4,7 @@ require_once("common.php");
 print_header("Check PHPlicensewatcher installation");
 
 ?>
-</head><body>
+
 <h1>Check PHPlicensewatcher installation</h1>
 <hr/>
 

@@ -10,7 +10,7 @@ require_once("common.php");
 print_header("PHP Licensewatcher Admin Page");
 
 ?>
-</head><body>
+
 <h1>PHP Licensewatcher Admin Page</h1>
 <p>This page contains links to pages that are usually unavailable to general population</p>
 <ul>
@@ -37,10 +37,7 @@ if ( isset($log_file) && sizeof($log_file) > 0 ){
 	
 </ul>
 
-<?php
-include_once('./version.php');
 
-?>
 
-</body>
-</html>
+
+<?php echo footer(); ?>

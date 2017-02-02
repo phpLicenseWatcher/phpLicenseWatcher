@@ -34,7 +34,7 @@ $expire_date = mktime (0,0,0,date("m"),date("d")+$lead_time,  date("Y"));
 
 $today = mktime (0,0,0,date("m"),date("d"),  date("Y"));
 
-$message = "<p align=\"center\"><a href=\"admin.php\"><img src=\"back.jpg\" alt=\"up page\" border=\"0\"></a></p>";
+
 
 for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 #for ( $i = 0 ; $i < 1 ; $i++ ) {
@@ -110,7 +110,7 @@ will expire at 23:59 on the day of expiration.<p>";
 
 $message .= $table_html;
 
-$message .= "</HTML>";
+$message .= "<?php echo footer(); ?>";
 
 ########################################################################
 # If the table has more than one row (header row will be one) there 

@@ -16,7 +16,7 @@ if ( isset($_GET['refresh']) && $_GET['refresh'] > 0 && ! $disable_autorefresh){
 <body>
 
 <h1>Flexlm Licenses in Detail</h1>
-<p class="a_centre"><a href="index.php"><img src="back.jpg" alt="up page"/></a></p>
+
 <hr/>
 
 <?php
@@ -330,10 +330,6 @@ if ( $_GET['listing'] == 1 ) {
 } // end if ( $listing == 1 )
 ?>
 
-<?PHP
-if ( $showversion ) {
-  include_once('./version.php');
-}
-?>
 
-</body></html>
+
+<?php echo footer(); ?>

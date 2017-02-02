@@ -1,9 +1,9 @@
 <?php
 
 if(!is_readable('./config.php')){
-	print("</head><body>");
+	print("");
 	print("<h2>Error: Configuration file config.php does not exist. Please notify your system administrator.</h2>");
-	print("</body></html>\n");
+	print("<?php echo footer(); ?>\n");
 	exit;
 }else{
 	include_once('./config.php');
@@ -11,8 +11,14 @@ if(!is_readable('./config.php')){
 
 function print_header($title)
 {
-	print("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"DTD/xhtml1-strict.dtd\">\n");
-	print("<html><head><link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\"/><title>".htmlspecialchars($title)."</title>\n");
+
+        
+        print file_get_contents('header.html');
+        
+}
+
+function footer(){
+    print file_get_contents('footer.html');
 }
 
 function print_sql ($sql) {

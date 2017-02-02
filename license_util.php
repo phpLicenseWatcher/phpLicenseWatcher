@@ -78,18 +78,6 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 
 	}
 
-	##########################################################################
-	# Insert into the RRD file if feature is being monitored
-	##########################################################################	
-	if ( isset($rrdtool_bin) && is_executable($rrdtool_bin) &&  in_array($license_array[$j]["feature"],  $license_feature) ) {
-	
-		$feature = strtolower($license_array[$j]["feature"]);
-		$filename = $rrd_dir . "/" . $feature . ".rrd";
-		insert_into_rrd($rrdtool_bin, $filename, $license_array[$j]["licenses_used"]);
-
-	
-	}
-
     }
 
     unset($license_array);

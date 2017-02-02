@@ -5,39 +5,12 @@ print_header("License Server Status");
 
 ?>
 
-<!-- hide script
-<script language="javascript" type="text/javascript">
-function beforepost(which) {
-	var pass=true;
-	var servers = "";
-
-	for (i=0;i<which.length;i++) {
-		//servers = servers + i;
-		var tempobj=which.elements[i];
-		if (tempobj.checked) {
-			if ( servers == "" )
-				servers = servers + tempobj.name.substring(16,20);
-			else
-				servers = servers + "," + tempobj.name.substring(16,20);
-		}
-	} // for (i=0, ) .... loop
-
-	if ( servers == "" ) {
-		alert("No servers selected");
-		return false;
-	}else{
-		which.server.value=servers;
-		which.submit();
-	}
-}
-</script>
--->
 
 <link rel="top" href="index.php"/>
 </head>
 <body>
 <h1>License Server Status</h1>
-<p class="a_centre"><a href="index.php"><img src="back.jpg" alt="up page"/></a></p>
+
 <hr/>
 <h2>Flexlm Servers</h2>
 <form action="details.php" onsubmit="beforepost(this); return false;">
@@ -261,10 +234,5 @@ $table->display();
 } // end if (
 ?>
 
-<?PHP
-if ( $showversion ) {
-  include_once('./version.php');
-}
-?>
 
-</body></html>
+<?php echo footer(); ?>

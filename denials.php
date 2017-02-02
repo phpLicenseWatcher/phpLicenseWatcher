@@ -3,10 +3,10 @@
 require_once("common.php");
 print_header("License Denials");
 ?>
-</head><body>
+
 
 <h1>License Denials</h1>
-<p class="a_centre"><a href="admin.php"><img src="back.jpg" alt="up page"/></a></p>
+
  
 <form>
 <p>Sort by
@@ -115,7 +115,6 @@ $table->updateColAttributes(2,"align=\"right\"");
 
 $table->display();
 
-include('./version.php');
 
 ?>
-</body></html>
+<?php echo footer(); ?>
