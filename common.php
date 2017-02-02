@@ -6,7 +6,7 @@ if(!is_readable('./config.php')){
 	print("<?php echo footer(); ?>\n");
 	exit;
 }else{
-	include_once('./config.php');
+	require_once('./config.php');
 }
 
 function print_header($title)

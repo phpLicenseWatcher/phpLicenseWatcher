@@ -351,28 +351,67 @@ class timespan
     }
 
 
-function generate_error_image($str) {
+
+
+
+
+function run_command( $command ){
+    global $lmutil_loc;
     
-        header("Content-type: image/png");
-        $im = @imagecreate (300, 200)
-            or die ("Cannot Initialize new GD image stream");
-        $background_color = imagecolorallocate ($im, 220, 210, 60);
-        $text_color = imagecolorallocate ($im, 233, 14, 91);
-        imagestring ($im, 1, 5, 5,  $str, $text_color);
-        imagestring ($im, 1, 5, 25,  "Please check your settings.", $text_color);
-        imagepng($im);
-        imagedestroy($im);
+    $data = "";
+    
+    if( !cache_check($command, $data) ){
+   
+        $fp = popen( $command , "r");
+
+        $data = "";
+        while ( !feof ($fp) ) {
+            $data .= fgets ($fp, 1024);
+        }
+        pclose($fp);
+    
+        cache_store( $command , $data );
+        
+    }
+    
+    return $data;
+}
+
+
+
+
+function cache_check( $command , &$data ){
+    $result = false;
+    
+    $cache_dir = '/tmp/';
+    $hash = md5( $command );
+    $cacheFile = $cache_dir . $hash ;
+    
+    if( file_exists( $cacheFile ) ){
+        
+        if (time()-filemtime($cacheFile) > 2 * 3600) {
+          // file older than 2 hours
+        } else {
+          // file younger than 2 hours
+            $data = file_get_contents($cacheFile);
+            $result = true;
+        }
+        
+    }
+    
+    return $result;
     
 }
 
-###################################################################################################
-# Insert values into existing RRDs. If no date is supplied it defaults to current time
-###################################################################################################
-function insert_into_rrd($rrdtool_bin, $filename, $value, $date = "N") {
-
-	echo "Inserting into " . $filename . " " . $date . " value = " . $value . "\n";
-	exec ($rrdtool_bin . " update " . $filename . " " . $date . ":" . $value);	
-
+function cache_store( $command , $data ){
+    
+     $cache_dir = '/tmp/';
+    $hash = md5( $command );
+    $cacheFile = $cache_dir . $hash ;
+    
+    file_put_contents($cacheFile, $data );
+    
 }
+
 
 ?>

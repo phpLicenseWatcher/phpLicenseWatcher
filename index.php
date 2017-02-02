@@ -1,6 +1,7 @@
 <?php
 
 require_once("common.php");
+require_once("tools.php");
 print_header("License Server Status");
 
 ?>
@@ -37,32 +38,35 @@ $table->setColAttributes(1,"align=\"center\"");
 
 # Define a table header
 $headerStyle = "";
-$colHeaders = array("","License port@server","Description", "Status", "Current Usage", "Available features/license","Master", "LM Hostname", "lmgrd version");
+$colHeaders = array("","License port@server","Description", "Status", "Current Usage", "Available features/license","Master",  "lmgrd version");
 $table->addRow($colHeaders, $headerStyle, "TH");
 
 for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
-	$fp = popen($lmutil_loc . " lmstat -c " . $servers[$i], "r");
+	$data = run_command($lmutil_loc . " lmstat -c " . $servers[$i]);
+        
+        
 
 	$status_string = "";
 	$detaillink="<a href=\"details.php?listing=0&amp;server=" . $i . "\">Details</a>" ;
 	$listingexpirationlink="<a href=\"details.php?listing=1&amp;server=" . $i . "\">Listing/Expiration dates</a>" ;
 
-	while ( !feof ($fp) ) {
-		$line = fgets ($fp, 1024);
+	foreach(explode(PHP_EOL, $data) as $line){
 		/* Look for an expression like this ie. kalahari: license server UP (MASTER) v6.1 */
 		if ( preg_match ("/: license server UP \(MASTER\)/i", $line) ) {
 			$status_string = "UP";
 			$class = "up";
 			$lmgrdversion = preg_replace("/.*license server UP \(MASTER\)/i ", "", $line);
 			$lmmaster = substr($line,0,strpos($line,':',0));
-		}
+		}else{
 
-		if ( preg_match ("/: license server UP/i", $line) ) {
-			$status_string = "UP";
-			$class = "up";
-			$lmgrdversion = preg_replace("/.*license server UP/i ", "", $line);
-			$lmmaster = substr($line,0,strpos($line,':',0));
-		}
+                    if ( preg_match ("/: license server UP/i", $line) ) {
+                            $status_string = "UP";
+                            $class = "up";
+                            $lmgrdversion = preg_replace("/.*license server UP/i ", "", $line);
+                            $lmmaster = substr($line,0,strpos($line,':',0));
+                    }
+                
+                }
 
 		if ( preg_match ("/Cannot connect to license server/i", $line, $out) ) {
 			$status_string = "DOWN";
@@ -130,7 +134,7 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 	$table->updateCellAttributes( 1 , 0, "");
 
 	# Close the pipe
-	pclose($fp);
+	//pclose($fp);
 }
 
 # Display the table
