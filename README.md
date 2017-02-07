@@ -1,50 +1,24 @@
 License
 
-   This program is licensed under the terms of GNU Public License. You can
-   read it at
-
-   http://www.gnu.org/copyleft/gpl.html#SEC1
-
-   or you can find a file LICENSE in this directory with a plain text copy of
-   it.
+   This program is licensed under the terms of GNU Public License. You can read it at http://www.gnu.org/copyleft/gpl.html#SEC1 or you can find a file LICENSE in this directory with a plain text copy of it.
 
 Thanks
 
    This package would be impossible if it weren't for these software project
 
-     * 
+     * PHP and PHP's PEAR classes - a marvelous scripting language (http://www.php.net/)
 
-       PHP and PHP's PEAR classes - a marvelous scripting language
-       (http://www.php.net/)
-
-     * 
-
-       PHP-Diagram class - simple diagramming class
-       (http://www.tuxxland.de/php/cdiagram)
 
 What this program does:
 
-     * 
-
-       Shows the health of a license server or a group of them
-
-     * 
-
-       Check which licenses are being used and who is currently using them
-
-     * 
-
-       Get a listing of licenses, their expiration days and number of days to
+     * Shows the health of a license server or a group of them
+     *  Check which licenses are being used and who is currently using them
+     *  Get a listing of licenses, their expiration days and number of days to
        expiration
-
-     * 
-
-       E-mail alert of licenses that will expire within certain time period
+     *  E-mail alert of licenses that will expire within certain time period
        ie. within next 10 days.
 
-     * 
-
-       Monitors server utilization
+     * Monitors server utilization
 
 Warning:
 
@@ -65,16 +39,9 @@ Limitations:
 
    Requirements:
 
-     * 
+     *  PHP enabled web server
 
-       PHP enabled web server (most Linux distributions come with Apache and
-       PHP installed)
-
-     * 
-
-       FlexLM lmstat/lmutil/lmdiag binaries for the OS you are running the
-       web server on. Latest FlexLM can be obtained at
-       http://www.globetrotter.com/flexlm/lmgrd.shtml#unixdownload
+     * FlexLM lmstat/lmutil/lmdiag binaries for the OS you are running the web server on. Latest FlexLM can be obtained at http://www.globetrotter.com/flexlm/lmgrd.shtml#unixdownload
 
           You don't have to run this on the same machine that you are running
           the web server on. My license server runs on Solaris and I use a
