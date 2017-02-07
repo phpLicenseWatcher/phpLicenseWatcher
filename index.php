@@ -14,11 +14,7 @@ print_header("License Server Status");
 
 <hr/>
 <h2>Flexlm Servers</h2>
-<form action="details.php" onsubmit="beforepost(this); return false;">
-<div>
-<input type="hidden" name="listing" value="0"/>
-<input type="hidden" name="server" value=""/>
-</div>
+
 
 <p>To get current usage for an individual server please click on the "Details" link next to the server. If you would like to get current usage for multiple servers on the same page use checkbox on the right of the server then click on the "Get current usage for multiple servers on one page".</p>
 
@@ -29,16 +25,16 @@ print_header("License Server Status");
 ##########################################################################
 require_once ("HTML/Table.php");
 
-$tableStyle = "border=\"1\" cellpadding=\"1\" cellspacing=\"2\" ";
+$tableStyle = "class='table' ";
 
 # Create a new table object
 $table = new HTML_Table($tableStyle);
 
-$table->setColAttributes(1,"align=\"center\"");
+//$table->setColAttributes(1,"align=\"center\"");
 
 # Define a table header
 $headerStyle = "";
-$colHeaders = array("","License port@server","Description", "Status", "Current Usage", "Available features/license","Master",  "lmgrd version");
+$colHeaders = array("License port@server","Description", "Status", "Current Usage", "Available features/license","Master",  "lmgrd version");
 $table->addRow($colHeaders, $headerStyle, "TH");
 
 for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
@@ -71,30 +67,30 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 		if ( preg_match ("/Cannot connect to license server/i", $line, $out) ) {
 			$status_string = "DOWN";
 			$class = "down";
-			$lmgrdversion = "unknown" ;
-			$lmmaster = "unknown";
-			$detaillink="Details not available";
-			$listingexpirationlink="Listing/Expiration dates not available";
+			$lmgrdversion = "" ;
+			$lmmaster = "";
+			$detaillink="No details";
+			$listingexpirationlink="";
 			break;
 		}
 
 		if ( preg_match ("/Cannot read data/i", $line, $out) ) {
 			$status_string = "DOWN";
 			$class = "down";
-			$lmgrdversion = "unknown" ;
-			$lmmaster = "unknown";
-			$detaillink="Details not available";
-			$listingexpirationlink="Listing/Expiration dates not available";
+			$lmgrdversion = "" ;
+			$lmmaster = "";
+			$detaillink="No details";
+			$listingexpirationlink="";
 			break;
 		}
 
 		if ( preg_match ("/Error getting status/i", $line, $out) ) {
 			$status_string = "DOWN";
 			$class = "down";
-			$lmgrdversion = "unknown" ;
-			$lmmaster = "unknown";
-			$detaillink="Details not available";
-			$listingexpirationlink="Listing/Expiration dates not available";
+			$lmgrdversion = "" ;
+			$lmmaster = "";
+			$detaillink="No details";
+			$listingexpirationlink="";
 			break;
 		}
 
@@ -115,15 +111,14 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 	if ( $status_string == "" ) {
  		$status_string = "DOWN";
 		$class = "down";
-		$lmgrdversion = "unknown" ;
-		$lmmaster = "unknown";
-		$detaillink="Details not available";
-		$listingexpirationlink="Listing/Expiration dates not available";
+		$lmgrdversion = "" ;
+		$lmmaster = "";
+		$detaillink="No details";
+		$listingexpirationlink="";
 	}
 	
-	$checkbox = '<input type="checkbox" name="multiple_servers[]" value=' . $i . '>';
-
-	$table->AddRow(array($checkbox,$servers[$i],$description[$i],$status_string,
+	
+	$table->AddRow(array($servers[$i],$description[$i],$status_string,
 			 $detaillink,
 			 $listingexpirationlink,
 			 $lmmaster,
@@ -131,7 +126,7 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 
 	# Set the background color of status cell
 	$table->updateCellAttributes( ($table->getRowCount() - 1) , 3, "class='" . $class . "'");
-	$table->updateCellAttributes( 1 , 0, "");
+	//$table->updateCellAttributes( 1 , 0, "");
 
 	# Close the pipe
 	//pclose($fp);
@@ -141,11 +136,6 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 $table->display();
 ?>
 
-<p>
-<input type="submit" value="Get current usage for multiple servers on one page"/>
-<input type="reset"/>
-</p>
-</form>
 
 <?php
 
@@ -175,11 +165,11 @@ $table->addRow($colHeaders, $headerStyle, "TH");
 # If no license server is running, lum outputs:
 # ADM-10037: There are no active license servers
 		if ( preg_match ("/ADM-10037: There are no active license servers/i", $line) ) {
-			$servername = "unknown" ;
-			$targetid = "unknown" ;
-			$targettype = "unknown" ;
-			$servertype = "unknown" ;
-			$details = "unknown" ;
+			$servername = "" ;
+			$targetid = "" ;
+			$targettype = "" ;
+			$servertype = "" ;
+			$details = "" ;
 			$status_string = "DOWN";
 			$class="down" ;
 	$table->AddRow(array($servername,$targetid,$targettype,$servertype, $details, $status_string));

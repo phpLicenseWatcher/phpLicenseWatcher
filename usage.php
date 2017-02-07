@@ -23,7 +23,7 @@ if (DB::isError($db)) {
 
     
 
-    $sql = "SELECT feature FROM feature WHERE showInLists = 1 ORDER BY feature";
+    $sql = "SELECT feature, label FROM feature WHERE showInLists = 1 ORDER BY feature";
 
     $recordset = $db->query($sql);
   
@@ -33,7 +33,12 @@ if (DB::isError($db)) {
 
     while ($row = $recordset->fetchRow()){
  
-       echo ('<li><a href="monitor_detail.php?feature=' . $row[0] . '">' . $row[0] . '</a></li>');
+       $label = $row[1];
+       if( $label == "" ){
+           $label =$row[0];
+       }
+        
+       echo ('<li><a href="monitor_detail.php?feature=' . $row[0] . '">' . $label . '</a></li>');
     }
 
   

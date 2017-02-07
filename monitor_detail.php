@@ -3,12 +3,46 @@
 require_once("./common.php");
 print_header("Per Feature License Monitoring");
 
+
 $feature = preg_replace("/[^a-zA-Z0-9_]+/", "", htmlspecialchars($_GET['feature'])) ;
+$label = $feature;
+
+require_once("DB.php");
+$db = DB::connect($dsn, true);
+
+if (DB::isError($db)) {
+  die ($db->getMessage());
+}
+
+    
+
+    $sql = "SELECT feature, label FROM feature WHERE showInLists = 1 AND feature = '{$feature}' ";
+
+    $recordset = $db->query($sql);
+  
+    if (DB::isError($recordset)) {
+        die ($recordset->getMessage());
+    }
+
+    While ($row = $recordset->fetchRow()){
+ 
+       $label = $row[1];
+       if( $label == "" ){
+           $label =$row[0];
+       }
+        
+      
+    }
+
+  
+    $recordset->free();
+
+$db->disconnect();
 
 ?>
 
 
-<h1><?php echo $feature; ?> Usage</h1>
+<h1><?php echo $label; ?> Usage</h1>
 
 <hr/>
 <p class="a_centre">Data is taken every <?php echo($collection_interval); ?> minutes. It shows usage for past day, past week, past month and past year.</p>
