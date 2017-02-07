@@ -215,10 +215,14 @@ if ( $_GET['listing'] == 1 ) {
 					if ( ! isset($_GET['filter_feature']) || in_array($license_array[$j]["feature"], $_GET['filter_feature']) ) {
                                                 $feature = $license_array[$j]["feature"] ;
                                             
+                                                $graph_url = "monitor_detail.php?feature=$feature";
+                                                
 						# How many licenses are currently used
 						$licenses_available = $license_array[$j]["num_licenses"] - $license_array[$j]["licenses_used"];
 						$license_info = "Total of " . $license_array[$j]["num_licenses"] . " licenses, " .
 						$license_array[$j]["licenses_used"] . " currently in use, <b>" . $licenses_available . " available</b>";
+                                                
+                                                $license_info .= "<br/><a href='$graph_url'>Historical Usage</a>";
 
 						
 						$table->addRow(array($license_array[$j]["feature"], "$licenses_available", $license_info), "style=\"background: $color[$j];\"");
