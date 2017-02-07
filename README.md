@@ -2,13 +2,6 @@
 
    This program is licensed under the terms of GNU Public License. You can read it at http://www.gnu.org/copyleft/gpl.html#SEC1 or you can find a file LICENSE in this directory with a plain text copy of it.
 
-##Thanks
-
-   This package would be impossible if it weren't for these software project
-
-* PHP and PHP's PEAR classes - a marvelous scripting language (http://www.php.net/)
-
-
 ##What this program does
 
 * Shows the health of a license server or a group of them
@@ -36,19 +29,17 @@
 
 ##Requirements
 
-     *  PHP enabled web server
+* PHP enabled web server
 
-     * FlexLM lmstat/lmutil/lmdiag binaries for the OS you are running the web server on. Latest FlexLM can be obtained at http://www.globetrotter.com/flexlm/lmgrd.shtml#unixdownload
+* FlexLM lmstat/lmutil/lmdiag binaries for the OS you are running the web server on. Latest FlexLM can be obtained at http://www.globetrotter.com/flexlm/lmgrd.shtml#unixdownload
 
-          You don't have to run this on the same machine that you are running
-          the web server on. My license server runs on Solaris and I use a
-          Linux box with Linux lmstat binary to query it remotely.
+You don't have to run this on the same machine that you are running the web server on. My license server runs on Solaris and I use a Linux box with Linux lmstat binary to query it remotely.
 
 ##Install process
 
 ###Quick Start
 
-   I assume you already unpacked this archive to a directory ie. phplicensewatcher. All you have to do now is modify the values in config.php. Config.php contains comments on and then point your browser to http://your.host.com/phplicensewatcher/ or other location where you installed it. This will enable only basic options such as displaying the list of features, current usage. If you need options such as email alerts you have to follow the extended install process
+I assume you already unpacked this archive to a directory ie. phplicensewatcher. All you have to do now is modify the values in config.php. Config.php contains comments on and then point your browser to http://your.host.com/phplicensewatcher/ or other location where you installed it. This will enable only basic options such as displaying the list of features, current usage. If you need options such as email alerts you have to follow the extended install process
 
 ##Detailed Install process
 
