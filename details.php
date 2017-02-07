@@ -1,6 +1,8 @@
 <?php
 
 require_once("common.php");
+require_once('./tools.php');
+
 print_header("Licenses in Detail");
 
 ##############################################################
@@ -29,25 +31,23 @@ if ( $_GET['listing'] == 1 ) {
 
 	$today = mktime(0,0,0,date("m"),date("d"),date("Y"));
 
-	$tableStyle = "border=\"1\" cellpadding=\"1\" cellspacing=\"2\" ";
+
 
 	# Create a new table object
-	$table = new HTML_Table($tableStyle);
+	$table = new HTML_Table("class='table' style='width:100%;' ");
 
 	# First row should be the name of the license server and it's description
-	$headerStyle = "colspan=\"4\"";
 	$colHeaders = array("Server: " . $servers[$_GET['server']] . " ( " . $description[$_GET['server']] . " )");
 
-	$table->addRow($colHeaders, $headerStyle, "TH");
+	$table->addRow($colHeaders, "colspan='4'", "th");
 
 	include_once("./tools.php");
 
 	build_license_expiration_array($lmutil_loc, $servers[$_GET['server']], $expiration_array);
 
 	# Define a table header
-	$headerStyle = "style=\"background: yellow;\"";
 	$colHeaders = array("Feature", "Vendor Daemon", "Total licenses", "Number licenses, Days to expiration, Date of expiration");
-	$table->addRow($colHeaders, $headerStyle, "TH");
+	$table->addRow($colHeaders, "", "th");
 
 	#######################################################
 	# Get names of different colors. These will be used to group visually
@@ -113,40 +113,8 @@ if ( $_GET['listing'] == 1 ) {
 	########################################################
 	echo ("<p>Following is the list of licenses currently being used. Licenses that are currently not in use are not shown.</p>");
 
-	# Display the autorefresh drop box if disable_autorefresh is not set
-	if ( ! isset($disable_autorefresh) || $disable_autorefresh == 1 ) {
-		print("<form action=\"".$_SERVER['PHP_SELF']."\">");
-		echo("<table border=\"0\" width=\"100%\"><tr><td>Refresh this page every <select name=\"refresh\" onchange='this.form.submit();'><option value=\"norefresh\">Don't refresh</option>");
+
 	
-		# How often to refresh in minutes 120,60,30,15,10,5,2,1
-		$refresh = array (360,240,120,60,30,15,10,5,2,1);
-
-		# Loop through the refresh array
-		foreach ($refresh as $key) {
-			# Convert into seconds since that is what is supplied to the META refresh
-			$seconds = $key * 60;
-
-			if ( isset($_GET['refresh']) && $_GET['refresh'] == $seconds ){
-				echo("<option value=\"" . $seconds . "\" selected>" . $key . " minutes</option>\n");
-			}else{
-				echo("<option value=\"" . $seconds . "\">" . $key . " minutes</option>\n");
-			}
-
-		}
-
-		echo('</select>');
-		echo('</td><td class="a_centre">Page last refreshed at: ' . date("Y-m-d H:i:s") . '</td></tr></table>');
-		print("</form>");
-	}
-
-
-	echo("<form action=\"".$_SERVER['PHP_SELF']."\"><div><input type=\"hidden\" name=\"listing\" value=\"" . intval($_GET['listing']) . "\"/><input type=\"hidden\" name=\"server\" value=\"" . $_GET['server'] . "\"/>");
-	if ( isset($_GET['filter_feature']) ) {
-		foreach ( $_GET['filter_feature'] as $key ){
-			echo("<input type=\"hidden\" name=\"filter_feature[]\" value=\"" . $key . "\"/>\n");
-		}
-	}
-	print("</div>");
 
 	# If person is filtering for certain features
 	if ( isset($_GET['filter_feature']) ) {
@@ -169,7 +137,7 @@ if ( $_GET['listing'] == 1 ) {
 	}
 
 	# We'll need timestamp class to get a human readable time difference
-	include_once('./tools.php');
+	
 
 	#######################################################
 	# Get names of different colors
@@ -225,18 +193,17 @@ if ( $_GET['listing'] == 1 ) {
 			if ( $i > - 1 ) {
 
 				# Create a new table
-				$tableStyle = "width=\"100%\"";
+				$tableStyle = "class='table' width=\"100%\"";
 
 				$table = new HTML_Table($tableStyle);
 
 				# Show a banner with the name of the serve@port plus description
-				$headerStyle = "colspan=\"5\"";
 				$colHeaders = array("Server: " . $servers[$current_server[$n]] . " ( " . $description[$current_server[$n]] . " )");
-				$table->addRow($colHeaders, $headerStyle, "TH");
+				$table->addRow($colHeaders, "colspan='4'", "TH");
 
-				$headerStyle = "style=\"background: lightblue;\"";
-				$colHeaders = array("Filter/<br/>Remove","Feature", "# cur. avail", "Details","Time checked out");
-				$table->addRow($colHeaders, $headerStyle, "TH");
+
+				$colHeaders = array("Feature", "# cur. avail", "Details","Time checked out");
+				$table->addRow($colHeaders, "" , "TH");
 
 				# Get current UNIX time stamp
 				$now = time ();
@@ -246,13 +213,15 @@ if ( $_GET['listing'] == 1 ) {
 				###########################################################################
 				for ( $j = 0 ; $j <= $i ; $j++ ) {
 					if ( ! isset($_GET['filter_feature']) || in_array($license_array[$j]["feature"], $_GET['filter_feature']) ) {
+                                                $feature = $license_array[$j]["feature"] ;
+                                            
 						# How many licenses are currently used
 						$licenses_available = $license_array[$j]["num_licenses"] - $license_array[$j]["licenses_used"];
 						$license_info = "Total of " . $license_array[$j]["num_licenses"] . " licenses, " .
 						$license_array[$j]["licenses_used"] . " currently in use, <b>" . $licenses_available . " available</b>";
 
-						$checkbox = '<input type="checkbox" name="filter_feature[]" value="' . $license_array[$j]["feature"] . '"/>';
-						$table->addRow(array($checkbox,$license_array[$j]["feature"], "$licenses_available", $license_info), "style=\"background: $color[$j];\"");
+						
+						$table->addRow(array($license_array[$j]["feature"], "$licenses_available", $license_info), "style=\"background: $color[$j];\"");
 
 						for ( $k = 0; $k < sizeof($users[$current_server[$n]][$j]) ; $k++ ) {
 							################################################################
@@ -296,20 +265,20 @@ if ( $_GET['listing'] == 1 ) {
 							}
 		
 							# Output the user line
-							if ( ! isset($disable_license_removal) ) {
-								$removal_dialog = "<h6><a href='' onclick='if (confirm(\"Are you sure you want to remove this license ?\")) this.href=\"lmremove.php\?server=" . $current_server[$n] . "&amp;feature=" . $license_array[$j]["feature"] . "&amp;arg=" . urlencode(trim($users[$current_server[$n]][$j][$k])) ."\";'>Remove</a>";
 							
-								$table->addRow(array($removal_dialog, "&nbsp;", "" ,$users[$current_server[$n]][$j][$k], $time_difference), "style=\"background: $color[$j];\"");	
-							} else{
-								$table->addRow(array("&nbsp;", "&nbsp;", "" ,$users[$current_server[$n]][$j][$k], $time_difference), "style=\"background: $color[$j];\"");
-							}
+                                                        $user_line = $users[$current_server[$n]][$j][$k];
+                                                        $user_line_parts = explode( ' ', trim($user_line) );
+                                                        
+                                                        $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> " ;
+                                                        $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> " ;
+                                                        
+							$table->addRow(array( "&nbsp;", "" ,$user_line_formated, $time_difference), "style=\"background: $color[$j];\"");
+							
 
 						}
 					}
 
-					$table->updateColAttributes(2,"align=\"center\"");
-					$table->updateColAttributes(4,"align=\"center\"");
-					$table->updateColAttributes(0,"align=\"center\"");
+					
 				}
 
 			     # Display the table
@@ -325,8 +294,7 @@ if ( $_GET['listing'] == 1 ) {
 	} // end for loop
 
 	// End of current usage
-	echo('<div><input type="submit" value="Filter"/><input type="reset"/></div>');
-	echo('</form>');
+	
 } // end if ( $listing == 1 )
 ?>
 
