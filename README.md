@@ -1,26 +1,23 @@
-License
+##License
 
    This program is licensed under the terms of GNU Public License. You can read it at http://www.gnu.org/copyleft/gpl.html#SEC1 or you can find a file LICENSE in this directory with a plain text copy of it.
 
-Thanks
+##Thanks
 
    This package would be impossible if it weren't for these software project
 
-     * PHP and PHP's PEAR classes - a marvelous scripting language (http://www.php.net/)
+* PHP and PHP's PEAR classes - a marvelous scripting language (http://www.php.net/)
 
 
-What this program does:
+##What this program does
 
-     * Shows the health of a license server or a group of them
-     *  Check which licenses are being used and who is currently using them
-     *  Get a listing of licenses, their expiration days and number of days to
-       expiration
-     *  E-mail alert of licenses that will expire within certain time period
-       ie. within next 10 days.
+* Shows the health of a license server or a group of them
+* Check which licenses are being used and who is currently using them
+* Get a listing of licenses, their expiration days and number of days to expiration
+* E-mail alert of licenses that will expire within certain time period ie. within next 10 days.
+* Monitors server utilization
 
-     * Monitors server utilization
-
-Warning:
+##Warning
 
    There is no warranty on this package. I wrote this scripts to help myself
    keep tabs on my FlexLM servers. I am not a FlexLM developer and base my
@@ -32,12 +29,12 @@ Warning:
    because phplicensewatcher has not been audited to make sure it is secure.
    It likely isn't. You have been warned.
 
-Limitations:
+##Limitations
 
    Currently only FlexLM servers are supported but in the future a wider
    array of license servers may be supported.
 
-   Requirements:
+##Requirements
 
      *  PHP enabled web server
 
@@ -47,33 +44,26 @@ Limitations:
           the web server on. My license server runs on Solaris and I use a
           Linux box with Linux lmstat binary to query it remotely.
 
-Basic Install process
+##Install process
 
-   I assume you already unpacked this archive to a directory ie.
-   phplicensewatcher. All you have to do now is modify the values in
-   config.php. Config.php contains comments on and then point your browser to
+###Quick Start
 
-   http://your.host.com/phplicensewatcher/
+   I assume you already unpacked this archive to a directory ie. phplicensewatcher. All you have to do now is modify the values in config.php. Config.php contains comments on and then point your browser to http://your.host.com/phplicensewatcher/ or other location where you installed it. This will enable only basic options such as displaying the list of features, current usage. If you need options such as email alerts you have to follow the extended install process
 
-   or other location where you installed it. This will enable only basic
-   options such as displaying the list of features, current usage. If you
-   need options such as email alerts you have to follow the extended install
-   process
-
-Extended Install process
+##Detailed Install process
 
    I consider all of the extended install options to be for Administrators
    only. To access them please go to
 
    http://your.host.com/phplicensewatcher/admin.php
 
-  License Alerts e-mail
+###License Alerts e-mail
 
    This is probably the most important part of managing licenses :-). Being
    notified when licenses are due to expire. E-mails come as HTML mail since
    I wanted to use tables and colors.
 
-    Installation
+###Installation
 
    The way I use it is to run license_alert.php report every night at 2 a.m.
    This report will query all specified license servers and figure out which
@@ -89,7 +79,7 @@ Extended Install process
 
  0 2 * * * wget -O - http://your.apachehost.com/phplicensewatcher/license_alert.php >> /dev/null
 
-  License utilization
+###License utilization
 
    In order to evaluate license utilization at your site you need to start
    collecting data usage statistics. PHPLicensewatcher does this by querying
@@ -109,7 +99,7 @@ Extended Install process
 
     Installation
 
-   DB setup
+###DB setup
 
    First you have to decide where you are going to store the database files.
    I use mysql. To create my own database as mySQL administrator I entered
@@ -129,20 +119,16 @@ Extended Install process
 
    Then edit config.php to suit your site.
 
-   Crontab setup
+###Crontab setup
 
    Last but not least is to set up data collection crontabs. There are two
    scripts that need to be executed ie. license_util.php and
    license_cache.php.
 
-     * 
-
-       License_util.php is used to get current license usage. It should be
+* License_util.php is used to get current license usage. It should be
        run periodically throughout the day ie. every 15 minutes.
 
-     * 
-
-       License_cache.php stores the total number of available licenses on
+* License_cache.php stores the total number of available licenses on
        particular day. This script is necessary because you may have
        temporary keys that may expire on a particular day and you want to
        capture that. It should be run once a day preferably soon after the
@@ -154,7 +140,7 @@ Extended Install process
  0,15,30,45 * * * * wget -O - http://your.apachehost.com/phplicensewatcher/license_util.php >> /dev/null
  15 0 * * *  wget -O - http://your.apachehost.com/phplicensewatcher/license_cache.php >> /dev/null
 
-  License denials / per user usage
+###License denials / per user usage
 
    An important metric in evaluating your licenses is license denials ie. how
    many people were denied access to a certain feature because we were out of
@@ -189,9 +175,3 @@ Extended Install process
  0 2 * * *  wget -O - http://your.apachehost.com/phplicensewatcher/parselog.php >> /dev/null
 
    You are done now.
-
-Questions, Comments, Accolades, Patches
-
-   Please address any questions, comments or patches to
-
-   Vladimir Vuksan <vuksan-php@veus.hr >
