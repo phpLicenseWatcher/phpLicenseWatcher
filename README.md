@@ -112,57 +112,39 @@ I assume you already unpacked this archive to a directory ie. phplicensewatcher.
 
 ###Crontab setup
 
-   Last but not least is to set up data collection crontabs. There are two
-   scripts that need to be executed ie. license_util.php and
-   license_cache.php.
+Last but not least is to set up data collection crontabs. There are thre scripts that need to be executed ie. license_util.php and license_cache.php.
 
-* License_util.php is used to get current license usage. It should be
-       run periodically throughout the day ie. every 15 minutes.
+* License_util.php is used to get current license usage. It should be run periodically throughout the day ie. every 10 minutes.
+* License_cache.php stores the total number of available licenses on particular day. This script is necessary because you may have temporary keys that may expire on a particular day and you want to capture that. It should be run once a day preferably soon after the midnight after which license server should invalidate all the expired keys.
+* license_alert.php check for expiring licenses and emails admins.  I run once a week.
 
-* License_cache.php stores the total number of available licenses on
-       particular day. This script is necessary because you may have
-       temporary keys that may expire on a particular day and you want to
-       capture that. It should be run once a day preferably soon after the
-       midnight after which license server should invalidate all the expired
-       keys.
+My crontab looks like this
+0,11,21,31,41,51 * * * * wget -O - http://127.0.0.1/licenses-dev/license_util.php >> /dev/null
+15 0 * * *  wget -O - http://127.0.0.1/licenses-dev/license_cache.php >> /dev/null
+0 6 * * 1 wget http://127.0.0.1/licenses-dev/license_alert.php >> /dev/null
 
-   My crontab looks like this
 
- 0,15,30,45 * * * * wget -O - http://your.apachehost.com/phplicensewatcher/license_util.php >> /dev/null
- 15 0 * * *  wget -O - http://your.apachehost.com/phplicensewatcher/license_cache.php >> /dev/null
 
-###License denials / per user usage
 
-   An important metric in evaluating your licenses is license denials ie. how
-   many people were denied access to a certain feature because we were out of
-   licenses. To do that we have to analyze FlexLM logs. FlexLM logs are
-   enabled during FlexLM start up. For example we start our FlexLM servers
-   with following options
+#License denials / per user usage
+
+An important metric in evaluating your licenses is license denials ie. how many people were denied access to a certain feature because we were out of licenses. To do that we have to analyze FlexLM logs. FlexLM logs are enabled during FlexLM start up. For example we start our FlexLM servers with following options
 
  su nobody -c '/tools/lmgrd -l /usr/tmp/27000-at-licenserv -c /tools/license/license.dat'
 
-   This will create /usr/tmp/27000-at-licenserv which will contain
-   information such as when the license has been checked out, when it was
-   checked in plus any time a license has been denied ie.
+This will create /usr/tmp/27000-at-licenserv which will contain information such as when the license has been checked out, when it was checked in plus any time a license has been denied ie.
 
  16:01:20 (daemond) DENIED: "viewer" jack@server  (Licensed number of users already reached (-4,342))
 
-   We want to capture this information since a high number of denials would
-   indicate that we should consider getting additional licenses since a lot
-   of people are being denied access.
+We want to capture this information since a high number of denials would indicate that we should consider getting additional licenses since a lot of people are being denied access.
 
-    Installation
+##Installation##
 
-   If you haven't set up databases for license utilization please follow DB
-   setup instructions under License utilization. Phplicensewatcher.sql
-   creates the table structure necessary for Denials as well.
+If you haven't set up databases for license utilization please follow DB setup instructions under License utilization. Phplicensewatcher.sql creates the table structure necessary for Denials as well.
 
-   Crontab setup
+##Crontab setup##
 
-   FlexLM logs can be very large so it may take a long time to analyze them.
-   I run the analysis scripts around 2 a.m. every morning. To run them put
-   something like this in your crontab
+FlexLM logs can be very large so it may take a long time to analyze them. I run the analysis scripts around 2 a.m. every morning. To run them put something like this in your crontab
 
  0 2 * * *  wget -O - http://your.apachehost.com/phplicensewatcher/parselog.php >> /dev/null
 
-   You are done now.
