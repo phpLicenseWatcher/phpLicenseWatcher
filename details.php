@@ -14,8 +14,7 @@ if ( isset($_GET['refresh']) && $_GET['refresh'] > 0 && ! $disable_autorefresh){
 	echo('<meta http-equiv="refresh" content="' . intval($_GET['refresh']) . '"/>');
 }
 ?>
-</head>
-<body>
+
 
 <h1>Flexlm Licenses in Detail</h1>
 
