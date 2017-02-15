@@ -1,5 +1,16 @@
 <?php
 
+require_once("common.php");
+require_once('./tools.php');
+
+print_header("Licenses in Detail");
+
+?>
+
+<h1>License Alert</h1>
+
+<?php
+
 ############################################################################
 # Purpose: This script is used to e-mail alerts on licenses that are 
 # 	   due to expire some time in the future. This script should
@@ -8,23 +19,6 @@
 #	   as well as how much ahead should the user be warned about 
 #	   expiration ie. 10 days before license expires.
 ############################################################################
-
-#require_once("common.php");
-#print_header("
-
-if ( ! is_readable('./config.php') ) {
-    echo("<H2>Error: Configuration file config.php does not exist. Please
-         notify your system administrator.</H2>");
-    exit;
-} else
-    include_once('./config.php');
-
-if ( ! is_readable('./tools.php') ) {
-    echo("<H2>Error: Tools.php is missing. Please make sure that the file is 
-there. Exiting ....</H2>");
-    exit;
-} else
-    include_once('./tools.php');
 
 
 ######################################################### 
@@ -51,13 +45,12 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 require_once ("HTML/Table.php");
 
 
-$table = new HTML_Table();
+$table = new HTML_Table("class='table' style='width:100%;' ");
 
-$headerStyle = "bgcolor=lightblue";
 $colHeaders = array("Server", "Server description", "Feature expiring", "Expiration date", 
 	"Days to expiration", "Number of license(s) expiring");
 
-$table->addRow($colHeaders, $headerStyle, "TH");
+$table->addRow($colHeaders, "", "TH");
 
 #######################################################
 # Get names of different colors. These will be used to group visually
@@ -68,25 +61,26 @@ $color = explode(",", $colors);
 # Now after the expiration has been built loop through all the fileservers
 for ( $i = 0 ; $i < sizeof($expiration_array) ; $i++ ) {
 
-   foreach ( $expiration_array[$i] as $key => $myarray) {
+    if( isset($expiration_array[$i])){
+        foreach ( $expiration_array[$i] as $key => $myarray) {
 
-   
-   	for ( $j = 0 ; $j < sizeof($myarray) ; $j++ ) {
-   
-		if ( (strcmp($myarray[$j]["days_to_expiration"],"permanent") != 0) && ($myarray[$j]["days_to_expiration"] <= $lead_time) ) {
-		
-		if ( $myarray[$j]["days_to_expiration"] < 0 ) 
-			$myarray[$j]["days_to_expiration"] = "<b>Already expired</b>";
-		$table->addRow(array($servers[$i], $description[$i],
-			$key,$myarray[$j]["expiration_date"],
-			$myarray[$j]["days_to_expiration"],
-			$myarray[$j]["num_licenses"]),"bgcolor='" . $color[$i] ."'");
-	   }
-	
-	}
 
+             for ( $j = 0 ; $j < sizeof($myarray) ; $j++ ) {
+
+                     if ( (strcmp($myarray[$j]["days_to_expiration"],"permanent") != 0) && ($myarray[$j]["days_to_expiration"] <= $lead_time) ) {
+
+                     if ( $myarray[$j]["days_to_expiration"] < 0 ) 
+                             $myarray[$j]["days_to_expiration"] = "<b>Already expired</b>";
+                     $table->addRow(array($servers[$i], $description[$i],
+                             $key,$myarray[$j]["expiration_date"],
+                             $myarray[$j]["days_to_expiration"],
+                             $myarray[$j]["num_licenses"]),"bgcolor='" . $color[$i] ."'");
+                }
+
+             }
+
+        }
     }
-
 }
 
 ########################################################
@@ -122,13 +116,22 @@ if ( $table->getRowCount() > 1 ) {
 
        echo("Emailing to $notify_address<p>\n");
 
-       mail($notify_address, "ALERT: License expiration within " . $lead_time . " days", $message,
-          "From: License Robot <" . $notify_address . ">\nContent-Type: text/html\nMime-Version: 1.0");
+       
+       $headers[] = 'MIME-Version: 1.0';
+        $headers[] = 'Content-type: text/html; charset=iso-8859-1';
+        $headers[] = 'From: arc-donotreply@rpi.edu' ;
+        $headers[] ='Reply-To: arc-donotreply@rpi.edu' ;
+        $headers[] ='X-Mailer: PHP/' . phpversion();
+       
+       mail($notify_address, "ALERT: License expiration within " . $lead_time . " days", $message , implode("\r\n", $headers) );
 
+       
    }
 
 }
 
 echo($message);
 
+
+echo footer(); 
 ?>
