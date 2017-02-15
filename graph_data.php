@@ -11,6 +11,14 @@ require_once("DB.php");
 $feature = preg_replace("/[^a-zA-Z0-9_]+/", "", htmlspecialchars($_GET['feature'])) ;
 $days = intval($_GET['days']);
 
+$crit = "";
+if( $feature == 'all' ){
+    $crit = " 1 = 1 ";
+}else if( $feature != '' ){
+    $crit = " flmusage_product='$feature' ";
+}else{
+    $crit = " showInLists = 1 ";
+}
 
 if( !$days > 0 ){
     $days= 7;
@@ -28,13 +36,15 @@ if (DB::isError($db)) {
 
     $result = array( "cols"=>array() , "rows"=>array() );
 
-    $result["cols"][] = array("id"=>"","label"=>"Feature","pattern"=>"","type"=>"string");
-    $result["cols"][] = array("id"=>"","label"=>"Users","pattern"=>"","type"=>"number");
-
+    $result["cols"][] = array("id"=>"","label"=>"Date","pattern"=>"","type"=>"string");
+    
+    $table = array();
+    $products = array();
+    
     $sql = "SELECT flmusage_product , CONCAT( flmusage_date , ' ' , flmusage_time ) as flmusage_datetime , SUM(flmusage_users) 
-FROM license_usage WHERE flmusage_product='$feature'  
-    AND DATE_SUB(NOW(),INTERVAL $days DAY ) <= DATE(flmusage_date)
-GROUP BY flmusage_product, flmusage_datetime";
+FROM license_usage u LEFT JOIN feature f ON f.feature = u.`flmusage_product` WHERE $crit  AND 
+     DATE_SUB(NOW(),INTERVAL $days DAY ) <= DATE(flmusage_date)
+GROUP BY flmusage_product, flmusage_datetime ORDER BY flmusage_datetime ASC";
 
     $recordset = $db->query($sql);
   
@@ -43,7 +53,36 @@ GROUP BY flmusage_product, flmusage_datetime";
     }
 
     while ($row = $recordset->fetchRow()){
-       $result['rows'][] = array('c' => array( array('v'=>$row[1]), array('v'=>$row[2])) );        
+        
+        $date = $row[1];
+        
+        if( $days == 1 ){
+            $date =  date('H:i',strtotime($date));
+        }else if( $days <= 7 ){
+            $date =  date('Y-m-d H',strtotime($date));
+        }else{
+             $date =  date('Y-m-d',strtotime($date));
+        }
+        
+        if( !array_key_exists($row[0], $products)){
+            $products[$row[0]] = $row[0];
+        }
+        
+        if( !array_key_exists($date, $table)){
+            $table[$date] = array();
+        }
+       
+        //[date][product] = value
+        if( isset($table[$date][$row[0]]) ){
+			//make sure to select the largest value if we are reducing the data by changing the date key
+            if( $row[2] > $table[$date][$row[0]] ){
+                $table[$date][$row[0]] = $row[2];
+            }
+        }else{
+            $table[$date][$row[0]] = $row[2];
+        }
+        
+        
     }
 
   
@@ -51,6 +90,23 @@ GROUP BY flmusage_product, flmusage_datetime";
 
 $db->disconnect();
 
+
+foreach( array_keys($products) as $product ){
+    $result["cols"][] = array("id"=>"","label"=>$product,"pattern"=>"","type"=>"number");
+}
+
+foreach( array_keys($table) as $date ){
+    $ta = array();
+    
+    $ta[] =  array('v'=>$date);
+    
+    foreach( array_keys($products) as $product ){
+        $ta[] =  array('v'=>$table[$date][$product]);
+    }
+    
+    
+    $result['rows'][] = array('c' => $ta );   
+}
 
 header('Content-Type: application/json');
 echo json_encode( $result);

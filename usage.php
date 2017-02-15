@@ -45,6 +45,9 @@ if (DB::isError($db)) {
     $recordset->free();
 
 $db->disconnect();
+
+    echo ('<li><a href="monitor_detail.php?feature=">All listed above</a></li>');
+        echo ('<li><a href="monitor_detail.php?feature=all">Every single feature (slow)</a></li>');
 ?>
 </ul>
 
