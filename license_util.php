@@ -1,7 +1,7 @@
 <?php
 
-include_once('./tools.php');
-require_once("./common.php");
+include_once(__DIR__.'/tools.php');
+require_once(__DIR__."/common.php");
 
 ##################################################
 # Load PEAR DB abstraction library

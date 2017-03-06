@@ -1,13 +1,13 @@
 <?php
 
-if ( ! is_readable('./config.php') ) {
+if ( ! is_readable(__DIR__.'/config.php') ) {
     echo("<H2>Error: Configuration file config.php does not exist. Please
          notify your system administrator.</H2>");
     exit;
 } else
-    include_once('./config.php');
+    include_once(__DIR__.'/config.php');
 
-require_once("./common.php");
+require_once(__DIR__."/common.php");
 
 ###################################################
 # We are using PEAR's DB abstraction library

@@ -1,7 +1,7 @@
 <?php
 
-require_once("common.php");
-require_once('./tools.php');
+require_once(__DIR__."/common.php");
+require_once(__DIR__.'/tools.php');
 
 print_header("Licenses in Detail");
 

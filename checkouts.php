@@ -1,6 +1,6 @@
 <?php
 
-require_once("common.php");
+require_once(__DIR__."common.php");
 print_header("License Checkouts");
 
 ?>

@@ -13,6 +13,10 @@ require_once ("HTML/Table.php");
 if ( isset($_GET['refresh']) && $_GET['refresh'] > 0 && ! $disable_autorefresh){
 	echo('<meta http-equiv="refresh" content="' . intval($_GET['refresh']) . '"/>');
 }
+
+$server = preg_replace("/[^0-9,]+/", "", htmlspecialchars($_GET['server'])) ;
+
+
 ?>
 
 
@@ -30,19 +34,18 @@ if ( $_GET['listing'] == 1 ) {
 
 	$today = mktime(0,0,0,date("m"),date("d"),date("Y"));
 
-
-
+        
 	# Create a new table object
 	$table = new HTML_Table("class='table' style='width:100%;' ");
 
 	# First row should be the name of the license server and it's description
-	$colHeaders = array("Server: " . $servers[$_GET['server']] . " ( " . $description[$_GET['server']] . " )");
+	$colHeaders = array("Server: " . $servers[$server] . " ( " . $description[$server] . " )");
 
 	$table->addRow($colHeaders, "colspan='4'", "th");
 
 	include_once("./tools.php");
 
-	build_license_expiration_array($lmutil_loc, $servers[$_GET['server']], $expiration_array);
+	build_license_expiration_array($lmutil_loc, $servers[$server], $expiration_array);
 
 	# Define a table header
 	$colHeaders = array("Feature", "Vendor Daemon", "Total licenses", "Number licenses, Days to expiration, Date of expiration");
@@ -132,7 +135,7 @@ if ( $_GET['listing'] == 1 ) {
 	if ( isset($_GET['multiple_servers']) ){
 		$current_server = $_GET['multiple_servers'];
 	} else {
-		$current_server = explode(",", $_GET['server']);
+		$current_server = explode(",", $server);
 	}
 
 	# We'll need timestamp class to get a human readable time difference
