@@ -4,7 +4,7 @@ require_once("./common.php");
 print_header("Per Feature License Monitoring");
 
 
-$feature = preg_replace("/[^a-zA-Z0-9_]+/", "", htmlspecialchars($_GET['feature'])) ;
+$feature = preg_replace("/[^a-zA-Z0-9_|]+/", "", htmlspecialchars($_GET['feature'])) ;
 $label = $feature;
 
 require_once("DB.php");
@@ -38,6 +38,9 @@ if (DB::isError($db)) {
     $recordset->free();
 
 $db->disconnect();
+
+
+    $label = str_replace('|', ' or ', $label);
 
 ?>
 

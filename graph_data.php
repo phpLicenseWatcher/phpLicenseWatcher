@@ -8,17 +8,26 @@ require_once('./config.php');
 require_once("DB.php");
 
 
-$feature = preg_replace("/[^a-zA-Z0-9_]+/", "", htmlspecialchars($_GET['feature'])) ;
+$feature = preg_replace("/[^a-zA-Z0-9_|]+/", "", htmlspecialchars($_GET['feature'])) ;
 $days = intval($_GET['days']);
 
 $crit = "";
 if( $feature == 'all' ){
     $crit = " 1 = 1 ";
 }else if( $feature != '' ){
-    $crit = " flmusage_product='$feature' ";
+    
+    $features = array() ;
+    foreach(explode('|', $feature ) as $i ){
+        $features[] = "'".$i."'";
+    }
+    
+    $crit = " flmusage_product IN ( " . implode(',',$features) . " )  ";
+    
 }else{
     $crit = " showInLists = 1 ";
 }
+
+
 
 if( !$days > 0 ){
     $days= 7;
