@@ -36,10 +36,15 @@
 ## Install process
 
 1. Clone repostiory locally using git
-   ```git clone https://github.com/mcglow2-RPI/phpLicenseWatcher.git /var/www/html/````
+   ```
+   git clone https://github.com/mcglow2-RPI/phpLicenseWatcher.git /var/www/html/
+   ```
 2. Create the database
-```mysqladmin create licenses
-mysql -f licenses < phplicensewatcher.sql```
+```
+mysqladmin create licenses
+mysql -f licenses < phplicensewatcher.sql 
+```
+
 3. Update config file "./config.php" with proper values for your setup
 
 4. Setup cron to run scheduled tasks
