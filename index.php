@@ -98,9 +98,9 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 		if ( preg_match ("/vendor daemon is down/i", $line, $out) ) {
 			$status_string = "VENDOR DOWN";
 			$class = "warning";
-			$lmgrdversion = eregi_replace(".*license server UP \(MASTER\) ", "", $line);
+			$lmgrdversion = preg_replace(".*license server UP \(MASTER\) /i", "", $line);
 			$lmmaster = substr($line,0,strpos($line,':',0));
-			eregi_replace(".*license server UP ", "", $line);
+			preg_replace(".*license server UP /i", "", $line);
 			break;
 		}
 		
@@ -200,11 +200,11 @@ $table->addRow($colHeaders, $headerStyle, "TH");
 //                           === End of Server List ===
 //                           ==========================
 		if ( preg_match ("/Server Name:/i", $line) ) {
-			$servername = eregi_replace(".*Server Name:\ *", "", $line) ;
-			$targetid = eregi_replace(".*Target ID:\ *", "", fgets ($fp, 1024));  // Next line: TargetID
-			$targettype = eregi_replace(".*Target Type:\ *", "", fgets ($fp, 1024));  // Next line: TargetType
-			$servertype = eregi_replace(".*Server Type:\ *", "", fgets ($fp, 1024));  // Next line: ServerType
-			$load = fgets ($fp, 1024);  // Next line: Load (not displayed)
+                        $servername = preg_replace(".*Server Name:\ */i", "", $line);
+                        $targetid = preg_replace(".*Target ID:\ */i", "", fgets ($fp, 1024));  // Next line: TargetID
+                        $targettype = preg_replace(".*Target Type:\ */i", "", fgets ($fp, 1024));  // Next line: TargetType
+                        $servertype = preg_replace(".*Server Type:\ */i", "", fgets ($fp, 1024));  // Next line: ServerType
+ 			$load = fgets ($fp, 1024);  // Next line: Load (not displayed)
 			$loadthreshold = fgets ($fp, 1024);  // Next line: Load Threshod (not displayed)
 			$trace = fgets ($fp, 1024);  // Next line: Trace (not displayed)
 			$details = "<a href=\"lumdetails.php?server=" . $servername . "\">Details</a>" ;
