@@ -8,3 +8,4 @@ use File::Rsync;
 
 # TO DO: Array of files to rsync
 #        Rsync files to /var/www/html
+print "Run update_code.pl";

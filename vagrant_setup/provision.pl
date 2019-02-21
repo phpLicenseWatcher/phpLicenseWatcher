@@ -7,39 +7,72 @@ use autodie;
 use File::Copy;
 use File::Spec;
 
+my @REPO_PATH = ("/", "home", "vagrant", "github_phplw");
+my @REQUIRED_PACKAGES = ("apache2", "php", "php-db", "mysql-server", "mysql-client", "lsb");
+my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
+my $SQL_FILE = "phplicencewacther.sql";
+my $CONF_FILE = "phplw.conf";
+my $CODE_UPDATE = "update_code.pl";
+
 # Install required ubuntu packages
-my @packages = ("apache2", "php", "php-db", "mysql-server", "mysql-client", "lsb");
-system "apt-get update";
-foreach (@packages) {
-    system "apt-get -y install $_";
+system "export DEBIAN_FRONTEND=noninteractive";
+system "apt-get -q update";
+foreach (@REQUIRED_PACKAGES) {
+    system "apt-get -qy install $_";
+    print "Aptitude Installed Package: $_";
 }
 
 # Copy Flex LM files to system.
 # TO DO: Some error handling if these files don't exist.
 #        Maybe we don't necessarily have to halt provisioning on error.
-my @files = ("adskflex", "lmgrd", "lmutil");
-my $source_dir = "vagrant_setup/flex_lm";
-my $dest_dir   = "/opt/flexnetserver";
-mkdir $dest_dir, 0700;
-foreach (@files) {
-    copy File::Spec->catfile($source_dir, $_), File::Spec->catfile($dest_dir, $_);
+my ($source, $dest);
+my @source_path = (@REPO_PATH, "vagrant_setup", "flex_lm");
+my @dest_path   = ("/", "opt", "flexnetserver");
+
+$dest = File::Spec->catdir(@dest_path);
+mkdir $dest, 0700;
+print "Created directory: $dest";
+
+foreach (@FLEXLM_FILES) {
+    $source = File::Spec->catfile(@source_path, $_);
+    $dest   = File::Spec->catfile(@dest_path, $_);
+    copy $source, $dest;
+    print "Copied Flex LM binary $_";
 }
 
 # Setup mysql
-# TO DO: Create SQL file complete schema and dummy data for development.
-system "mysql < /home/vagrant/github_phplw/phplicensewatcher.sql";
+# TO DO: Create SQL file with complete schema and dummy data for development.
+$source = File::Spec->catfile(@REPO_PATH, $SQL_FILE);
+system "mysql < $source";
+print "Setup mysql with $SQL_FILE";
 
 # Remove extraneous files from /var/www/html
-unlink "/var/www/html/*";
+@source_path = ("/", "var", "www", "html");
+$source = File::Spec->catfile(@source_path, "*");
+foreach (glob($source)) {
+    unlink $_;
+}
 
 # Setup apache conf
-copy "/home/vagrant/github_phplw/vagrant_setup/apache/phplw.conf", "/etc/apache2/sites_available"
+@source_path = (@REPO_PATH, "vagrant_setup", "apache");
+@dest_path   = ("etc", "apache2", "sites_available");
+$source = File::Spec->catfile(@source_path, $CONF_FILE);
+$dest   = File::Spec->catfile(@dest_path, $CONF_FILE);
+copy $source, $dest;
+
+my $conf = $CONF_FILE;
+$conf =~ s{\.[^.]+$}{};
 system "a2dissite 000-default";
-system "a2ensite phplw";
+system "a2ensite $conf";
 system "apachectl restart";
 
-# Call script tp Rsync code files to /var/www/html
-system "perl update_code.pl";
+print "Setup/Configured Apache2 with $CONF_FILE";
+
+# Call script to Rsync code files to /var/www/html
+@source_path = (@REPO_PATH, "vagrant_setup");
+$source = File::Spec->catfile(@source_path, $CODE_UPDATE);
+system "perl $source";
+print "Repository code installed".
 
 # Done!
 exit 0;
