@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use autodie;
-use File::Rsync;
+# use File::Rsync;
 
 # TO DO: Array of files to rsync
 #        Rsync files to /var/www/html
