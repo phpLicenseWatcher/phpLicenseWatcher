@@ -4,24 +4,39 @@
 use strict;
 use warnings;
 use autodie;
-use File::Copy;
-use File::Spec;
+use File::Basename qw(fileparse);
+use File::Copy qw(copy);
+use File::Spec::Functions qw(catdir catfile rootdir);
 
-# Config
-my @REPO_PATH = ("/", "home", "vagrant", "github_phplw");
-my @HTML_PATH = ("/", "var", "www", "html");
-my @APACHE_PATH = ("/", "etc", "apache2");
+# ** ---------------------------- CONFIGURATION ----------------------------- **
+# TO DO: maybe create common config file for provision.pl and update_code.pl
+
+# Paths (as arrays of directories)
+my @REPO_PATH = (rootdir(), "home", "vagrant", "github_phplw");
+my @FLEXNETSERVER_PATH = (rootdir(), "opt", "flexnetserver");
+my @HTML_PATH = (rootdir(), "var", "www", "html");
+my @APACHE_PATH = (rootdir(), "etc", "apache2");
+
+# Packages needed by OS
 my @REQUIRED_PACKAGES = ("apache2", "php", "php-db", "mysql-server", "mysql-client", "lsb");
+
+# List of Flex LM binaries
 my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
+
+# DB config
 my $DB_NAME = "phplw_dev";
 my $DB_HOST = "localhost";
 my $DB_USER = "phplw_dev_dbuser";
+
+# Other relevant files
 my $SQL_FILE = "phplicensewatcher.sql";
 my $CONF_FILE = "phplw.conf";
 my $UPDATE_CODE = "update_code.pl";
 
 # Vars and arrays
 my ($source, $dest, $work, $conf, @source_path, @dest_path, @working_path);
+
+# ** -------------------------- END CONFIGURATION --------------------------- **
 
 # Install required ubuntu packages
 system "apt-get update > /dev/null 2>&1";
@@ -34,15 +49,18 @@ foreach (@REQUIRED_PACKAGES) {
 # TO DO: Some error handling if these files don't exist.
 #        Maybe we don't necessarily have to halt provisioning on error.
 @source_path = (@REPO_PATH, "vagrant_setup", "flex_lm");
-@dest_path   = ("/", "opt", "flexnetserver");
+@dest_path   = @FLEXNETSERVER_PATH;
 
-$dest = File::Spec->catdir(@dest_path);
-mkdir $dest, 0700;
-print "Created directory: $dest\n";
+$dest = catdir(@dest_path);
+if (!-e $dest) {
+    mkdir $dest, 0700;
+    print "Created directory: $dest\n";
+}
+
 
 foreach (@FLEXLM_FILES) {
-    $source = File::Spec->catfile(@source_path, $_);
-    $dest   = File::Spec->catfile(@dest_path, $_);
+    $source = catfile(@source_path, $_);
+    $dest   = catfile(@dest_path, $_);
     if (-f $source) {
         copy $source, $dest;
         print "Copied Flex LM binary $_\n";
@@ -56,25 +74,20 @@ foreach (@FLEXLM_FILES) {
 system "mysql -e \"CREATE DATABASE $DB_NAME;\"";
 
 # Create database user (no password)
-system "mysql -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'$DB_HOST';\"";
+system "mysql -e \"CREATE USER '$DB_USER'\@'$DB_HOST';\"";
+system "mysql -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'\@'$DB_HOST';\"";
 
-# Setup Schema
-$source = File::Spec->catfile(@REPO_PATH, $SQL_FILE);
-system "mysql -u $DB_USER -D $DB_NAME < $source";
-print "Setup mysql database phplw-dev with $SQL_FILE\n";
-
-# Remove extraneous files from /var/www/html
-$work = File::Spec->catfile(@HTML_PATH, "*");
-foreach (glob($work)) {
-    unlink $_;
-}
+# Setup database schema
+$work = catfile(@REPO_PATH, $SQL_FILE);
+system "mysql -u $DB_USER -D $DB_NAME < $work";
+print "Setup mysql database $DB_NAME with $SQL_FILE\n";
 
 # Setup apache conf
 # First disable all currently active conf files
 @working_path = (@APACHE_PATH, "sites-enabled");
-$work = File::Spec->catfile(@working_path, "*");
+$work = catfile(@working_path, "*");
 foreach (glob($work)) {
-    $conf = $_;
+    $conf = fileparse($_);
     $conf =~ s{\.[^.]+$}{};  # Removes ".conf" extension
     system "a2dissite $conf";
 }
@@ -82,8 +95,8 @@ foreach (glob($work)) {
 # Copy phpLicenseWatcher conf file
 @source_path = (@REPO_PATH, "vagrant_setup", "apache");
 @dest_path   = (@APACHE_PATH, "sites-available");
-$source = File::Spec->catfile(@source_path, $CONF_FILE);
-$dest   = File::Spec->catfile(@dest_path, $CONF_FILE);
+$source = catfile(@source_path, $CONF_FILE);
+$dest   = catfile(@dest_path, $CONF_FILE);
 copy $source, $dest;
 
 # Activate phpLicenseWatcher conf file
@@ -94,8 +107,8 @@ system "apachectl restart";
 print "Setup/Configured Apache2 with $CONF_FILE\n";
 
 # Call script to Rsync code files to /var/www/html
-@working_path = (@REPO_PATH, "vagrant_setup");
-$work = File::Spec->catfile(@working_path, $UPDATE_CODE);
+@working_path = (@REPO_PATH, "vagrant_setup", "provision");
+$work = catfile(@working_path, $UPDATE_CODE);
 system "perl $work";
 print "Repository code installed.\n".
 
