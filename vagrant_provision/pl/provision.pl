@@ -48,7 +48,7 @@ foreach (@REQUIRED_PACKAGES) {
 # Copy Flex LM files to system.
 # TO DO: Some error handling if these files don't exist.
 #        Maybe we don't necessarily have to halt provisioning on error.
-@source_path = (@REPO_PATH, "vagrant_setup", "flex_lm");
+@source_path = (@REPO_PATH, "vagrant_provision", "flex_lm");
 @dest_path   = @FLEXNETSERVER_PATH;
 
 $dest = catdir(@dest_path);
@@ -56,7 +56,6 @@ if (!-e $dest) {
     mkdir $dest, 0700;
     print "Created directory: $dest\n";
 }
-
 
 foreach (@FLEXLM_FILES) {
     $source = catfile(@source_path, $_);
@@ -93,7 +92,7 @@ foreach (glob($work)) {
 }
 
 # Copy phpLicenseWatcher conf file
-@source_path = (@REPO_PATH, "vagrant_setup", "apache");
+@source_path = (@REPO_PATH, "vagrant_provision", "apache");
 @dest_path   = (@APACHE_PATH, "sites-available");
 $source = catfile(@source_path, $CONF_FILE);
 $dest   = catfile(@dest_path, $CONF_FILE);
@@ -107,7 +106,7 @@ system "apachectl restart";
 print "Setup/Configured Apache2 with $CONF_FILE\n";
 
 # Call script to Rsync code files to /var/www/html
-@working_path = (@REPO_PATH, "vagrant_setup", "provision");
+@working_path = (@REPO_PATH, "vagrant_provision", "provision");
 $work = catfile(@working_path, $UPDATE_CODE);
 system "perl $work";
 print "Repository code installed.\n".
