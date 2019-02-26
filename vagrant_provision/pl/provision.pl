@@ -27,6 +27,7 @@ my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
 my $DB_NAME = "phplw_dev";
 my $DB_HOST = "localhost";
 my $DB_USER = "phplw_dev_dbuser";
+my $DB_PASS = "phplw_dev_dbpassword";
 
 # Other relevant files
 my $SQL_FILE = "phplicensewatcher.sql";
@@ -41,8 +42,8 @@ my ($source, $dest, $work, $conf, @source_path, @dest_path, @working_path);
 # Install required ubuntu packages
 system "apt-get update > /dev/null 2>&1";
 foreach (@REQUIRED_PACKAGES) {
+    print "Installing aptitude package $_.\n";
     system "apt-get -y install $_ > /dev/null 2>&1";
-    print "Aptitude Installed Package: $_\n";
 }
 
 # Copy Flex LM files to system.
@@ -73,12 +74,12 @@ foreach (@FLEXLM_FILES) {
 system "mysql -e \"CREATE DATABASE $DB_NAME;\"";
 
 # Create database user (no password)
-system "mysql -e \"CREATE USER '$DB_USER'\@'$DB_HOST';\"";
+system "mysql -e \"CREATE USER '$DB_USER'\@'$DB_HOST' IDENTIFIED BY '$DB_PASS';\"";
 system "mysql -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'\@'$DB_HOST';\"";
 
 # Setup database schema
 $work = catfile(@REPO_PATH, $SQL_FILE);
-system "mysql -u $DB_USER -D $DB_NAME < $work";
+system "mysql --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < $work";
 print "Setup mysql database $DB_NAME with $SQL_FILE\n";
 
 # Setup apache conf
@@ -106,7 +107,7 @@ system "apachectl restart";
 print "Setup/Configured Apache2 with $CONF_FILE\n";
 
 # Call script to Rsync code files to /var/www/html
-@working_path = (@REPO_PATH, "vagrant_provision", "provision");
+@working_path = (@REPO_PATH, "vagrant_provision", "pl");
 $work = catfile(@working_path, $UPDATE_CODE);
 system "perl $work";
 print "Repository code installed.\n".
