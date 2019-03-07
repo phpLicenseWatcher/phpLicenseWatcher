@@ -8,6 +8,9 @@ use File::Basename qw(fileparse);
 use File::Copy qw(copy);
 use File::Spec::Functions qw(catdir catfile rootdir);
 
+# Root required
+print "Root required.\n" and exit 1 if ($> != 0);
+
 # ** ---------------------------- CONFIGURATION ----------------------------- **
 # TO DO: maybe create common config file for provision.pl and update_code.pl
 
@@ -18,7 +21,7 @@ my @HTML_PATH = (rootdir(), "var", "www", "html");
 my @APACHE_PATH = (rootdir(), "etc", "apache2");
 
 # Packages needed by OS
-my @REQUIRED_PACKAGES = ("apache2", "php", "php-db", "mysql-server", "mysql-client", "lsb");
+my @REQUIRED_PACKAGES = ("apache2", "php", "php-db", "php-mysql", "mysql-server", "mysql-client", "lsb");
 
 # List of Flex LM binaries
 my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
@@ -71,6 +74,7 @@ foreach (@FLEXLM_FILES) {
 
 # Setup mysql
 # Create database
+print "Setting up mysql database.  Password security warning can be ignored.\n";
 system "mysql -e \"CREATE DATABASE $DB_NAME;\"";
 
 # Create database user (no password)
@@ -80,10 +84,10 @@ system "mysql -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'\@'$DB_HOST';
 # Setup database schema
 $work = catfile(@REPO_PATH, $SQL_FILE);
 system "mysql --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < $work";
-print "Setup mysql database $DB_NAME with $SQL_FILE\n";
 
 # Setup apache conf
 # First disable all currently active conf files
+print "Setting up Apache2\n";
 @working_path = (@APACHE_PATH, "sites-enabled");
 $work = catfile(@working_path, "*");
 foreach (glob($work)) {
@@ -104,13 +108,13 @@ $conf = $CONF_FILE;
 $conf =~ s{\.[^.]+$}{};  # Removes ".conf" extension
 system "a2ensite $conf";
 system "apachectl restart";
-print "Setup/Configured Apache2 with $CONF_FILE\n";
 
 # Call script to Rsync code files to /var/www/html
+print "Copying repository code.\n";
 @working_path = (@REPO_PATH, "vagrant_provision", "pl");
 $work = catfile(@working_path, $UPDATE_CODE);
 system "perl $work";
-print "Repository code installed.\n".
 
 # Done!
+print "All done!\n";
 exit 0;
