@@ -125,7 +125,7 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 			 $lmgrdversion));
 
 	# Set the background color of status cell
-	$table->updateCellAttributes( ($table->getRowCount() - 1) , 3, "class='" . $class . "'");
+	$table->updateCellAttributes( ($table->getRowCount() - 1) , 2, "class='" . $class . "'");
 	//$table->updateCellAttributes( 1 , 0, "");
 
 	# Close the pipe
