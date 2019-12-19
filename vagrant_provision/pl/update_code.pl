@@ -23,23 +23,22 @@ my @CONFIG_PATH = (@REPO_PATH, "vagrant_provision", "config");
 my $CONFIG_FILE = "config.php";
 
 # Vars and arrays
-my ($source, $dest, $work, @source_path, @dest_path);
+my ($source, $dest, $files, @source_path, @dest_path);
 
 # ** -------------------------- END CONFIGURATION --------------------------- **
 
 # Remove extraneous files from /var/www/html
-$work = catfile(@HTML_PATH, "*");
-foreach (glob($work)) {
+$files = catfile(@HTML_PATH, "*");
+foreach (glob($files)) {
     unlink $_ if (-f $_);
 }
 
 # Copy code to HTML directory
-foreach(qw(*.php *.html *.css)) {
-    $work = catfile(@REPO_PATH, $_);
-    foreach (glob($work)) {
-        $source = $_;
-        $work = fileparse($source);
-        $dest = catfile(@HTML_PATH, $work);
+foreach (qw(*.php *.html *.css)) {
+    $files = catfile(@REPO_PATH, $_);
+    foreach $source (glob($files)) {
+        $files = fileparse($source);
+        $dest = catfile(@HTML_PATH, $files);
         copy $source, $dest;
         chown 1000, 33, $dest;
         chmod 0551, $dest;

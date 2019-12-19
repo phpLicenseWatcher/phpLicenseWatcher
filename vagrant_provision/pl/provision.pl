@@ -38,12 +38,14 @@ my $CONF_FILE = "phplw.conf";
 my $UPDATE_CODE = "update_code.pl";
 
 # Vars and arrays
-my ($source, $dest, $work, $conf, @source_path, @dest_path, @working_path);
+my ($source, $dest, $file, $files, $conf, @source_path, @dest_path, @working_path);
 
 # ** -------------------------- END CONFIGURATION --------------------------- **
 
-# Install required ubuntu packages
+# Run Ubuntu updates and install required Ubuntu packages
+print "Updating Ubuntu VM\n"
 system "apt-get update > /dev/null 2>&1";
+system "apt-get -y upgrade > /dev/null 2>&1";
 foreach (@REQUIRED_PACKAGES) {
     print "Installing aptitude package $_.\n";
     system "apt-get -y install $_ > /dev/null 2>&1";
@@ -66,9 +68,9 @@ foreach (@FLEXLM_FILES) {
     $dest   = catfile(@dest_path, $_);
     if (-f $source) {
         copy $source, $dest;
-        print "Copied Flex LM binary $_\n";
+        print "Installed Flex LM binary $_\n";
     } else {
-        print "Flex LM binary $_ NOT FOUND\n";
+        print "Flex LM binary $_ NOT FOUND, NOT INSTALLED\n";
     }
 }
 
@@ -82,18 +84,18 @@ system "mysql -e \"CREATE USER '$DB_USER'\@'$DB_HOST' IDENTIFIED BY '$DB_PASS';\
 system "mysql -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'\@'$DB_HOST';\"";
 
 # Setup database schema
-$work = catfile(@REPO_PATH, $SQL_FILE);
-system "mysql --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < $work";
+$file = catfile(@REPO_PATH, $SQL_FILE);
+system "mysql --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < $file";
 
 # Setup apache conf
 # First disable all currently active conf files
 print "Setting up Apache2\n";
 @working_path = (@APACHE_PATH, "sites-enabled");
-$work = catfile(@working_path, "*");
-foreach (glob($work)) {
+$files = catfile(@working_path, "*");
+foreach (glob($files)) {
     $conf = fileparse($_);
     $conf =~ s{\.[^.]+$}{};  # Removes ".conf" extension
-    system "a2dissite $conf";
+    system "a2dissite $conf > /dev/null 2>&1";
 }
 
 # Copy phpLicenseWatcher conf file
@@ -106,14 +108,14 @@ copy $source, $dest;
 # Activate phpLicenseWatcher conf file
 $conf = $CONF_FILE;
 $conf =~ s{\.[^.]+$}{};  # Removes ".conf" extension
-system "a2ensite $conf";
+system "a2ensite $conf > /dev/null 2>&1";
 system "apachectl restart";
 
-# Call script to Rsync code files to /var/www/html
+# Call script to copy code files to /var/www/html
 print "Copying repository code.\n";
 @working_path = (@REPO_PATH, "vagrant_provision", "pl");
-$work = catfile(@working_path, $UPDATE_CODE);
-system "perl $work";
+$file = catfile(@working_path, $UPDATE_CODE);
+system "perl $file";
 
 # Done!
 print "All done!\n";

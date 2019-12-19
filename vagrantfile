@@ -10,7 +10,7 @@ Vagrant.configure(2) do |config|
         virtualbox.cpus = 1
         virtualbox.memory = 2048
         # Resync the clock if it drifts by more than 10 seconds.  Useful for when host wakes up from sleep.
-        virtualbox.customize ['guestproperty', 'set', :id, '/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold', 10000 ]
+        virtualbox.customize ['guestproperty', 'set', :id, '/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold', 10000]
         # Helps work around DNS problems that may happen with large campus LANs or VPN.
         virtualbox.customize ['modifyvm', :id, '--natdnsproxy1', 'on']
     end
@@ -31,4 +31,3 @@ Vagrant.configure(2) do |config|
     config.vm.provision "shell", inline: "perl /home/vagrant/github_phplw/vagrant_provision/pl/provision.pl", privileged: true, run: "once"
     config.vm.provision "refresh", type: "shell", inline: "perl /home/vagrant/github_phplw/vagrant_provision/pl/update_code.pl", privileged: true, run: "never"
 end
-
