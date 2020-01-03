@@ -18,6 +18,7 @@ Download and install for your operating system:
 ## Using Vagrant
 ### Setup
 1. Install Vagrant and VirtualBox.
+    * Make sure to install the vbguest plugin.  `vagrant plugin install vagrant-vbguest`
 2. Clone this repository to your host, either with `git` command line or the Github Application.
 3. Go to the root folder of the cloned repository.
 4. On the command line: `vagrant up`
