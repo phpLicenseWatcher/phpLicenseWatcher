@@ -43,7 +43,7 @@ my ($source, $dest, $file, $files, $conf, @source_path, @dest_path, @working_pat
 # ** -------------------------- END CONFIGURATION --------------------------- **
 
 # Run Ubuntu updates and install required Ubuntu packages
-print "Updating Ubuntu VM\n"
+print "Updating Ubuntu VM\n";
 system "apt-get update > /dev/null 2>&1";
 system "apt-get -y upgrade > /dev/null 2>&1";
 foreach (@REQUIRED_PACKAGES) {
