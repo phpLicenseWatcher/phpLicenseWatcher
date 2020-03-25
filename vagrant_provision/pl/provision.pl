@@ -77,14 +77,15 @@ foreach (@FLEXLM_FILES) {
     $dest   = catfile(@dest_path, $_);
     if (-f $source) {
         copy $source, $dest;
-        print "Installed Flex LM binary $_\n";
+        print "Copied Flex LM binary $_\n";
     } else {
-        print "Flex LM binary $_ NOT FOUND, NOT INSTALLED\n";
+        print "Flex LM binary $_ NOT FOUND, NOT COPIED.\n";
     }
 }
 
 # Setup mysql
 # Create database
+print "\n";
 print "Setting up mysql database.  Password security warning can be ignored.\n";
 exec_cmd("mysql -e \"CREATE DATABASE $DB_NAME;\"");
 
