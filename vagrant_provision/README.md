@@ -1,9 +1,9 @@
 # Vagrant
 
 ## Summary
-Vagrant is software used to more easily manage VirtualBox, while VirtualBox will run the actual virtual machine.  This repository provides a `vagrantfile` that defines a Vagrant box to help with code development.  The Vagrant VM will act as a development and test server.  It provides Linux (Ubuntu) with Apache2, MySQL, and PHP (aka "LAMP").
+Vagrant is software used to more easily manage VirtualBox, while VirtualBox will run the actual virtual machine.  This repository provides a `vagrantfile` that defines a Vagrant box to help with code development.  The Vagrant VM will act as a development and test server.  It provides a LAMP stack with Ubuntu 18.04, Apache2, MySQL, and PHP.
 
-The Vagrant Box was developed and tested with Vagrant 2.2.3, VirtualBox 5.2.26, and Mac OS 10.12.6.  It should work with Vagrant 2.2.0 or later, VirtualBox 5.2.x or later, and any operating systems compatible with Vagrant and Virtualbox.
+The Vagrant Box was originally developed and tested with Vagrant 2.2.3, VirtualBox 5.2.26, and macOS 10.12.6.  It should work with Vagrant 2.2.0 or later, VirtualBox 5.2.x or later, and any operating systems compatible with Vagrant and Virtualbox.
 
 ## Jargon
 * *Guest*, *Box*, *VM*:  The virtual machine development and test server.
@@ -22,7 +22,8 @@ Download and install for your operating system:
 2. Clone this repository to your host, either with `git` command line or the Github Application.
 3. Go to the root folder of the cloned repository.
 4. On the command line: `vagrant up`
-    * There will be a long series of messages involved with setting up the VM.
+    * There will be a long series of build messages printed to the console.
+    * Build messages will be logged in the repository at `.vagrant/provision.log` (not tracked by git).
     * Depending on the speed of your Internet connection and the speed of your host computer, it can take 30 minutes or more to build the VM.
     * Once the VM is built, it doesn't take nearly as long to start up the VM another time.
 

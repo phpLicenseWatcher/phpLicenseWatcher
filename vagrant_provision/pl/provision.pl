@@ -8,6 +8,14 @@ use File::Basename qw(fileparse);
 use File::Copy qw(copy);
 use File::Spec::Functions qw(catdir catfile rootdir);
 
+# Help with logging executed commands and their results.
+sub exec_cmd {
+    my $cmd = shift;
+    print "\$ $cmd\n";
+    system $cmd;
+    print "\n";
+}
+
 # Root required
 print "Root required.\n" and exit 1 if ($> != 0);
 
@@ -38,17 +46,18 @@ my $CONF_FILE = "phplw.conf";
 my $UPDATE_CODE = "update_code.pl";
 
 # Vars and arrays
-my ($source, $dest, $file, $files, $conf, @source_path, @dest_path, @working_path);
+my ($cmd, $source, $dest, $file, $files, $conf, @source_path, @dest_path, @working_path);
 
 # ** -------------------------- END CONFIGURATION --------------------------- **
 
 # Run Ubuntu updates and install required Ubuntu packages
-print "Updating Ubuntu VM\n";
-system "apt-get update > /dev/null 2>&1";
-system "apt-get -y upgrade > /dev/null 2>&1";
+exec_cmd("apt-get -q update");
+
+# This prevents grub-pc from calling up a user interactive menu that will halt provisioning.
+exec_cmd("DEBIAN_FRONTEND=noninteractive apt-get -qy -o DPkg::options::='--force-confdef' -o DPkg::options::='--force-confold' dist-upgrade");
+
 foreach (@REQUIRED_PACKAGES) {
-    print "Installing aptitude package $_.\n";
-    system "apt-get -y install $_ > /dev/null 2>&1";
+    exec_cmd("apt-get -qy install $_");
 }
 
 # Copy Flex LM files to system.
@@ -77,15 +86,15 @@ foreach (@FLEXLM_FILES) {
 # Setup mysql
 # Create database
 print "Setting up mysql database.  Password security warning can be ignored.\n";
-system "mysql -e \"CREATE DATABASE $DB_NAME;\"";
+exec_cmd("mysql -e \"CREATE DATABASE $DB_NAME;\"");
 
 # Create database user (no password)
-system "mysql -e \"CREATE USER '$DB_USER'\@'$DB_HOST' IDENTIFIED BY '$DB_PASS';\"";
-system "mysql -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'\@'$DB_HOST';\"";
+exec_cmd("mysql -e \"CREATE USER '$DB_USER'\@'$DB_HOST' IDENTIFIED BY '$DB_PASS';\"");
+exec_cmd("mysql -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'\@'$DB_HOST';\"");
 
 # Setup database schema
 $file = catfile(@REPO_PATH, $SQL_FILE);
-system "mysql --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < $file";
+exec_cmd("mysql --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < $file");
 
 # Setup apache conf
 # First disable all currently active conf files
@@ -95,7 +104,7 @@ $files = catfile(@working_path, "*");
 foreach (glob($files)) {
     $conf = fileparse($_);
     $conf =~ s{\.[^.]+$}{};  # Removes ".conf" extension
-    system "a2dissite $conf > /dev/null 2>&1";
+    exec_cmd("a2dissite $conf");
 }
 
 # Copy phpLicenseWatcher conf file
@@ -108,14 +117,14 @@ copy $source, $dest;
 # Activate phpLicenseWatcher conf file
 $conf = $CONF_FILE;
 $conf =~ s{\.[^.]+$}{};  # Removes ".conf" extension
-system "a2ensite $conf > /dev/null 2>&1";
-system "apachectl restart";
+exec_cmd("a2ensite $conf");
+exec_cmd("apachectl restart");
 
 # Call script to copy code files to /var/www/html
 print "Copying repository code.\n";
 @working_path = (@REPO_PATH, "vagrant_provision", "pl");
 $file = catfile(@working_path, $UPDATE_CODE);
-system "perl $file";
+exec_cmd("perl $file");
 
 # Done!
 print "All done!\n";
