@@ -12,7 +12,7 @@ use File::Spec::Functions qw(catdir catfile rootdir);
 sub exec_cmd {
     my $cmd = shift;
     print "\$ $cmd\n";
-    system $cmd;
+    print "$cmd exited ", $? >> 8, "\n" and exit 1 if ((system $cmd) != 0);
     print "\n";
 }
 
@@ -33,7 +33,7 @@ my @REQUIRED_PACKAGES = ("apache2", "php", "php-gd", "php-db", "php-mysql", "mys
 
 # List of Flex LM binaries
 my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
-my $FLEXLM_OWNER = "vagrant";
+my $FLEXLM_OWNER = "www-data";
 my $FLEXLM_OWNER_UID = getpwnam $FLEXLM_OWNER;
 my $FLEXLM_OWNER_GID = getgrnam $FLEXLM_OWNER;
 my $FLEXLM_PERMISSIONS = 0700;
