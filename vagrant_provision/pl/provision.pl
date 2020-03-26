@@ -29,7 +29,7 @@ my @HTML_PATH = (rootdir(), "var", "www", "html");
 my @APACHE_PATH = (rootdir(), "etc", "apache2");
 
 # Packages needed by OS
-my @REQUIRED_PACKAGES = ("apache2", "php", "php-gd", "php-db", "php-mysql", "mysql-server", "mysql-client", "lsb");
+my @REQUIRED_PACKAGES = ("apache2", "php", "php-gd", "php-db", "php-mysql", "mysql-server", "mysql-client", "lsb", "composer");
 
 # List of Flex LM binaries
 my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");

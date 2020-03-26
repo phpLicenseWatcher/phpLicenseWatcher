@@ -1,0 +1,10 @@
+{
+    "repositories": [{
+        "type": "pear",
+        "url": "https://pear.php.net"
+    }],
+
+    "require": {
+        "pear-pear.php.net/html_table": "^1.8.4"
+    }
+}
