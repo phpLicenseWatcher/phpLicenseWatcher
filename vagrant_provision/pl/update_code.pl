@@ -1,12 +1,21 @@
 #!/usr/bin/env perl
 
-# This script will update code files from repository to working directory.
+# This script will update code files from repository to project directory.
 use strict;
 use warnings;
 use autodie;
 use File::Basename qw(fileparse);
-use File::Copy qw(copy);
+use File::Path qw(remove_tree);
 use File::Spec::Functions qw(catfile rootdir);
+
+# rsync provides easy recursive copy, but is not part of Perl core libraries.
+sub exec_rsync {
+    my ($source, $dest) = @_;
+    if ((system "rsync -qa $source $dest") != 0) {
+        print "rsync $source: $!\n";
+        exit 1;
+    }
+}
 
 # Root required
 print "Root required.\n" and exit 1 if ($> != 0);
@@ -27,30 +36,22 @@ my ($source, $dest, $files, @source_path, @dest_path);
 
 # ** -------------------------- END CONFIGURATION --------------------------- **
 
-# Remove extraneous files from /var/www/html
-$files = catfile(@HTML_PATH, "*");
-foreach (glob($files)) {
-    unlink $_ if (-f $_);
-}
+# Remove everything from HTML directory
+remove_tree(catfile(@HTML_PATH), {safe => 1, keep_root => 1});
 
 # Copy code to HTML directory
-foreach (qw(*.php *.html *.css)) {
+foreach (qw(*.php *.html *.css vendor)) {
     $files = catfile(@REPO_PATH, $_);
     foreach $source (glob($files)) {
-        $files = fileparse($source);
-        $dest = catfile(@HTML_PATH, $files);
-        copy $source, $dest;
-        chown 1000, 33, $dest;
-        chmod 0551, $dest;
+        $dest = catfile(@HTML_PATH);
+        exec_rsync($source, $dest);
     }
 }
 
 #Copy dev config file
 $source = catfile(@CONFIG_PATH, $CONFIG_FILE);
-$dest = catfile(@HTML_PATH, $CONFIG_FILE);
-copy $source, $dest;
-chown 1000, 33, $dest;
-chmod 0551, $dest;
+$dest = catfile(@HTML_PATH);
+exec_rsync($source, $dest);
 
 # All done!
 exit 0;

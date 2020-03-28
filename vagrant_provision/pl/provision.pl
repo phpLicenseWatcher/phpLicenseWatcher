@@ -31,6 +31,11 @@ my @APACHE_PATH = (rootdir(), "etc", "apache2");
 # Packages needed by OS
 my @REQUIRED_PACKAGES = ("apache2", "php", "php-gd", "php-db", "php-mysql", "mysql-server", "mysql-client", "lsb", "composer");
 
+# Non super user account.  Some package systems run better when not as root.
+my $NOT_SUPERUSER = "vagrant";
+my $NOT_SUPERUSER_UID = getpwnam $NOT_SUPERUSER;
+my $NOT_SUPERUSER_GID = getgrnam $NOT_SUPERUSER;
+
 # List of Flex LM binaries
 my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
 my $FLEXLM_OWNER = "www-data";
@@ -63,6 +68,10 @@ exec_cmd("DEBIAN_FRONTEND=noninteractive apt-get -qy -o DPkg::options::='--force
 foreach (@REQUIRED_PACKAGES) {
     exec_cmd("apt-get -qy install $_");
 }
+
+# Run composer to retrieve PHP dependencies
+# Composer cannot be run as superuser.
+exec_cmd("su -c \"composer -d" . catfile(@REPO_PATH) . " install\" $NOT_SUPERUSER");
 
 # Copy Flex LM files to system.
 @source_path = (@REPO_PATH, "vagrant_provision", "flex_lm");

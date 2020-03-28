@@ -30,10 +30,11 @@ Download and install for your operating system:
 ### Using Vagrant For Development
 You may develop code for this repository on your host.  Make sure the VM is running to test the server in your web browser.
 
+* Clone the repository, and develop and commit code on your host.
 * Code is in HTML, CSS, and PHP.
 * You do *not* need to install PHP on your host.
-* Develop and commit code on your host.
 * To test any code changes, the Vagrant VM needs to be updated with this command: `vagrant up --provision-with refresh`
+    * Some composer libraries are dormant, and checking for composer library updates can take extra time when all you want is to refresh your own code.  Therefore, checking for composer library updates is separate: `vagrant up --provision-with composer-update`
 * You can view the VM server webpage at `http://localhost:50080`
 * A MySQL database viewer can connect to the VM server at `localhost`, port `53306`.
 
