@@ -36,4 +36,5 @@ Vagrant.configure(2) do |config|
     config.vm.provision "shell", inline: "perl #{REPO_PATH}/#{PROV_SCRIPT} |& tee #{REPO_PATH}/#{PROV_LOG}", privileged: true, run: "once"
     config.vm.provision "refresh", type: "shell", inline: "perl #{REPO_PATH}/#{REFRESH_SCRIPT}", privileged: true, run: "never"
     config.vm.provision "composer-update", type: "shell", inline: "composer -d#{REPO_PATH} update", privileged: false, run: "never"
+    config.vm.provision "composer-update", type: "shell", inline: "perl #{REPO_PATH}/#{UPDATE_SCRIPT} update-composer ", privileged: true, run: "never"
 end
