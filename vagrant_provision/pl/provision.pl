@@ -137,7 +137,7 @@ $conf =~ s{\.[^.]+$}{};  # Removes ".conf" extension
 exec_cmd("a2ensite $conf");
 exec_cmd("apachectl restart");
 
-# Call script to copy code files to /var/www/html
+# Call script to copy code files to HTML directory
 print "Copying repository code.\n";
 @working_path = (@REPO_PATH, "vagrant_provision", "pl");
 $file = catfile(@working_path, $UPDATE_CODE);

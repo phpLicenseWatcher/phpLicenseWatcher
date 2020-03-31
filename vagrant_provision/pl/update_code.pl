@@ -5,7 +5,6 @@ use strict;
 use warnings;
 use autodie;
 use File::Basename qw(fileparse);
-use File::Copy qw(copy);
 use File::Path qw(remove_tree);
 use File::Spec::Functions qw(catfile rootdir);
 
@@ -15,59 +14,75 @@ print "Root required.\n" and exit 1 if ($> != 0);
 # ** ---------------------------- CONFIGURATION ----------------------------- **
 # TO DO: maybe create common config file for provision.pl and update_code.pl
 
-# Paths (as arrays of directories)
+# Files and paths
 my @REPO_PATH = (rootdir(), "home", "vagrant", "github_phplw");
 my @HTML_PATH = (rootdir(), "var", "www", "html");
-my @CONFIG_PATH = (@REPO_PATH, "vagrant_provision", "config");
-
-my $VAGRANT_NAME = "vagrant";
-
-# HTML file ownership UID and GID
-my $HTML_UID = getpwnam("www-data");
-my $HTML_GID = getgrnam("www-data");
-my $HTML_PERMISSIONS = 0664;
-
-# Files
+my @CONFIG_PATH = ("vagrant_provision", "config");
 my $CONFIG_FILE = "config.php";
 
-# Vars and arrays
-my ($source, $dest, $files, @source_path, @dest_path);
+# Users
+my $VAGRANT_USERNAME = "vagrant";
 
 # ** -------------------------- END CONFIGURATION --------------------------- **
 
-# Help provide some error messaging if there is a copy error.
-sub copy_file {
+# rsync provides easy recursive copy, but is not part of Perl core libraries.
+sub exec_rsync {
     my ($source, $dest) = @_;
-    print STDERR "copy $source: $!" and exit 1 if !(copy $source, $dest);
-    chown $HTML_UID, $HTML_GID, $dest;
-    chmod $HTML_PERMISSIONS, $dest;
-}
 
-if (defined $ARGV[0] && $ARGV[0] eq "composer") {
-    $dest = catfile(@HTML_PATH);
-    print STDERR "composer exited ", $? >> 8, "\n" and exit 1 if !(system "su -c \"composer -d$dest update\" $VAGRANT_NAME");
-
-    # CLI arg "composer" only updates composer code in working directory.
-    exit 0;
-}
-
-# Remove everything from HTML directory
-remove_tree(catfile(@HTML_PATH), {safe => 1, keep_root => 1});
-
-# Copy code to HTML directory
-foreach (qw(*.php *.html *.css *.json)) {
-    $files = catfile(@REPO_PATH, $_);
-    foreach $source (glob($files)) {
-        $files = fileparse($source);
-        $dest = catfile(@HTML_PATH, $files);
-        copy_file($source, $dest);
+    if ((system "rsync -a $source $dest") != 0) {
+        print STDERR "rsync exited ", $? >> 8, "\n";
+        exit 1;
     }
 }
 
-# Copy dev config file
-$source = catfile(@CONFIG_PATH, $CONFIG_FILE);
-$dest = catfile(@HTML_PATH);
-copy_file($source, $dest);
+# Update *only* composer dependencies
+sub exec_composer {
+    my $cmd = shift;
+    my $dest = catfile(@HTML_PATH);
+
+    if ((system "su -c \"composer -d$dest $cmd\" $VAGRANT_USERNAME") != 0) {
+        print STDERR "composer exited ", $? >> 8, "\n";
+        exit 1;
+    }
+
+    print "Composer: $cmd done.\n";
+}
+
+# Remove everything from HTML directory
+sub remove_all {
+    remove_tree(catfile(@HTML_PATH), {safe => 1, keep_root => 1});
+    print "Cleared HTML directory.\n";
+}
+
+# Copy code to HTML directory
+sub copy_code {
+    my ($source, $files);
+    my $dest = catfile(@HTML_PATH);
+
+    foreach (qw(*.php *.html *.css *.json), catfile(@CONFIG_PATH, $CONFIG_FILE)) {
+        $files = catfile(@REPO_PATH, $_);
+        foreach $source (glob($files)) {
+            exec_rsync($source, $dest);
+        }
+    }
+
+    print "Installed/Updated development code.\n";
+}
+
+# CLI arg = full:  remove/reinstall all code and dependencies to HTML directory
+# CLI arg = update-composer:  Run update only on composer dependencies
+# No CLI arg:  (default) rsync latest dev code to HTML directory
+if (defined $ARGV[0]) {
+    if ($ARGV[0] eq "full") {
+        remove_all();
+        copy_code();
+        exec_composer("install");
+    } elsif ($ARGV[0] eq "update-composer") {
+        exec_composer("update");
+    }
+} else {
+    copy_code();
+}
 
 # All done!
 exit 0;
