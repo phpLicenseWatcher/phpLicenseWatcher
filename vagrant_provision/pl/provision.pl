@@ -8,14 +8,6 @@ use File::Basename qw(fileparse);
 use File::Copy qw(copy);
 use File::Spec::Functions qw(catdir catfile rootdir);
 
-# Help with logging executed commands and their results.
-sub exec_cmd {
-    my $cmd = shift;
-    print "\$ $cmd\n";
-    print "$cmd exited ", $? >> 8, "\n" and exit 1 if ((system $cmd) != 0);
-    print "\n";
-}
-
 # Root required
 print "Root required.\n" and exit 1 if ($> != 0);
 
@@ -59,6 +51,14 @@ my ($source, $dest, $file, $files, $conf, @source_path, @dest_path, @working_pat
 
 # ** -------------------------- END CONFIGURATION --------------------------- **
 
+# Help with logging executed commands and their results.
+sub exec_cmd {
+    my $cmd = shift;
+    print "\$ $cmd\n";
+    print STDERR "$cmd exited ", $? >> 8, "\n" and exit 1 if ((system $cmd) != 0);
+    print "\n";
+}
+
 # Run Ubuntu updates and install required Ubuntu packages
 exec_cmd("apt-get -q update");
 
@@ -88,7 +88,7 @@ foreach (@FLEXLM_FILES) {
     if (copy $source, $dest) {
         print "Copied Flex LM binary $_\n";
     } else {
-        print "Flex LM binary $_: $!\n";
+        print STDERR "Flex LM binary $_: $!\n";
         exit 1;
     }
 
@@ -141,7 +141,7 @@ exec_cmd("apachectl restart");
 print "Copying repository code.\n";
 @working_path = (@REPO_PATH, "vagrant_provision", "pl");
 $file = catfile(@working_path, $UPDATE_CODE);
-exec_cmd("perl $file");
+exec_cmd("perl $file full");
 
 # Done!
 print "All done!\n";

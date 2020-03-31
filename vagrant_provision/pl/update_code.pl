@@ -6,7 +6,7 @@ use warnings;
 use autodie;
 use File::Basename qw(fileparse);
 use File::Path qw(remove_tree);
-use File::Spec::Functions qw(catfile rootdir);
+use File::Spec::Functions qw(catfile catdir rootdir);
 
 # Root required
 print "Root required.\n" and exit 1 if ($> != 0);
@@ -18,6 +18,7 @@ print "Root required.\n" and exit 1 if ($> != 0);
 my @REPO_PATH = (rootdir(), "home", "vagrant", "github_phplw");
 my @HTML_PATH = (rootdir(), "var", "www", "html");
 my @CONFIG_PATH = ("vagrant_provision", "config");
+my $COMPOSER_PACKAGES = "vendor";
 my $CONFIG_FILE = "config.php";
 
 # Users
@@ -35,10 +36,10 @@ sub exec_rsync {
     }
 }
 
-# Update *only* composer dependencies
-sub exec_composer {
+# Run composer to either install or update packages.
+sub composer {
     my $cmd = shift;
-    my $dest = catfile(@HTML_PATH);
+    my $dest = catdir(@REPO_PATH);
 
     if ((system "su -c \"composer -d$dest $cmd\" $VAGRANT_USERNAME") != 0) {
         print STDERR "composer exited ", $? >> 8, "\n";
@@ -49,17 +50,25 @@ sub exec_composer {
 }
 
 # Remove everything from HTML directory
-sub remove_all {
-    remove_tree(catfile(@HTML_PATH), {safe => 1, keep_root => 1});
+sub clear_html_folder {
+    remove_tree(catdir(@HTML_PATH), {safe => 1, keep_root => 1});
     print "Cleared HTML directory.\n";
 }
 
 # Copy code to HTML directory
 sub copy_code {
     my ($source, $files);
-    my $dest = catfile(@HTML_PATH);
+    my $dest = catdir(@HTML_PATH);
+    my @file_list = qw(*.php *.html *.css);
 
-    foreach (qw(*.php *.html *.css *.json), catfile(@CONFIG_PATH, $CONFIG_FILE)) {
+    # Normally, we just want to rsync development code, but a full provision
+    # also requires config file and composer packages.
+    my $option = shift if (@_);
+    if (defined $option && $option eq "full") {
+        push(@file_list, catfile(@CONFIG_PATH, $CONFIG_FILE), $COMPOSER_PACKAGES);
+    }
+
+    foreach (@file_list) {
         $files = catfile(@REPO_PATH, $_);
         foreach $source (glob($files)) {
             exec_rsync($source, $dest);
@@ -71,14 +80,14 @@ sub copy_code {
 
 # CLI arg = full:  remove/reinstall all code and dependencies to HTML directory
 # CLI arg = update-composer:  Run update only on composer dependencies
-# No CLI arg:  (default) rsync latest dev code to HTML directory
+# No CLI arg:  (default) rsync latest development code to HTML directory
 if (defined $ARGV[0]) {
     if ($ARGV[0] eq "full") {
-        remove_all();
-        copy_code();
-        exec_composer("install");
+        composer("install");
+        clear_html_folder();
+        copy_code("full");
     } elsif ($ARGV[0] eq "update-composer") {
-        exec_composer("update");
+        composer("update");
     }
 } else {
     copy_code();
