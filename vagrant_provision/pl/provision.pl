@@ -38,8 +38,8 @@ my $FLEXLM_PERMISSIONS = 0700;
 # DB config
 my $DB_NAME = "phplw_dev";
 my $DB_HOST = "localhost";
-my $DB_USER = "phplw_dev_dbuser";
-my $DB_PASS = "phplw_dev_dbpassword";
+my $DB_USER = "dev_dbuser";
+my $DB_PASS = "dev_dbpassword";
 
 # Other relevant files
 my $SQL_FILE = "phplicensewatcher.sql";

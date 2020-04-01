@@ -6,7 +6,7 @@ use warnings;
 use autodie;
 use File::Basename qw(fileparse);
 use File::Path qw(remove_tree);
-use File::Spec::Functions qw(catfile catdir rootdir);
+use File::Spec::Functions qw(catdir catfile rootdir);
 
 # Root required
 print "Root required.\n" and exit 1 if ($> != 0);
@@ -56,7 +56,7 @@ sub clear_html_folder {
 }
 
 # Copy code to HTML directory
-sub copy_code {
+sub rsync_code {
     my ($source, $files);
     my $dest = catdir(@HTML_PATH);
     my @file_list = qw(*.php *.html *.css);
@@ -85,12 +85,12 @@ if (defined $ARGV[0]) {
     if ($ARGV[0] eq "full") {
         composer("install");
         clear_html_folder();
-        copy_code("full");
+        rsync_code("full");
     } elsif ($ARGV[0] eq "update-composer") {
         composer("update");
     }
 } else {
-    copy_code();
+    rsync_code();
 }
 
 # All done!

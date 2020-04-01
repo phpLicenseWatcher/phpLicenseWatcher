@@ -45,7 +45,7 @@ Command | Purpose
 `vagrant halt` | Gracefully shutdown the VM, which will return the reserved 2GB of RAM.
 `vagrant destroy` | Delete the VM.  It will need to be rebuilt with `vagrant up` to be used again.
 `vagrant up --provision-with update` | Update the VM with your latest code.  You'll also have to refresh your web browser.
-`vagrant up --provision-with full-update` | Remove all code and packages from guest, then reinstall your latest code and composer packages.  Just in case code in the VM goes stale.
+`vagrant up --provision-with full-update` | Remove all code and packages from guest.  Reinstall development code from working branch.  Reinstall composer packages.  Reinstall provision configuration file.  Just in case you need a complete reset.
 `vagrant up --provision-with composer-update` | Checks composer for and installs all updates to packages.
 `vagrant ssh` | Opens a secure shell connection to the VM.  You probably won't need this, but it is available if you want to internally review the server.
 
@@ -55,3 +55,10 @@ Service | Guest Port | Host Port
 SSH | 22 | 2222
 HTTP | 80 | 50080
 MySQL Server | 3306 | 53306
+
+### MySQL Database Info
+**Never use these values in a production system.**
+--- | ---
+Database Name | `phplw_dev`
+Database User | `dev_dbuser`
+Database Password | `dev_dbpassword`
