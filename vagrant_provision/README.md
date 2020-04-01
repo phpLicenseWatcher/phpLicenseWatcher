@@ -19,6 +19,7 @@ Download and install for your operating system:
 ### Setup
 1. Install Vagrant and VirtualBox.
     * Make sure to install the vbguest plugin.  `vagrant plugin install vagrant-vbguest`
+    * You do _not_ need the Virtualbox Extension Pack to run this Vagrant box.
 2. Clone this repository to your host, either with `git` command line or the Github Application.
 3. Go to the root folder of the cloned repository.
 4. On the command line: `vagrant up`
@@ -45,8 +46,8 @@ Command | Purpose
 `vagrant halt` | Gracefully shutdown the VM, which will return the reserved 2GB of RAM.
 `vagrant destroy` | Delete the VM.  It will need to be rebuilt with `vagrant up` to be used again.
 `vagrant up --provision-with update` | Update the VM with your latest code.  You'll also have to refresh your web browser.
-`vagrant up --provision-with full-update` | Remove all code and packages from guest.  Reinstall development code from working branch.  Reinstall composer packages.  Reinstall provision configuration file.  Just in case you need a complete reset.
-`vagrant up --provision-with composer-update` | Checks composer for and installs all updates to packages.
+`vagrant up --provision-with full-update` | Remove all code and packages from guest.  Reinstall development code from working branch.  Reinstall composer packages.  Reinstall provision configuration file.  Do this only if you need a complete reset.
+`vagrant up --provision-with composer-update` | Checks composer for&mdash;and installs&mdash;all updates to packages.
 `vagrant ssh` | Opens a secure shell connection to the VM.  You probably won't need this, but it is available if you want to internally review the server.
 
 ### Forwarded Ports
@@ -58,6 +59,7 @@ MySQL Server | 3306 | 53306
 
 ### MySQL Database Info
 **Never use these values in a production system.**
+Property | Value
 --- | ---
 Database Name | `phplw_dev`
 Database User | `dev_dbuser`
