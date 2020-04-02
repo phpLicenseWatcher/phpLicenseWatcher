@@ -7,7 +7,7 @@ print_header("License Denials");
 
 <h1>License Denials</h1>
 
- 
+
 <form>
 <p>Sort by
 <select onChange='this.form.submit();' name="sortby">
@@ -17,7 +17,7 @@ print_header("License Denials");
 </select>
 <input type="submit" value="Submit"/></p>
 </form>
-    
+
 <?php
 
 ##############################################################
@@ -25,7 +25,7 @@ print_header("License Denials");
 ##############################################################
 require_once ("HTML/Table.php");
 require_once 'DB.php';
-    
+
 $tableStyle = "border=\"1\" cellpadding=\"1\" cellspacing=\"2\" ";
 
 # Create a new table object
@@ -38,7 +38,7 @@ $headerStyle = "style=\"background: yellow;\"";
 $colHeaders = array("Date", "Feature", "Total number of denials");
 $table->addRow($colHeaders, $headerStyle, "TH");
 
-  
+
 ################################################################
 # First let's get license usage for the product specified in $feature
 ##############################################################
@@ -86,7 +86,7 @@ while ($row = $recordset->fetchRow()) {
 if ( $_GET['sortby'] == "feature"){
 	$sql = "SELECT `flmevent_date`,`flmevent_feature`,count(*) FROM `flexlm_events` WHERE `flmevent_type`='DENIED' GROUP BY `flmevent_feature`,`flmevent_date` ORDER BY `flmevent_feature`,`flmevent_date` DESC;";
 }else if ( $_GET['sortby'] == "numdenials" ){
-	$sql = "SELECT `flmevent_date`,`flmevent_feature`,count(*) AS `numdenials` FROM `flexlm_events` WHERE `flmevent_type`='DENIED'  GROUP BY `flmevent_date`,`flmevent_feature` ORDER BY `numdenials` DESC;";    
+	$sql = "SELECT `flmevent_date`,`flmevent_feature`,count(*) AS `numdenials` FROM `flexlm_events` WHERE `flmevent_type`='DENIED'  GROUP BY `flmevent_date`,`flmevent_feature` ORDER BY `numdenials` DESC;";
 }else{
 	$sql = "SELECT `flmevent_date`,`flmevent_feature`,count(*) FROM `flexlm_events` WHERE `flmevent_type`='DENIED' GROUP BY `flmevent_date`,`flmevent_feature` ORDER BY `flmevent_date` DESC,`flmevent_feature`;";
 }
@@ -104,17 +104,17 @@ while ($row = $recordset->fetchRow()) {
 	$table->AddRow($row, "style=\"background: " . $features_color[$row[1]].";\"");
 }
 
-$recordset->free();    
+$recordset->free();
 
 $db->disconnect();
 
 ################################################################
 # Right align the 3 column
 ################################################################
-$table->updateColAttributes(2,"align=\"right\""); 
+$table->updateColAttributes(2,"align=\"right\"");
 
 $table->display();
 
 
 ?>
-<?php echo footer(); ?>
+<?php print_footer(); ?>
