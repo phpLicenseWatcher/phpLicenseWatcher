@@ -21,27 +21,27 @@ if (DB::isError($db)) {
   die ($db->getMessage());
 }
 
-    
+
 
     $sql = "SELECT feature, label FROM feature WHERE showInLists = 1 ORDER BY feature";
 
     $recordset = $db->query($sql);
-  
+
     if (DB::isError($recordset)) {
         die ($recordset->getMessage());
     }
 
     while ($row = $recordset->fetchRow()){
- 
+
        $label = $row[1];
        if( $label == "" ){
            $label =$row[0];
        }
-        
+
        echo ('<li><a href="monitor_detail.php?feature=' . $row[0] . '">' . $label . '</a></li>');
     }
 
-  
+
     $recordset->free();
 
 $db->disconnect();
@@ -52,4 +52,4 @@ $db->disconnect();
 </ul>
 
 
-<?php echo footer(); ?>
+<?php print_footer(); ?>

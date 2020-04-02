@@ -8,7 +8,7 @@ print_header("License Checkouts");
 
 <h1>License Checkouts</h1>
 
-   
+
 <form>
 <p>Sort by
 <select onChange='this.form.submit();' name="sortby">
@@ -18,7 +18,7 @@ print_header("License Checkouts");
 </select>
 </p>
 </form>
-    
+
 <?php
 
 ##############################################################
@@ -26,7 +26,7 @@ print_header("License Checkouts");
 ##############################################################
 require_once ("HTML/Table.php");
 require_once 'DB.php';
-    
+
 $tableStyle = "border=\"1\" cellpadding=\"1\" cellspacing=\"2\"";
 
 # Create a new table object
@@ -39,7 +39,7 @@ $headerStyle = "style=\"background: yellow;\"";
 $colHeaders = array("Date", "User", "Feature", "Total number of checkouts");
 $table->addRow($colHeaders, $headerStyle, "TH");
 
-  
+
 ################################################################
 # First let's get license usage for the product specified in $feature
 ##############################################################
@@ -104,17 +104,17 @@ while ($row = $recordset->fetchRow()) {
 
 $table->updateColAttributes(3,"align=\"center\"");
 
-$recordset->free();    
+$recordset->free();
 
 $db->disconnect();
 
 ################################################################
 # Right align the 3 column
 ################################################################
-$table->updateColAttributes(2,"align=\"right\""); 
+$table->updateColAttributes(2,"align=\"right\"");
 
 $table->display();
 
 
 ?>
-<?php echo footer(); ?>
+<?php print_footer(); ?>

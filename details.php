@@ -34,7 +34,7 @@ if ( $_GET['listing'] == 1 ) {
 
 	$today = mktime(0,0,0,date("m"),date("d"),date("Y"));
 
-        
+
 	# Create a new table object
 	$table = new HTML_Table("class='table' style='width:100%;' ");
 
@@ -74,9 +74,9 @@ if ( $_GET['listing'] == 1 ) {
 			# this is since you can have licenses with different expiration
 			$total_licenses += $feature_array[$p]["num_licenses"];
 			$feature_table->addRow(array($feature_array[$p]["num_licenses"] . " license(s) expire(s) in ". $feature_array[$p]["days_to_expiration"] . " day(s) Date of expiration: " . $feature_array[$p]["expiration_date"] ), "colspan=\"3\"");
-			
+
 			#######################################################################
-			# Check whether license is close to expiration date			
+			# Check whether license is close to expiration date
 			#######################################################################
 			if ( $feature_array[$p]["days_to_expiration"] < 4000 ) {
 
@@ -116,7 +116,7 @@ if ( $_GET['listing'] == 1 ) {
 	echo ("<p>Following is the list of licenses currently being used. Licenses that are currently not in use are not shown.</p>");
 
 
-	
+
 
 	# If person is filtering for certain features
 	if ( isset($_GET['filter_feature']) ) {
@@ -124,13 +124,13 @@ if ( $_GET['listing'] == 1 ) {
 		foreach ( $_GET['filter_feature'] as $key ) {
 			echo("(" . str_replace(":","", $key) . ") " );
 		}
-	
+
 		echo("</span></p>");
 	}
-	
+
 	######################################################################
 	# This is a hack so we can support both specifying multiple
-	# servers as comma separated arguments or multiple_servers array 
+	# servers as comma separated arguments or multiple_servers array
 	######################################################################
 	if ( isset($_GET['multiple_servers']) ){
 		$current_server = $_GET['multiple_servers'];
@@ -139,7 +139,7 @@ if ( $_GET['listing'] == 1 ) {
 	}
 
 	# We'll need timestamp class to get a human readable time difference
-	
+
 
 	#######################################################
 	# Get names of different colors
@@ -216,17 +216,17 @@ if ( $_GET['listing'] == 1 ) {
 				for ( $j = 0 ; $j <= $i ; $j++ ) {
 					if ( ! isset($_GET['filter_feature']) || in_array($license_array[$j]["feature"], $_GET['filter_feature']) ) {
                                                 $feature = $license_array[$j]["feature"] ;
-                                            
+
                                                 $graph_url = "monitor_detail.php?feature=$feature";
-                                                
+
 						# How many licenses are currently used
 						$licenses_available = $license_array[$j]["num_licenses"] - $license_array[$j]["licenses_used"];
 						$license_info = "Total of " . $license_array[$j]["num_licenses"] . " licenses, " .
 						$license_array[$j]["licenses_used"] . " currently in use, <b>" . $licenses_available . " available</b>";
-                                                
+
                                                 $license_info .= "<br/><a href='$graph_url'>Historical Usage</a>";
 
-						
+
 						$table->addRow(array($license_array[$j]["feature"], "$licenses_available", $license_info), "style=\"background: $color[$j];\"");
 
 						for ( $k = 0; $k < sizeof($users[$current_server[$n]][$j]) ; $k++ ) {
@@ -240,10 +240,10 @@ if ( $_GET['listing'] == 1 ) {
 							################################################################
 							$line = explode(", start ", $users[$current_server[$n]][$j][$k]);
 							preg_match("/(.+?) (.+?) (\d+):(\d+)/i", $line[1], $line2);
-				
+
 							# Convert the date and time ie 12/5 9:57 to UNIX time stamp
 							$time_checkedout = strtotime ($line2[2] . " " . $line2[3] . ":" . $line2[4]);
-			
+
 							$time_difference = "";
 
 							################################################################
@@ -260,31 +260,31 @@ if ( $_GET['listing'] == 1 ) {
 							}else {
 								# Get the time difference
 								$t = new timespan( $now, $time_checkedout );
-		
+
 								# Format the date string
 								if ( $t->years > 0) $time_difference .= $t->years . " years(s), ";
 								if ( $t->months > 0) $time_difference .= $t->months . " month(s), ";
 								if ( $t->weeks > 0) $time_difference .= $t->weeks . " week(s), ";
 								if ( $t->days > 0) $time_difference .= " " . $t->days . " day(s), ";
 								if ( $t->hours > 0) $time_difference .= " " . $t->hours . " hour(s), ";
-								$time_difference .= $t->minutes . " minute(s)";	
+								$time_difference .= $t->minutes . " minute(s)";
 							}
-		
+
 							# Output the user line
-							
+
                                                         $user_line = $users[$current_server[$n]][$j][$k];
                                                         $user_line_parts = explode( ' ', trim($user_line) );
-                                                        
+
                                                         $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> " ;
                                                         $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> " ;
-                                                        
+
 							$table->addRow(array( "&nbsp;", "" ,$user_line_formated, $time_difference), "style=\"background: $color[$j];\"");
-							
+
 
 						}
 					}
 
-					
+
 				}
 
 			     # Display the table
@@ -300,10 +300,10 @@ if ( $_GET['listing'] == 1 ) {
 	} // end for loop
 
 	// End of current usage
-	
+
 } // end if ( $listing == 1 )
 ?>
 
 
 
-<?php echo footer(); ?>
+<?php print_footer(); ?>
