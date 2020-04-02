@@ -39,8 +39,8 @@ $table->addRow($colHeaders, $headerStyle, "TH");
 
 for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 	$data = run_command($lmutil_loc . " lmstat -c " . $servers[$i]);
-        
-        
+
+
 
 	$status_string = "";
 	$detaillink="<a href=\"details.php?listing=0&amp;server=" . $i . "\">Details</a>" ;
@@ -61,7 +61,7 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
                             $lmgrdversion = preg_replace("/.*license server UP/i ", "", $line);
                             $lmmaster = substr($line,0,strpos($line,':',0));
                     }
-                
+
                 }
 
 		if ( preg_match ("/Cannot connect to license server/i", $line, $out) ) {
@@ -103,7 +103,7 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 			preg_replace(".*license server UP /i", "", $line);
 			break;
 		}
-		
+
 
 	}
 
@@ -116,8 +116,8 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 		$detaillink="No details";
 		$listingexpirationlink="";
 	}
-	
-	
+
+
 	$table->AddRow(array($servers[$i],$description[$i],$status_string,
 			 $detaillink,
 			 $listingexpirationlink,
@@ -140,7 +140,7 @@ $table->display();
 <?php
 
 
-# Check whether we are monitoring LUM servers. 
+# Check whether we are monitoring LUM servers.
 if ( isset ($i4blt_loc) && $i4blt_loc != "" ) {
 
 echo ("<h2>LUM Servers</h2>");
@@ -185,17 +185,17 @@ $table->addRow($colHeaders, $headerStyle, "TH");
 // ===========================================================================
 // ===                             S e r v e r s                           ===
 // ===========================================================================
-// 
+//
 //   Server Name:     ip:linux.site
 //   Target ID:       608cf8f8
 //   Target Type:     Linux
-//   Server Type:     Network   
+//   Server Type:     Network
 //   Load:            Null or Not Available
-//   Load Threshold:  90          
-//   Trace:           none       
-// 
+//   Load Threshold:  90
+//   Trace:           none
+//
 // ===========================================================================
-// 
+//
 //                           ==========================
 //                           === End of Server List ===
 //                           ==========================
@@ -229,4 +229,4 @@ $table->display();
 ?>
 
 
-<?php echo footer(); ?>
+<?php print_footer(); ?>

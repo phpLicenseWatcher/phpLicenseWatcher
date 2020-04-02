@@ -1,15 +1,38 @@
-#main-wrap{
+/* Do not rely on the browser for default values */
+body {
+    color: black;
+    background-color: white;
+    font: 16px;
+}
+
+#main-wrap {
     margin-top: 50px;
 }
 
-td.up{
-    background-color:green;
+/* We will use crimson instead of red for contrast ratio > 4.5:1 */
+/* Not all browsers correctly interpret 'crimson' as #dc143c */
+.red-text {
+    color: #dc143c;
 }
 
-td.down{
-    color:red;
+.green-text {
+    color: green;
 }
 
-td.warning{
-    color:orange;
+table#install-check {
+    width: 60%;
+    margin-left: 20%;
+    margin-right: 20%;
+}
+
+td.up {
+    background-color: green;
+}
+
+td.down {
+    color: #dc143c;
+}
+
+td.warning {
+    color: orange;
 }
