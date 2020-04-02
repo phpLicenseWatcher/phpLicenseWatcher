@@ -26,7 +26,7 @@ $table_val  = $test ? "Installed" : "Not Installed";
 $table_mark = $test ? PASS_MARK : FAIL_MARK;
 
 $test        = is_executable($lmutil_loc);
-$lmutil_val  = $test ? "Is executable" : "Not executable (maybe check permissions?)";
+$lmutil_val  = $test ? "Is Executable" : "Not Executable (maybe check permissions?)";
 $lmutil_mark = $test ? PASS_MARK : FAIL_MARK;
 
 $test = (bool) function() {
@@ -41,46 +41,46 @@ $db_val  = $test ? "Connection OK" : "Connection Failed.";
 $db_mark = $test ? PASS_MARK : FAIL_MARK;
 
 print_header();
-?>
 
-<h1>Check PHPlicensewatcher installation</h1>
+print <<< HTML
+<h1>Check PHPlicensewatcher Installation</h1>
 <hr/>
 
 <p>This will check whether PHPlicensewatcher has been properly installed.
 This is not an exhaustive check but checks for common installation and configuration issues.</p>
 
 <table id="install-check">
-    <caption>PHPlicensewatcher Installation Check</caption>
     <tr>
         <th>TEST</th>
         <th>VALUE</th>
         <th>RESULT</th>
     </tr><tr>
         <td>PHP Version</td>
-        <td><?php print $php_val; ?></td>
-        <td><?php print $php_mark; ?></td>
+        <td>{$php_val}</td>
+        <td>{$php_mark}</td>
     </tr><tr>
         <td>Config File</td>
-        <td><?php print $config_val; ?></td>
-        <td><?php print $config_mark; ?></td>
+        <td>{$config_val}</td>
+        <td>{$config_mark}</td>
     </tr><tr>
         <td>GD Support for Graphs</td>
-        <td><?php print $gd_val; ?></td>
-        <td><?php print $gd_mark; ?></td>
+        <td>{$gd_val}</td>
+        <td>{$gd_mark}</td>
     </tr><tr>
         <td>Pear HTML Table Class</td>
-        <td><?php print $table_val; ?></td>
-        <td><?php print $table_mark; ?></td>
+        <td>{$table_val}</td>
+        <td>{$table_mark}</td>
     </tr><tr>
-        <td><code><?php print $lmutil_loc; ?></code></td>
-        <td><?php print $lmutil_val; ?></td>
-        <td><?php print $lmutil_mark; ?></td>
+        <td><code>{$lmutil_loc}</code></td>
+        <td>{$lmutil_val}</td>
+        <td>{$lmutil_mark}</td>
     </tr><tr>
-        <td>Database connectivity</td>
-        <td><?php print $db_val; ?></td>
-        <td><?php print $db_mark; ?></td>
+        <td>Database Connectivity</td>
+        <td>{$db_val}</td>
+        <td>{$db_mark}</td>
     </tr>
 </table>
-<?php
-    print_footer();
+HTML;
+
+print_footer();
 ?>
