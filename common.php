@@ -16,12 +16,12 @@ if (is_readable(__DIR__ . '/config.php')) {
 	require_once(__DIR__ . '/config.php');
 } else {
     print_header();
-	print <<< HTML
+	  print <<< HTML
 <h1>Missing Component</h1>
 <p>Configuration file <code>config.php</code> does not exist.  Please notify your system administrator.
 HTML;
-	print_footer();
-	exit;
+	  print_footer();
+	  exit;
 }
 
 function print_header() {
@@ -33,7 +33,7 @@ function print_footer() {
 }
 
 function print_sql ($sql) {
-	print "<span style='color: crimson;'>Executing SQL: </span> <span style='color: blue;'>" . $sql . "</span><br>\n";
+	print "<span class='red-text'>Executing SQL: </span> <span style='color: blue;'>" . $sql . "</span><br>\n";
 }
 
 ?>
