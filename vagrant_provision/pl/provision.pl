@@ -21,7 +21,7 @@ my @HTML_PATH = (rootdir(), "var", "www", "html");
 my @APACHE_PATH = (rootdir(), "etc", "apache2");
 
 # Packages needed by OS
-my @REQUIRED_PACKAGES = ("apache2", "php", "php-gd", "php-db", "php-mysql", "mysql-server", "mysql-client", "lsb", "composer");
+my @REQUIRED_PACKAGES = ("apache2", "php", "php-xml", "php-gd", "php-mysql", "mysql-server", "mysql-client", "lsb", "composer");
 
 # Non super user account.  Some package systems run better when not as root.
 my $NOT_SUPERUSER = "vagrant";
