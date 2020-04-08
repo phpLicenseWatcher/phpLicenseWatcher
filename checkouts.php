@@ -55,7 +55,7 @@ if (DB::isError($db)) {
 	die ($db->getMessage());
 }
 
-$sql = "SELECT DISTINCT `flmevent_feature` FROM `flexlm_events` WHERE `flmevent_type`='OUT'";
+$sql = "SELECT DISTINCT `feature` FROM `events` WHERE `type`='OUT'";
 
 $recordset = $db->query($sql);
 
@@ -81,11 +81,11 @@ while ($row = $recordset->fetchRow()) {
 # Check what we want to sort data on
 ################################################################
 if ( $_GET['sortby'] == "date"){
-	$sql = "SELECT `flmevent_date`,`flmevent_user`,MAX(`flmevent_feature`),count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_date`,`flmevent_user` ORDER BY `flmevent_date`,`flmevent_user`,`flmevent_feature` DESC;";
+	$sql = "SELECT `date`,`user`,MAX(`feature`),count(*) FROM `events` WHERE `type`='OUT' GROUP BY `date`,`user` ORDER BY `date`,`user`,`feature` DESC;";
 }else if ( $_GET['sortby'] == "user" ){
-	$sql = "SELECT `flmevent_date`,`flmevent_user`,MAX(`flmevent_feature`),count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_user`,`flmevent_date` ORDER BY `flmevent_user`,`flmevent_date`,`flmevent_feature` DESC;";
+	$sql = "SELECT `date`,`user`,MAX(`feature`),count(*) FROM `events` WHERE `type`='OUT' GROUP BY `user`,`date` ORDER BY `user`,`date`,`feature` DESC;";
 }else{
-	$sql = "SELECT `flmevent_date`,MAX(flmevent_user),`flmevent_feature`,count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_feature`,`flmevent_date` ORDER BY `flmevent_feature`,`flmevent_date`,`flmevent_user` DESC;";
+	$sql = "SELECT `date`,MAX(user),`feature`,count(*) FROM `events` WHERE `type`='OUT' GROUP BY `feature`,`date` ORDER BY `feature`,`date`,`user` DESC;";
 }
 
 if ( isset($debug) && $debug == 1 )

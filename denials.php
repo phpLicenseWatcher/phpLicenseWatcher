@@ -57,7 +57,7 @@ if (DB::isError($db)) {
 ################################################################
 # Get a list of features that have been denied :-)
 ################################################################
-$sql = "SELECT DISTINCT flmevent_feature FROM flexlm_events WHERE flmevent_type='DENIED'";
+$sql = "SELECT DISTINCT feature FROM events WHERE type='DENIED'";
 
 $recordset = $db->query($sql);
 
@@ -84,11 +84,11 @@ while ($row = $recordset->fetchRow()) {
 # Check what we want to sort data on
 ################################################################
 if ( $_GET['sortby'] == "feature"){
-	$sql = "SELECT `flmevent_date`,`flmevent_feature`,count(*) FROM `flexlm_events` WHERE `flmevent_type`='DENIED' GROUP BY `flmevent_feature`,`flmevent_date` ORDER BY `flmevent_feature`,`flmevent_date` DESC;";
+	$sql = "SELECT `date`,`feature`,count(*) FROM `events` WHERE `type`='DENIED' GROUP BY `feature`,`date` ORDER BY `feature`,`date` DESC;";
 }else if ( $_GET['sortby'] == "numdenials" ){
-	$sql = "SELECT `flmevent_date`,`flmevent_feature`,count(*) AS `numdenials` FROM `flexlm_events` WHERE `flmevent_type`='DENIED'  GROUP BY `flmevent_date`,`flmevent_feature` ORDER BY `numdenials` DESC;";
+	$sql = "SELECT `date`,`feature`,count(*) AS `numdenials` FROM `events` WHERE `type`='DENIED'  GROUP BY `date`,`feature` ORDER BY `numdenials` DESC;";
 }else{
-	$sql = "SELECT `flmevent_date`,`flmevent_feature`,count(*) FROM `flexlm_events` WHERE `flmevent_type`='DENIED' GROUP BY `flmevent_date`,`flmevent_feature` ORDER BY `flmevent_date` DESC,`flmevent_feature`;";
+	$sql = "SELECT `date`,`feature`,count(*) FROM `events` WHERE `type`='DENIED' GROUP BY `date`,`feature` ORDER BY `date` DESC,`feature`;";
 }
 
 if ( isset($debug) && $debug == 1 )

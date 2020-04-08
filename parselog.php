@@ -46,7 +46,7 @@ $mydate[] = date("Y-m-d", mktime (0,0,0,date("m"),date("d")-1,  date("Y")));
 #########################################################
 # Loop through the log files specified in config.php
 #########################################################
-for ( $k = 0 ; $k < sizeof($log_file) ; $k++ ) { 
+for ( $k = 0 ; $k < sizeof($log_file) ; $k++ ) {
 
     # Open the log file
     $file = fopen ( $log_file[$k], "r");
@@ -57,50 +57,50 @@ for ( $k = 0 ; $k < sizeof($log_file) ; $k++ ) {
             exit;
         } else {
             echo "Processing file " . $log_file[$k] . "\n-------------------------\n";
-        }  
+        }
 
         #####################################################
         # Loop through the file
         #####################################################
         while (!feof ($file)) {
-    
+
             $line = fgets ($file, 1024);
 	#	print $line;
             ###################################################
             # Look for the time stamp. Time stamp is actually current date
             # which is logged only when FlexLM starts the log or at midnight.
-            ###################################################            
+            ###################################################
             if (preg_match ("/TIMESTAMP (.*)/i", $line, $out2)) {
 
                 $timestamp_date =  convert_to_mysql_date($out2[1]);
 
-            } else 
+            } else
 
             # if ($timestamp_date && in_array($timestamp_date, $mydate) && eregi('(.*) \((.*)\) DENIED: "(.*)" (.*)  (.*)', $line, $out2)) {
             if (isset($timestamp_date) && preg_match('/(.*) \((.*)\) (IN:|OUT:|DENIED:) "(.*)" (.*)/i', $line, $out2)) {
-            
+
                 # Strip :
                 $log_event = substr($out2[3],0, strpos($out2[3],":"));
                 # Strip username from the username@hostname
                 $username = substr($out2[5],0, strpos($out2[5],"@"));
-                
+
 				preg_match('/(.*) \((.*)\) (OUT:|DENIED:) "(.*)" (.*)  (.*)/i', $line, $out3);
-					
-				if ( !isset( $out3[6] ) ) 
+
+				if ( !isset( $out3[6] ) )
 						$out2[6] = "";
-				else 
+				else
 						$out2[6] = $out3[6];
 
 				unset($out3);
-								
-                $sql = "INSERT IGNORE INTO flexlm_events (flmevent_date, flmevent_time, flmevent_type, flmevent_feature, flmevent_user, flmevent_reason) 
+
+                $sql = "INSERT IGNORE INTO events (date, time, type, feature, user, reason) 
                 VALUES ('" . $timestamp_date . "','" . trim($out2[1]) . "','" . $log_event ."','" . $out2[4] . "','" . $username . "','" . trim($out2[6]) . "')";
 
 		unset($out2);
-                
+
                 if ( isset($debug) && $debug == 1 )
                 	print_sql ($sql);
-                
+
                 $recordset = $db->query($sql);
 
                  if (DB::isError($recordset)) {
@@ -113,7 +113,7 @@ for ( $k = 0 ; $k < sizeof($log_file) ; $k++ ) {
 
 
         }
-    
+
 # Close the log file
 fclose($file);
 

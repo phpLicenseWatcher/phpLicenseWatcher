@@ -12,7 +12,7 @@ require_once(__DIR__."/common.php");
 ###################################################
 # We are using PEAR's DB abstraction library
 ###################################################
-require_once("DB.php");    
+require_once("DB.php");
 
 
 ################################################################
@@ -28,7 +28,7 @@ if (DB::isError($db)) {
 $today = date("Y-m-d");
 
 for ( $i = 0 ; $i < sizeof($servers); $i++ ) {
-  
+
    $fp = popen($lmutil_loc . " lmstat -a -c " . $servers[$i], "r");
 
    while ( !feof ($fp) ) {
@@ -42,9 +42,9 @@ for ( $i = 0 ; $i < sizeof($servers); $i++ ) {
 		# Remove the : in the end of the string
 		$feature = str_replace(":", "", $out[2]);
                 # Return the number
-		$sql = "INSERT INTO licenses_available (flmavailable_server,flmavailable_date,flmavailable_product,flmavailable_num_licenses) VALUES ('$servers[$i]','" . 
+		$sql = "INSERT INTO available (server,date,product,num_licenses) VALUES ('$servers[$i]','" . 
 			$today . "','" . $feature . "'," . $out[6] . ")";
-                
+
                 if ( isset($debug) && $debug == 1 )
 	              	print_sql ($sql);
 

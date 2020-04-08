@@ -14,7 +14,7 @@ require_once("DB.php");
 if ( isset($db_hostname) && isset($db_username) && isset($db_password) ) {
 
 	$db = DB::connect($dsn, true);
-	
+
 	if (DB::isError($db)) {
 		die ($db->getMessage());
 	}
@@ -41,8 +41,8 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 
 
           if ( preg_match("/(Total of) (.*) (license[s]? issued;  Total of) (.*) (license[s]? in use)/i", $line, $items ) ) {
-	  			$license_array[] = array ( 
-				"feature" => substr($out[2],0,strpos($out[2],":")), 
+	  			$license_array[] = array (
+				"feature" => substr($out[2],0,strpos($out[2],":")),
 					"licenses_used" => $items[4] ) ;
                                 unset($out);
 				unset($items);
@@ -64,14 +64,14 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 	############################################################################
 	if ( isset($db_hostname) && isset($db_username) && isset($db_password) ) {
 
-		$sql = "INSERT INTO license_usage (flmusage_server,flmusage_product,flmusage_date,flmusage_time,flmusage_users) VALUES ('$servers[$i]','" .
+		$sql = "INSERT INTO usage (server,product,date,time,users) VALUES ('$servers[$i]','" .
 		$license_array[$j]["feature"] . "', '$date', '$time'," . $license_array[$j]["licenses_used"] . ")";
-	
+
 		if ( isset($debug) && $debug == 1 )
 			print_sql ($sql);
-		
+
 		$recordset = $db->query($sql);
-	
+
 		if (DB::isError($recordset)) {
 			die ($recordset->getMessage());
 		}
