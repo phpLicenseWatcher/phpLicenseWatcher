@@ -62,10 +62,10 @@ DROP TABLE IF EXISTS `usage` ;
 
 CREATE TABLE IF NOT EXISTS `usage` (
   `server_id` INT NOT NULL,
-  `product` VARCHAR(80) NOT NULL,
   `time` DATETIME NOT NULL,
+  `product` VARCHAR(80) NOT NULL,
   `users` INT NOT NULL,
-  PRIMARY KEY (`product`, `server_id`, `time`),
+  PRIMARY KEY (`server_id`, `time`, `product`),
   INDEX `fk_usage_server1_idx` (`server_id` ASC),
   CONSTRAINT `fk_usage_server1`
     FOREIGN KEY (`server_id`)
@@ -82,11 +82,11 @@ DEFAULT CHARACTER SET = utf8;
 DROP TABLE IF EXISTS `available` ;
 
 CREATE TABLE IF NOT EXISTS `available` (
-  `date` DATE NOT NULL,
   `server_id` INT NOT NULL,
+  `date` DATE NOT NULL,
   `product` VARCHAR(80) NOT NULL,
   `num_licenses` INT NOT NULL,
-  PRIMARY KEY (`date`, `product`, `num_licenses`, `server_id`),
+  PRIMARY KEY (`server_id`, `date`, `product`, `num_licenses`),
   INDEX `fk_available_server_idx` (`server_id` ASC),
   CONSTRAINT `fk_available_server`
     FOREIGN KEY (`server_id`)
