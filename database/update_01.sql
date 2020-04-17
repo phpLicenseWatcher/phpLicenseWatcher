@@ -63,14 +63,13 @@ SET `available`.`server_id`=`servers`.`id`
 WHERE `available`.`flmavailable_server`=`servers`.`name`;
 
 -- Fix primary key, establish foreign key
--- TO DO: fix ERROR 1215 (HY000): Cannot add foreign key constraint
 ALTER TABLE `available`
     DROP PRIMARY KEY,
     ADD PRIMARY KEY (`server_id`, `date`, `product`, `num_licenses`),
     DROP COLUMN `flmavailable_server`,
     ADD CONSTRAINT `fk_usage_server1`
         FOREIGN KEY (`server_id`)
-        REFERENCES `server` (`id`)
+        REFERENCES `servers` (`id`)
         ON DELETE NO ACTION
         ON UPDATE NO ACTION;
 
