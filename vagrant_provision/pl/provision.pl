@@ -1,6 +1,8 @@
 #!/usr/bin/env perl
 
 # This script will provision a Vagrant Virtualbox VM for development.
+# Note that we are restricted to core perl as this script is run *before* we can
+# get any additional perl libraries.
 use strict;
 use warnings;
 use autodie;
@@ -9,7 +11,7 @@ use File::Copy qw(copy);
 use File::Spec::Functions qw(catdir catfile rootdir);
 
 # Root required
-print "Root required.\n" and exit 1 if ($> != 0);
+print STDERR "Root required.\n" and exit 1 if ($> != 0);
 
 # ** ---------------------------- CONFIGURATION ----------------------------- **
 # TO DO: maybe create common config file for provision.pl and update_code.pl
@@ -36,15 +38,27 @@ my $FLEXLM_OWNER_GID = getgrnam $FLEXLM_OWNER;
 my $FLEXLM_PERMISSIONS = 0700;
 
 # DB config
-my $DB_NAME = "phplw_dev";
-my $DB_HOST = "localhost";
-my $DB_USER = "dev_dbuser";
-my $DB_PASS = "dev_dbpassword";
+my @DB_HOSTS = ("localhost", "_gateway");
+my @DB_CONFIG_PATH = (rootdir(), "etc", "mysql", "mysql.conf.d");
+my $DB_CONFIG_FILE = "mysqld.cnf";
+my $DB_NAME = "vagrant";
+my $DB_USER = "vagrant";
+my $DB_PASS = "vagrant";
 
 # Other relevant files
 my $SQL_FILE = "phplicensewatcher.sql";
 my $CONF_FILE = "phplw.conf";
 my $UPDATE_CODE = "update_code.pl";
+
+# IP address to bind MySQL to.
+# The VM is supposed to have only one IP address outside of 127.0.0.0/8 and it
+# should be within 10.0.2.0/24 via Virtualbox's NAT.  So, `hostname -I` should
+# return only one result.  Due to a small level of uncertainty, we'll
+# specifically use the first result found within 10.0.2.0/24.
+@hosts = split / /, `hostname -I`;
+chomp (my @filtered_hosts = grep(/10\.0\.2\.\d{1,3}/, @hosts));
+my $IP = $filtered_hosts[0];
+print STDERR "IP within 10.0.2.0/24 expected, not found.  MySQL may not be accessible.\nIP(s) found: @hosts\n" if (!defined $IP);
 
 # Vars and arrays
 my ($source, $dest, $file, $files, $conf, @source_path, @dest_path, @working_path);
@@ -100,16 +114,42 @@ foreach (@FLEXLM_FILES) {
 }
 
 # Setup mysql
-# Create database
+# (1) bind IP in cfg
+$source = catfile(@DB_CONFIG, $DB_CONFIG_FILE);
+$dest = catfile(@DB_CONFIG, $DB_CONFIG_FILE . ".bak");
+
+# move original file to a backup
+rename($source, $dest);
+
+# Swap so we can read from backup ($source) and write adjustments to original ($dest).
+$file = $source;
+$source = $dest;
+$dest = $file;
+
+open(my $source_fh, "<:encoding(UTF-8)", $source);
+open(my $dest_fh, ">:encoding(UTF-8)", $dest);
+while(<$source_fh>) {
+    $_ =~ s/bind\-address\s+= 127\.0\.0\.1/bind\-address = $IP/g;
+    print $dest_fh $_;
+}
+
+close($source_fh);
+close($dest_fh);
+
+# (2) Create database
 print "\n";
 print "Setting up mysql database.  Password security warning can be ignored.\n";
 exec_cmd("mysql -e \"CREATE DATABASE $DB_NAME;\"");
 
-# Create database user (no password)
-exec_cmd("mysql -e \"CREATE USER '$DB_USER'\@'$DB_HOST' IDENTIFIED BY '$DB_PASS';\"");
-exec_cmd("mysql -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'\@'$DB_HOST';\"");
+# (3) Create database user account (various connection hosts)
+foreach (@DB_HOSTS) {
+    exec_cmd("mysql -e \"CREATE USER '$DB_USER'\@'$_' IDENTIFIED BY '$DB_PASS';\"");
+    exec_cmd("mysql -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'\@'$_';\"");
+}
 
-# Setup database schema
+exec_cmd("mysql -e \"FLUSH PRIVILEGES;\"");
+
+# (4) Setup database schema
 $file = catfile(@REPO_PATH, $SQL_FILE);
 exec_cmd("mysql --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < $file");
 
