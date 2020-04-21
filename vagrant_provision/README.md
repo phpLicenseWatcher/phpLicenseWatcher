@@ -40,7 +40,9 @@ You may develop code for this repository on your host.  Make sure the VM is runn
 * A MySQL database viewer can connect to the VM server at `localhost`, port `53306`.
 
 ### Tips and Tricks
-* You can use secure copy ('scp') to upload a file to the VM without it being tracked by git:`scp -P 2222 my_file vagrant@localhost:`  Password is `vagrant`.
+* You can use secure copy ('scp') to upload a file to the VM without it being tracked by git:<br />
+`scp -P 2222 my_file vagrant@localhost:`
+    * Password is `vagrant`.
 * The VM can use the host's Internet connection.
     * Virtualbox typically assigns the VM an IP of `10.0.2.15`.  This is not visible from the host due to Virtualbox's NAT firewall.  Instead, certain ports are forwarded to the host at `localhost`.
     * Virtualbox's NAT firewall is meant to block connections to the VM from the Internet.
