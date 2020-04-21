@@ -55,7 +55,7 @@ my $UPDATE_CODE = "update_code.pl";
 # should be within 10.0.2.0/24 via Virtualbox's NAT.  So, `hostname -I` should
 # return only one result.  Due to a small level of uncertainty, we'll
 # specifically use the first result found within 10.0.2.0/24.
-@hosts = split / /, `hostname -I`;
+my @hosts = split / /, `hostname -I`;
 chomp (my @filtered_hosts = grep(/10\.0\.2\.\d{1,3}/, @hosts));
 my $IP = $filtered_hosts[0];
 print STDERR "IP within 10.0.2.0/24 expected, not found.  MySQL may not be accessible.\nIP(s) found: @hosts\n" if (!defined $IP);
@@ -114,27 +114,34 @@ foreach (@FLEXLM_FILES) {
 }
 
 # Setup mysql
-# (1) bind IP in cfg
-$source = catfile(@DB_CONFIG, $DB_CONFIG_FILE);
-$dest = catfile(@DB_CONFIG, $DB_CONFIG_FILE . ".bak");
+# (1) bind IP in cfg if IP was found.
+if (defined $IP) {
+    $source = catfile(@DB_CONFIG_PATH, $DB_CONFIG_FILE);
+    $dest = catfile(@DB_CONFIG_PATH, $DB_CONFIG_FILE . ".bak");
 
-# move original file to a backup
-rename($source, $dest);
+    # move original file to a backup
+    rename($source, $dest);
 
-# Swap so we can read from backup ($source) and write adjustments to original ($dest).
-$file = $source;
-$source = $dest;
-$dest = $file;
+    # Swap so we can read from backup ($source) and write adjustments to
+    # original ($dest).
+    $file = $source;
+    $source = $dest;
+    $dest = $file;
 
-open(my $source_fh, "<:encoding(UTF-8)", $source);
-open(my $dest_fh, ">:encoding(UTF-8)", $dest);
-while(<$source_fh>) {
-    $_ =~ s/bind\-address\s+= 127\.0\.0\.1/bind\-address = $IP/g;
-    print $dest_fh $_;
+    open(my $source_fh, "<:encoding(UTF-8)", $source);
+    open(my $dest_fh, ">:encoding(UTF-8)", $dest);
+    while(<$source_fh>) {
+        $_ =~ s/bind\-address\s+= 127\.0\.0\.1/bind\-address = $IP/g;
+        print $dest_fh $_;
+    }
+
+    close($source_fh);
+    close($dest_fh);
+    print "MySQL configured to listen on localhost:53306.  Restarting MySQL...\n";
+    exec_cmd("service mysql restart");
+} else {
+    print STDERR "10.0.2.0/24 IP not found in VM.\nMySQL will not be listening on localhost:53306.\n";
 }
-
-close($source_fh);
-close($dest_fh);
 
 # (2) Create database
 print "\n";

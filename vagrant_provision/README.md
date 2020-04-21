@@ -18,7 +18,7 @@ Download and install for your operating system:
 ## Using Vagrant
 ### Setup
 1. Install Vagrant and VirtualBox.
-    * Make sure to install the vbguest plugin.  `vagrant plugin install vagrant-vbguest`
+    * Make sure to install the vbguest plugin:  `vagrant plugin install vagrant-vbguest`
     * You do _not_ need the Virtualbox Extension Pack to run this Vagrant box.
 2. Clone this repository to your host, either with `git` command line or the Github Application.
 3. Go to the root folder of the cloned repository.
@@ -34,10 +34,13 @@ You may develop code for this repository on your host.  Make sure the VM is runn
 * Clone the repository, and develop and commit code on your host.
 * Code is in HTML, CSS, and PHP.
 * You do _not_ need to install PHP on your host.
-* To test any code changes, the Vagrant VM needs to be updated with this command: `vagrant up --provision-with update`
-    * Some composer libraries are dormant, and checking for composer library updates can take extra time when all you want is to update your working code.  Therefore, checking for composer library updates is separate: `vagrant up --provision-with composer-update`
+* To test any code changes, the Vagrant VM needs to be updated with this command:<br />
+`vagrant up --provision-with update`
+    * Some composer libraries are dormant, and checking for composer library updates can take extra time when all you want is to update your working code.  Therefore, checking for composer library updates is separate:<br />
+    `vagrant up --provision-with composer-update`
 * You can view the VM server webpage at `http://localhost:50080`
 * A MySQL database viewer can connect to the VM server at `localhost`, port `53306`.
+    * MySQL Workbench can connect to the VM server with user and password as `vagrant`.  Database Schema is also `vagrant`.
 
 ### Tips and Tricks
 * You can use secure copy ('scp') to upload a file to the VM without it being tracked by git:<br />
