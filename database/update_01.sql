@@ -16,6 +16,7 @@ ALTER TABLE `server`
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
 
+-- Merge relevant data from `server_status`
 UPDATE `servers`
     INNER JOIN `server_status` ON `servers`.`id`=`server_status`.`server_id`
     SET `servers`.`lmgrd_version`=`server_status`.`lmgrd_version`, `servers`.`last_updated`=`server_status`.`last_updated`
@@ -25,9 +26,10 @@ UPDATE `servers`
 -- Table `feature` -> `features`
 -- -----------------------------------------------------
 ALTER TABLE `feature`
-    RENAME TO `features`
+    RENAME TO `features`,
     CHANGE COLUMN `featureID` `id` INT NOT NULL AUTO_INCREMENT,
     CHANGE COLUMN `showInLists` `show_in_lists` TINYINT NOT NULL,
+    ADD COLUMN `server_id` INT NOT NULL AFTER `id`,
     ADD UNIQUE INDEX `ck_serverid_feature` (`server_id`, `feature`),
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
@@ -59,13 +61,22 @@ INNER JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
 SET `available`.`server_id`=`servers`.`id`
 WHERE `available`.`flmavailable_server`=`servers`.`name`;
 
+-- Make sure products in `available` also exist in `features`.
+INSERT INTO `features` (`feature`, `show_in_list`)
+    SELECT DISTINCT `available`.`flmavailable_product`, 1
+    FROM `available`
+    LEFT JOIN `features` ON `available`.`flmavailable_product`=`features`.`name`
+    WHERE `features`.`name` IS NULL;
+
+-- TO DO: associate server+feature as license and insert license into `available`
+
 -- Fix primary key, establish foreign key
 ALTER TABLE `available`
     DROP PRIMARY KEY,
     ADD PRIMARY KEY (`server_id`, `date`, `product`, `num_licenses`),
     DROP COLUMN `flmavailable_server`,
     ADD INDEX `fk_available_servers_idx` (`server_id` ASC),
-    ADD INDEX `fk_available_features` ('product' ASC),
+    ADD INDEX `fk_available_features` (`product` ASC),
     ADD CONSTRAINT `fk_available_servers`
         FOREIGN KEY (`server_id`)
         REFERENCES `servers` (`id`)
@@ -108,6 +119,10 @@ UPDATE `usage`
 INNER JOIN `servers` ON `usage`.`flmusage_server`=`servers`.`name`
 SET `usage`.`server_id`=`servers`.`id`
 WHERE `usage`.`flmusage_server`=`servers`.`name`;
+
+-- TO DO: Ensure products exist in features table.
+--        Associate product with server as license.
+--        Insert license_id to `usage`
 
 -- Fix primary key, establish foreign key
 ALTER TABLE `usage`
