@@ -9,10 +9,73 @@ ALTER TABLE `server`
     RENAME TO `servers`,
     ADD COLUMN `is_active` TINYINT NOT NULL DEFAULT 1,
     ADD COLUMN `notes` TEXT,
-    ADD UNIQUE INDEX `unique_name_alias_isactive` (`name`, `alias`, `is_active`),
+    ADD COLUMN `lmgrd_version` VARCHAR(20),
+    ADD COLUMN `last_updated` DATETIME,
+    ADD UNIQUE INDEX `ck_name_alias_isactive` (`name`, `alias`, `is_active`),
     ENGINE = InnoDB,
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
+
+UPDATE `servers`
+    INNER JOIN `server_status` ON `servers`.`id`=`server_status`.`server_id`
+    SET `servers`.`lmgrd_version`=`server_status`.`lmgrd_version`, `servers`.`last_updated`=`server_status`.`last_updated`
+    WHERE `servers`.`id`=`server_status`.`server_id`;
+
+-- -----------------------------------------------------
+-- Table `feature` -> `features`
+-- -----------------------------------------------------
+ALTER TABLE `feature`
+    RENAME TO `features`
+    CHANGE COLUMN `featureID` `id` INT NOT NULL AUTO_INCREMENT,
+    CHANGE COLUMN `showInLists` `show_in_lists` TINYINT NOT NULL,
+    ADD UNIQUE INDEX `ck_serverid_feature` (`server_id`, `feature`),
+    CONVERT TO CHARACTER SET utf8,
+    DEFAULT CHARACTER SET = utf8;
+
+-- -----------------------------------------------------
+-- Table `licenses_available` -> `available`
+-- -----------------------------------------------------
+
+-- Refactor `licenses_available` -> `available`
+ALTER TABLE `licenses_available`
+    RENAME TO `available`,
+    ADD COLUMN `server_id` INT FIRST,
+    CHANGE COLUMN `flmavailable_date` `date` DATE NOT NULL,
+    CHANGE COLUMN `flmavailable_product` `product` VARCHAR(100) NOT NULL AFTER `server_id`,
+    CHANGE COLUMN `flmavailable_num_licenses` `num_licenses` INT NOT NULL,
+    CONVERT TO CHARACTER SET utf8,
+    DEFAULT CHARACTER SET = utf8;
+
+-- Make sure servers in `available` also exist in `servers`.
+INSERT INTO `servers` (`name`, `alias`, `is_active`)
+    SELECT DISTINCT `available`.`flmavailable_server`, replace(`available`.`flmavailable_server`, '.', '_'), 0
+    FROM `available`
+    LEFT JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
+    WHERE `servers`.`name` IS NULL;
+
+-- Make sure id's in `servers` also exist in `available`
+UPDATE `available`
+INNER JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
+SET `available`.`server_id`=`servers`.`id`
+WHERE `available`.`flmavailable_server`=`servers`.`name`;
+
+-- Fix primary key, establish foreign key
+ALTER TABLE `available`
+    DROP PRIMARY KEY,
+    ADD PRIMARY KEY (`server_id`, `date`, `product`, `num_licenses`),
+    DROP COLUMN `flmavailable_server`,
+    ADD INDEX `fk_available_servers_idx` (`server_id` ASC),
+    ADD INDEX `fk_available_features` ('product' ASC),
+    ADD CONSTRAINT `fk_available_servers`
+        FOREIGN KEY (`server_id`)
+        REFERENCES `servers` (`id`)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    ADD CONSTRAINT `fk_available_features`
+        FOREIGN KEY (`product`)
+        REFERENCES `features` (`feature`)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE;
 
 -- -----------------------------------------------------
 -- Table `license_usage` -> `usage`
@@ -28,7 +91,7 @@ UPDATE `license_usage` SET `time` = timestamp(`flmusage_date`, `flmusage_time`);
 ALTER TABLE `license_usage`
     RENAME TO `usage`,
     ADD COLUMN `server_id` INT NOT NULL FIRST,
-    CHANGE COLUMN `flmusage_product` `product` VARCHAR(80) NOT NULL,
+    CHANGE COLUMN `flmusage_product` `product` VARCHAR(100) NOT NULL AFTER `server_id`,
     CHANGE COLUMN `flmusage_users` `users` INT NOT NULL,
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
@@ -54,96 +117,50 @@ ALTER TABLE `usage`
     DROP COLUMN `flmusage_date`,
     DROP COLUMN `flmusage_time`,
     ADD INDEX `fk_usage_servers_idx` (`server_id` ASC),
+    ADD INDEX `fk_usage_features_idx` (`product` ASC),
     ADD CONSTRAINT `fk_usage_servers`
         FOREIGN KEY (`server_id`)
         REFERENCES `servers` (`id`)
-        ON DELETE NO ACTION
-        ON UPDATE NO ACTION;
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    ADD CONSTRAINT `fk_usage_servers`
+        FOREIGN KEY (`server_id`)
+        REFERENCES `servers` (`id`)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE;
 
 -- -----------------------------------------------------
--- Table `licenses_available` -> `available`
+-- Table `events`
+-- This is to replace the old `flexlm_events` table.
+-- History is not being preserved.
 -- -----------------------------------------------------
-
--- Refactor `licenses_available` -> `available`
-ALTER TABLE `licenses_available`
-    RENAME TO `available`,
-    ADD COLUMN `server_id` INT FIRST,
-    CHANGE COLUMN `flmavailable_date` `date` DATE NOT NULL,
-    CHANGE COLUMN `flmavailable_product` `product` VARCHAR(80) NOT NULL,
-    CHANGE COLUMN `flmavailable_num_licenses` `num_licenses` INT NOT NULL,
-    CONVERT TO CHARACTER SET utf8,
-    DEFAULT CHARACTER SET = utf8;
-
--- Make sure servers in `available` also exist in `servers`.
-INSERT INTO `servers` (`name`, `alias`, `is_active`)
-    SELECT DISTINCT `available`.`flmavailable_server`, replace(`available`.`flmavailable_server`, '.', '_'), 1
-    FROM `available`
-    LEFT JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
-    WHERE `servers`.`name` IS NULL;
-
--- Make sure id's in `servers` also exist in `available`
-UPDATE `available`
-INNER JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
-SET `available`.`server_id`=`servers`.`id`
-WHERE `available`.`flmavailable_server`=`servers`.`name`;
-
--- Fix primary key, establish foreign key
-ALTER TABLE `available`
-    DROP PRIMARY KEY,
-    ADD PRIMARY KEY (`server_id`, `date`, `product`, `num_licenses`),
-    DROP COLUMN `flmavailable_server`,
-    ADD INDEX `fk_available_servers_idx` (`server_id` ASC),
-    ADD CONSTRAINT `fk_available_servers`
+DROP TABLE IF EXISTS `flexlm_events`;
+DROP TABLE IF EXISTS `events`;
+CREATE TABLE IF NOT EXISTS `events` (
+    `server_id` INT NOT NULL,
+    `feature` VARCHAR(100) NOT NULL,
+    `time` DATETIME NOT NULL,
+    `user` VARCHAR(80) NOT NULL,
+    `type` VARCHAR(20) NOT NULL,
+    `reason` TEXT NOT NULL,
+    PRIMARY KEY (`server_id`, `feature`, `time`, `user`),
+    INDEX `fk_events_features_idx` (`feature` ASC),
+    INDEX `fk_events_servers_idx` (`server_id` ASC),
+    CONSTRAINT `fk_events_servers`
         FOREIGN KEY (`server_id`)
         REFERENCES `servers` (`id`)
         ON DELETE NO ACTION
-        ON UPDATE NO ACTION;
-
--- -----------------------------------------------------
--- Table `feature` -> `features`
--- -----------------------------------------------------
-ALTER TABLE `feature`
-    RENAME TO `features`
-    CHANGE COLUMN `featureID` `id` INT NOT NULL AUTO_INCREMENT,
-    CHANGE COLUMN `showInLists` `show_in_lists` TINYINT DEFAULT NULL,
-    CONVERT TO CHARACTER SET utf8,
+        ON UPDATE NO ACTION,
+    CONSTRAINT `fk_events_features`
+        FOREIGN KEY (`feature`)
+        REFERENCES `features` (`feature`)
+        ON DELETE NO ACTION
+        ON UPDATE NO ACTION)
+    ENGINE = InnoDB
     DEFAULT CHARACTER SET = utf8;
 
 -- -----------------------------------------------------
--- Table `flexlm_events` -> `events`
+-- Table `server_status`
+-- Relevant data is merged into `servers` table.
 -- -----------------------------------------------------
-
--- Combine date and time columns to a single datetime column
-ALTER TABLE `flexlm_events`
-    ADD COLUMN `time` datetime NOT NULL DEFAULT now() FIRST;
-
-UPDATE `flexlm_events` SET `time` = timestamp(`flmevent_date`, `flmevent_time`);
-
--- Refactor `flexlm_events` -> `events`
-ALTER TABLE `flexlm_events`
-    RENAME TO `events`,
-    CHANGE COLUMN `flmevent_type` `type` VARCHAR(20) NOT NULL,
-    CHANGE COLUMN `flmevent_feature` `feature` VARCHAR(40) NOT NULL,
-    CHANGE COLUMN `flmevent_user` `user` VARCHAR(80) NOT NULL,
-    CHANGE COLUMN `flmevent_reason` `reason` TEXT NOT NULL,
-    DROP PRIMARY KEY,
-    DROP COLUMN `flmevent_date`,
-    DROP COLUMN `flmevent_time`,
-    ADD PRIMARY KEY (`time`, `feature`, `user`),
-    CONVERT TO CHARACTER SET utf8,
-    DEFAULT CHARACTER SET = utf8;
-
--- -----------------------------------------------------
--- Table `server_status` -> `status`
--- -----------------------------------------------------
-ALTER TABLE `server_status`
-    RENAME TO `status`,
-    MODIFY COLUMN `server_id` INT NOT NULL FIRST,
-    CHANGE COLUMN `server_dns` `dns` VARCHAR(100) DEFAULT NULL,
-    CHANGE COLUMN `server_port` `port` INT DEFAULT NULL,
-    CHANGE COLUMN `lm_hostname` `hostname` VARCHAR(100) DEFAULT NULL,
-    CHANGE COLUMN `isMaster` `is_master` TINYINT DEFAULT NULL,
-    CHANGE COLUMN `lmgrd_version` `version` VARCHAR(20) DEFAULT NULL,
-    ADD PRIMARY KEY (`server_id`),
-    CONVERT TO CHARACTER SET utf8,
-    DEFAULT CHARACTER SET = utf8;
+DROP TABLE IF EXISTS `server_status`;

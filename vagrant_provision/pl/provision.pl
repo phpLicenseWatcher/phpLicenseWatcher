@@ -110,7 +110,7 @@ exec_cmd("mysql -e \"CREATE USER '$DB_USER'\@'$DB_HOST' IDENTIFIED BY '$DB_PASS'
 exec_cmd("mysql -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'\@'$DB_HOST';\"");
 
 # Setup database schema
-$file = catfile(@REPO_PATH, $SQL_FILE);
+$file = catfile(@REPO_PATH, "database", $SQL_FILE);
 exec_cmd("mysql --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < $file");
 
 # Setup apache conf
