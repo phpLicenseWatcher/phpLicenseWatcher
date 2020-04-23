@@ -5,13 +5,21 @@
 -- -----------------------------------------------------
 -- Table `server` -> `servers`
 -- -----------------------------------------------------
+
+-- Deduplicate entries in `server`
+DELETE `t1` FROM `server` `t1`
+    INNER JOIN `server` `t2`
+    WHERE `t1`.`id` < `t2`.`id` AND `t1`.`name`=`t2`.`name` AND `t1`.`alias`=`t2`.`alias`;
+
+-- Refactor `server` table.
 ALTER TABLE `server`
     RENAME TO `servers`,
+    MODIFY COLUMN `alias` VARCHAR(100) NOT NULL,
     ADD COLUMN `is_active` TINYINT NOT NULL DEFAULT 1,
     ADD COLUMN `notes` TEXT,
-    ADD COLUMN `lmgrd_version` VARCHAR(20),
-    ADD COLUMN `last_updated` DATETIME,
-    ADD UNIQUE INDEX `ck_name_alias_isactive` (`name`, `alias`, `is_active`),
+    ADD COLUMN `lmgrd_version` TEXT,
+    ADD COLUMN `last_updated` DATETIME DEFAULT now(),
+    ADD UNIQUE INDEX `name_alias_isactive_UNIQUE` (`name`, `alias`),
     ENGINE = InnoDB,
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
@@ -22,17 +30,54 @@ UPDATE `servers`
     SET `servers`.`lmgrd_version`=`server_status`.`lmgrd_version`, `servers`.`last_updated`=`server_status`.`last_updated`
     WHERE `servers`.`id`=`server_status`.`server_id`;
 
+-- `server_status` is no longer needed.
+DROP TABLE IF EXISTS `server_status`;
+
 -- -----------------------------------------------------
 -- Table `feature` -> `features`
 -- -----------------------------------------------------
+
+-- Deduplicate entries in `feature`
+DELETE `t1` FROM `feature` `t1`
+    INNER JOIN `feature` `t2`
+    WHERE `t1`.`featureID` < `t2`.`featureID` AND `t1`.`feature` = `t2`.`feature`;
+
+-- Refactor `feature` table
 ALTER TABLE `feature`
     RENAME TO `features`,
     CHANGE COLUMN `featureID` `id` INT NOT NULL AUTO_INCREMENT,
     CHANGE COLUMN `showInLists` `show_in_lists` TINYINT NOT NULL,
-    ADD COLUMN `server_id` INT NOT NULL AFTER `id`,
-    ADD UNIQUE INDEX `ck_serverid_feature` (`server_id`, `feature`),
+    CHANGE COLUMN `feature` `name` VARCHAR(100) NOT NULL AFTER `id`,
+    ADD UNIQUE INDEX `name_UNIQUE` (`name` ASC),
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
+
+-- -----------------------------------------------------
+-- Table `licenses`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `licenses` ;
+
+CREATE TABLE IF NOT EXISTS `licenses` (
+    `id` INT NOT NULL AUTO_INCREMENT,
+    `server_id` INT NOT NULL,
+    `feature_id` INT NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `serverid_featureid_UNIQUE` (`server_id` ASC, `feature_id` ASC),
+    INDEX `fk_licenses_features1_idx` (`feature_id` ASC),
+    CONSTRAINT `fk_licenses_servers`
+        FOREIGN KEY (`server_id`)
+        REFERENCES `servers` (`id`)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    CONSTRAINT `fk_licenses_features`
+        FOREIGN KEY (`feature_id`)
+        REFERENCES `features` (`id`)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 1
+DEFAULT CHARACTER SET = utf8
+COLLATE = utf8_bin;
 
 -- -----------------------------------------------------
 -- Table `licenses_available` -> `available`
@@ -43,43 +88,60 @@ ALTER TABLE `licenses_available`
     RENAME TO `available`,
     ADD COLUMN `server_id` INT FIRST,
     CHANGE COLUMN `flmavailable_date` `date` DATE NOT NULL,
-    CHANGE COLUMN `flmavailable_product` `product` VARCHAR(100) NOT NULL AFTER `server_id`,
     CHANGE COLUMN `flmavailable_num_licenses` `num_licenses` INT NOT NULL,
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
 
 -- Make sure servers in `available` also exist in `servers`.
-INSERT INTO `servers` (`name`, `alias`, `is_active`)
+-- These servers will default to being inactive.
+INSERT IGNORE INTO `servers` (`name`, `alias`, `is_active`)
     SELECT DISTINCT `available`.`flmavailable_server`, replace(`available`.`flmavailable_server`, '.', '_'), 0
     FROM `available`
     LEFT JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
     WHERE `servers`.`name` IS NULL;
 
--- Make sure id's in `servers` also exist in `available`
-UPDATE `available`
-INNER JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
-SET `available`.`server_id`=`servers`.`id`
-WHERE `available`.`flmavailable_server`=`servers`.`name`;
-
 -- Make sure products in `available` also exist in `features`.
-INSERT INTO `features` (`feature`, `show_in_list`)
+INSERT IGNORE INTO `features` (`name`, `show_in_lists`)
     SELECT DISTINCT `available`.`flmavailable_product`, 1
     FROM `available`
     LEFT JOIN `features` ON `available`.`flmavailable_product`=`features`.`name`
     WHERE `features`.`name` IS NULL;
 
--- TO DO: associate server+feature as license and insert license into `available`
+-- Make sure all `servers` and `features` are added to `licenses`.
+INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
+    SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id`
+    FROM `available`
+    JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
+    JOIN `features` ON `available`.`flmavailable_product`=`features`.`name`
+    WHERE `servers`.`name`=`available`.`flmavailable_server` AND `features`.`name`=`flmavailable_product`;
+
+SELECT *
+FROM `licenses`
+WHERE `licenses`.`server_id`, `licenses`.`feature_id` IN
+    SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id`
+    FROM `available`
+    JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
+    JOIN `features` ON `available`.`flmavailable_product`=`features`.`name`
+    WHERE `servers`.`name`=`available`.`flmavailable_server` AND `features`.`name`=`flmavailable_product`;
+
+
+
+-- UPDATE `available`
+--     INNER JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
+--     SET `available`.`server_id`=`servers`.`id`
+--     WHERE `available`.`flmavailable_server`=`servers`.`name`;
+
+-- TO DO: associate server+feature as license and insert license_id into `available`
 
 -- Fix primary key, establish foreign key
 ALTER TABLE `available`
     DROP PRIMARY KEY,
-    ADD PRIMARY KEY (`server_id`, `date`, `product`, `num_licenses`),
+    ADD PRIMARY KEY (`license_id`, `date`, `num_licenses`),
     DROP COLUMN `flmavailable_server`,
-    ADD INDEX `fk_available_servers_idx` (`server_id` ASC),
-    ADD INDEX `fk_available_features` (`product` ASC),
-    ADD CONSTRAINT `fk_available_servers`
-        FOREIGN KEY (`server_id`)
-        REFERENCES `servers` (`id`)
+    DROP COLUMN `flmavailable_product`,
+    ADD CONSTRAINT `fk_available_licenses`
+        FOREIGN KEY (`license_id`)
+        REFERENCES `licenses` (`id`)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
     ADD CONSTRAINT `fk_available_features`
@@ -152,30 +214,16 @@ ALTER TABLE `usage`
 DROP TABLE IF EXISTS `flexlm_events`;
 DROP TABLE IF EXISTS `events`;
 CREATE TABLE IF NOT EXISTS `events` (
-    `server_id` INT NOT NULL,
-    `feature` VARCHAR(100) NOT NULL,
+    `license_id` INT NOT NULL,
     `time` DATETIME NOT NULL,
-    `user` VARCHAR(80) NOT NULL,
-    `type` VARCHAR(20) NOT NULL,
+    `user` TEXT NOT NULL,
+    `type` TEXT NOT NULL,
     `reason` TEXT NOT NULL,
-    PRIMARY KEY (`server_id`, `feature`, `time`, `user`),
-    INDEX `fk_events_features_idx` (`feature` ASC),
-    INDEX `fk_events_servers_idx` (`server_id` ASC),
-    CONSTRAINT `fk_events_servers`
-        FOREIGN KEY (`server_id`)
-        REFERENCES `servers` (`id`)
-        ON DELETE NO ACTION
-        ON UPDATE NO ACTION,
-    CONSTRAINT `fk_events_features`
-        FOREIGN KEY (`feature`)
-        REFERENCES `features` (`feature`)
-        ON DELETE NO ACTION
-        ON UPDATE NO ACTION)
-    ENGINE = InnoDB
-    DEFAULT CHARACTER SET = utf8;
-
--- -----------------------------------------------------
--- Table `server_status`
--- Relevant data is merged into `servers` table.
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `server_status`;
+    PRIMARY KEY (`license_id`, `time`, `user`),
+    CONSTRAINT `fk_events_licenses1`
+        FOREIGN KEY (`license_id`)
+        REFERENCES `licenses` (`id`)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
