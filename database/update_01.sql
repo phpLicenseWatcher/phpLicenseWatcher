@@ -86,7 +86,7 @@ COLLATE = utf8_bin;
 -- Refactor `licenses_available` -> `available`
 ALTER TABLE `licenses_available`
     RENAME TO `available`,
-    ADD COLUMN `server_id` INT FIRST,
+    ADD COLUMN `license_id` INT FIRST,
     CHANGE COLUMN `flmavailable_date` `date` DATE NOT NULL,
     CHANGE COLUMN `flmavailable_num_licenses` `num_licenses` INT NOT NULL,
     CONVERT TO CHARACTER SET utf8,
@@ -115,23 +115,14 @@ INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
     JOIN `features` ON `available`.`flmavailable_product`=`features`.`name`
     WHERE `servers`.`name`=`available`.`flmavailable_server` AND `features`.`name`=`flmavailable_product`;
 
-SELECT *
-FROM `licenses`
-WHERE `licenses`.`server_id`, `licenses`.`feature_id` IN
-    SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id`
-    FROM `available`
-    JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
-    JOIN `features` ON `available`.`flmavailable_product`=`features`.`name`
-    WHERE `servers`.`name`=`available`.`flmavailable_server` AND `features`.`name`=`flmavailable_product`;
-
-
-
--- UPDATE `available`
---     INNER JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
---     SET `available`.`server_id`=`servers`.`id`
---     WHERE `available`.`flmavailable_server`=`servers`.`name`;
-
--- TO DO: associate server+feature as license and insert license_id into `available`
+-- Now INSERT those license ids back into `available`
+UPDATE `available`
+    JOIN `servers` ON `servers`.`name`=`available`.`flmavailable_server`
+    JOIN `features` ON `features`.`name`=`available`.`flmavailable_product`
+    JOIN `licenses` ON `licenses`.`server_id`=`servers`.`id` AND `licenses`.`feature_id`=`features`.`id`
+SET `license_id`=`licenses`.`id`
+WHERE `licenses`.`server_id`=`servers`.`id` AND `available`.`flmavailable_server`=`servers`.`name`
+    AND `licenses`.`feature_id`=`features`.`id` AND `available`.`flmavailable_product`=`features`.`name`;
 
 -- Fix primary key, establish foreign key
 ALTER TABLE `available`
