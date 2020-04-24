@@ -24,13 +24,13 @@ ALTER TABLE `server`
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
 
--- Merge relevant data from `server_status`
+-- Merge relevant data from `server_status` table.
 UPDATE `servers`
     INNER JOIN `server_status` ON `servers`.`id`=`server_status`.`server_id`
     SET `servers`.`lmgrd_version`=`server_status`.`lmgrd_version`, `servers`.`last_updated`=`server_status`.`last_updated`
     WHERE `servers`.`id`=`server_status`.`server_id`;
 
--- `server_status` is no longer needed.
+-- `server_status` table is no longer needed.
 DROP TABLE IF EXISTS `server_status`;
 
 -- -----------------------------------------------------
@@ -113,7 +113,7 @@ INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
     FROM `available`
     JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
     JOIN `features` ON `available`.`flmavailable_product`=`features`.`name`
-    WHERE `servers`.`name`=`available`.`flmavailable_server` AND `features`.`name`=`flmavailable_product`;
+    WHERE `servers`.`name`=`available`.`flmavailable_server` AND `features`.`name`=`available`.`flmavailable_product`;
 
 -- Now INSERT those license ids back into `available`
 UPDATE `available`
@@ -134,11 +134,6 @@ ALTER TABLE `available`
         FOREIGN KEY (`license_id`)
         REFERENCES `licenses` (`id`)
         ON DELETE RESTRICT
-        ON UPDATE CASCADE,
-    ADD CONSTRAINT `fk_available_features`
-        FOREIGN KEY (`product`)
-        REFERENCES `features` (`feature`)
-        ON DELETE RESTRICT
         ON UPDATE CASCADE;
 
 -- -----------------------------------------------------
@@ -154,46 +149,53 @@ UPDATE `license_usage` SET `time` = timestamp(`flmusage_date`, `flmusage_time`);
 -- Refactor `license_usage` -> `usage`
 ALTER TABLE `license_usage`
     RENAME TO `usage`,
-    ADD COLUMN `server_id` INT NOT NULL FIRST,
-    CHANGE COLUMN `flmusage_product` `product` VARCHAR(100) NOT NULL AFTER `server_id`,
+    ADD COLUMN `license_id` INT NOT NULL FIRST,
     CHANGE COLUMN `flmusage_users` `users` INT NOT NULL,
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
 
 -- Make sure servers in `usage` also exist in `servers`.
-INSERT INTO `servers` (`name`, `alias`, `is_active`)
-    SELECT DISTINCT `usage`.`flmusage_server`, replace(`usage`.`flmusage_server`, '.', '_'), 1
+INSERT IGNORE INTO `servers` (`name`, `alias`, `is_active`)
+    SELECT DISTINCT `usage`.`flmusage_server`, replace(`usage`.`flmusage_server`, '.', '_'), 0
     FROM `usage`
     LEFT JOIN `servers` ON `usage`.`flmusage_server`=`servers`.`name`
     WHERE `servers`.`name` IS NULL;
 
--- Make sure id's in `servers` also exist in `usage`
-UPDATE `usage`
-INNER JOIN `servers` ON `usage`.`flmusage_server`=`servers`.`name`
-SET `usage`.`server_id`=`servers`.`id`
-WHERE `usage`.`flmusage_server`=`servers`.`name`;
+-- Make sure products in `available` also exist in `features`.
+INSERT IGNORE INTO `features` (`name`, `show_in_lists`)
+    SELECT DISTINCT `available`.`flmusage_product`, 1
+    FROM `available`
+    LEFT JOIN `features` ON `available`.`flmusage_product`=`features`.`name`
+    WHERE `features`.`name` IS NULL;
 
--- TO DO: Ensure products exist in features table.
---        Associate product with server as license.
---        Insert license_id to `usage`
+-- Make sure all `servers` and `features` are added to `licenses`.
+INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
+    SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id`
+    FROM `available`
+    JOIN `servers` ON `usage`.`flmusage_server`=`servers`.`name`
+    JOIN `features` ON `usage`.`flmusage_product`=`features`.`name`
+    WHERE `servers`.`name`=`usage`.`flmusage_server` AND `features`.`name`=`usage`.`flmusage_product`;
+
+-- Now INSERT those license ids back into `usage`
+UPDATE `usage`
+    JOIN `servers` ON `servers`.`name`=`usage`.`flmusage_server`
+    JOIN `features` ON `features`.`name`=`usage`.`flmusage_product`
+    JOIN `licenses` ON `licenses`.`server_id`=`servers`.`id` AND `licenses`.`feature_id`=`features`.`id`
+SET `license_id`=`licenses`.`id`
+WHERE `licenses`.`server_id`=`servers`.`id` AND `usage`.`flmusage_server`=`servers`.`name`
+    AND `licenses`.`feature_id`=`features`.`id` AND `usage`.`flmusage_product`=`features`.`name`;
 
 -- Fix primary key, establish foreign key
 ALTER TABLE `usage`
     DROP PRIMARY KEY,
-    ADD PRIMARY KEY (`server_id`, `time`, `product`),
+    ADD PRIMARY KEY (`license_id`, `time`, `product`),
     DROP COLUMN `flmusage_server`,
+    DROP COLUMN `flmuage_product`,
     DROP COLUMN `flmusage_date`,
     DROP COLUMN `flmusage_time`,
-    ADD INDEX `fk_usage_servers_idx` (`server_id` ASC),
-    ADD INDEX `fk_usage_features_idx` (`product` ASC),
-    ADD CONSTRAINT `fk_usage_servers`
-        FOREIGN KEY (`server_id`)
-        REFERENCES `servers` (`id`)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE,
-    ADD CONSTRAINT `fk_usage_servers`
-        FOREIGN KEY (`server_id`)
-        REFERENCES `servers` (`id`)
+    ADD CONSTRAINT `fk_usage_licenses`
+        FOREIGN KEY (`license_id`)
+        REFERENCES `licenses` (`id`)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
 
@@ -211,7 +213,7 @@ CREATE TABLE IF NOT EXISTS `events` (
     `type` TEXT NOT NULL,
     `reason` TEXT NOT NULL,
     PRIMARY KEY (`license_id`, `time`, `user`),
-    CONSTRAINT `fk_events_licenses1`
+    CONSTRAINT `fk_events_licenses`
         FOREIGN KEY (`license_id`)
         REFERENCES `licenses` (`id`)
         ON DELETE RESTRICT
