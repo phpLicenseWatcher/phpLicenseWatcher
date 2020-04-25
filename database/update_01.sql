@@ -161,17 +161,17 @@ INSERT IGNORE INTO `servers` (`name`, `alias`, `is_active`)
     LEFT JOIN `servers` ON `usage`.`flmusage_server`=`servers`.`name`
     WHERE `servers`.`name` IS NULL;
 
--- Make sure products in `available` also exist in `features`.
+-- Make sure products in `usage` also exist in `features`.
 INSERT IGNORE INTO `features` (`name`, `show_in_lists`)
-    SELECT DISTINCT `available`.`flmusage_product`, 1
-    FROM `available`
-    LEFT JOIN `features` ON `available`.`flmusage_product`=`features`.`name`
+    SELECT DISTINCT `usage`.`flmusage_product`, 1
+    FROM `usage`
+    LEFT JOIN `features` ON `usage`.`flmusage_product`=`features`.`name`
     WHERE `features`.`name` IS NULL;
 
 -- Make sure all `servers` and `features` are added to `licenses`.
 INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
     SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id`
-    FROM `available`
+    FROM `usage`
     JOIN `servers` ON `usage`.`flmusage_server`=`servers`.`name`
     JOIN `features` ON `usage`.`flmusage_product`=`features`.`name`
     WHERE `servers`.`name`=`usage`.`flmusage_server` AND `features`.`name`=`usage`.`flmusage_product`;
@@ -188,9 +188,9 @@ WHERE `licenses`.`server_id`=`servers`.`id` AND `usage`.`flmusage_server`=`serve
 -- Fix primary key, establish foreign key
 ALTER TABLE `usage`
     DROP PRIMARY KEY,
-    ADD PRIMARY KEY (`license_id`, `time`, `product`),
+    ADD PRIMARY KEY (`license_id`, `time`),
     DROP COLUMN `flmusage_server`,
-    DROP COLUMN `flmuage_product`,
+    DROP COLUMN `flmusage_product`,
     DROP COLUMN `flmusage_date`,
     DROP COLUMN `flmusage_time`,
     ADD CONSTRAINT `fk_usage_licenses`
@@ -209,7 +209,7 @@ DROP TABLE IF EXISTS `events`;
 CREATE TABLE IF NOT EXISTS `events` (
     `license_id` INT NOT NULL,
     `time` DATETIME NOT NULL,
-    `user` TEXT NOT NULL,
+    `user` VARCHAR(80) NOT NULL,
     `type` TEXT NOT NULL,
     `reason` TEXT NOT NULL,
     PRIMARY KEY (`license_id`, `time`, `user`),
