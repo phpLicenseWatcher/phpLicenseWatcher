@@ -64,12 +64,12 @@ CREATE TABLE IF NOT EXISTS `licenses` (
     PRIMARY KEY (`id`),
     UNIQUE INDEX `serverid_featureid_UNIQUE` (`server_id` ASC, `feature_id` ASC),
     INDEX `fk_licenses_features1_idx` (`feature_id` ASC),
-    CONSTRAINT `fk_licenses_servers`
+    CONSTRAINT `fk_licenses_servers1`
         FOREIGN KEY (`server_id`)
         REFERENCES `servers` (`id`)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
-    CONSTRAINT `fk_licenses_features`
+    CONSTRAINT `fk_licenses_features1`
         FOREIGN KEY (`feature_id`)
         REFERENCES `features` (`id`)
         ON DELETE RESTRICT
@@ -130,7 +130,7 @@ ALTER TABLE `available`
     ADD PRIMARY KEY (`license_id`, `date`, `num_licenses`),
     DROP COLUMN `flmavailable_server`,
     DROP COLUMN `flmavailable_product`,
-    ADD CONSTRAINT `fk_available_licenses`
+    ADD CONSTRAINT `fk_available_licenses1`
         FOREIGN KEY (`license_id`)
         REFERENCES `licenses` (`id`)
         ON DELETE RESTRICT
@@ -193,7 +193,7 @@ ALTER TABLE `usage`
     DROP COLUMN `flmusage_product`,
     DROP COLUMN `flmusage_date`,
     DROP COLUMN `flmusage_time`,
-    ADD CONSTRAINT `fk_usage_licenses`
+    ADD CONSTRAINT `fk_usage_licenses1`
         FOREIGN KEY (`license_id`)
         REFERENCES `licenses` (`id`)
         ON DELETE RESTRICT
@@ -213,7 +213,7 @@ CREATE TABLE IF NOT EXISTS `events` (
     `type` TEXT NOT NULL,
     `reason` TEXT NOT NULL,
     PRIMARY KEY (`license_id`, `time`, `user`),
-    CONSTRAINT `fk_events_licenses`
+    CONSTRAINT `fk_events_licenses1`
         FOREIGN KEY (`license_id`)
         REFERENCES `licenses` (`id`)
         ON DELETE RESTRICT
