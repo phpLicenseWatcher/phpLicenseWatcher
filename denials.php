@@ -57,7 +57,14 @@ if (DB::isError($db)) {
 ################################################################
 # Get a list of features that have been denied :-)
 ################################################################
-$sql = "SELECT DISTINCT feature FROM events WHERE type='DENIED'";
+$sql = <<<SQL
+SELECT DISTINCT `name`
+FROM `features`
+JOIN `licenses` ON `features`.`id`=`licenses`.`feature_id`
+JOIN `events` ON `licenses`.`id`=`events`.`license_id`
+WHERE `events`.`type`='DENIED';
+
+SQL;
 
 $recordset = $db->query($sql);
 
@@ -83,16 +90,55 @@ while ($row = $recordset->fetchRow()) {
 ################################################################
 # Check what we want to sort data on
 ################################################################
-if ( $_GET['sortby'] == "feature"){
-	$sql = "SELECT `date`,`feature`,count(*) FROM `events` WHERE `type`='DENIED' GROUP BY `feature`,`date` ORDER BY `feature`,`date` DESC;";
-}else if ( $_GET['sortby'] == "numdenials" ){
-	$sql = "SELECT `date`,`feature`,count(*) AS `numdenials` FROM `events` WHERE `type`='DENIED'  GROUP BY `date`,`feature` ORDER BY `numdenials` DESC;";
-}else{
-	$sql = "SELECT `date`,`feature`,count(*) FROM `events` WHERE `type`='DENIED' GROUP BY `date`,`feature` ORDER BY `date` DESC,`feature`;";
+/* Original queries are as follows:
+ * Sort by date:
+ * SELECT `date`,`feature`,count(*) FROM `events` WHERE `type`='DENIED' GROUP BY `feature`,`date` ORDER BY `feature`,`date` DESC;
+ * Sort by user:
+ * SELECT `date`,`feature`,count(*) AS `numdenials` FROM `events` WHERE `type`='DENIED'  GROUP BY `date`,`feature` ORDER BY `numdenials` DESC;
+ * Sort by feature:
+ * SELECT `date`,`feature`,count(*) FROM `events` WHERE `type`='DENIED' GROUP BY `date`,`feature` ORDER BY `date` DESC,`feature`;
+ */
+
+switch ($_GET['sortby']) {
+
+case "feature":
+	$sql = <<<SQL
+SELECT `time`, `features`.`name`, count(*)
+FROM `events`
+JOIN `licenses` ON `events`.`license_id`=`licenses`.`id`
+JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+WHERE `type`='DENIED'
+GROUP BY `features`.`name`, `time`
+ORDER BY `features`.`name`, `time` DESC;
+SQL;
+    break;
+
+case "numdenials":
+	$sql = <<<SQL
+SELECT `time`, `features`.`name`, count(*) AS `numdenials`
+FROM `events`
+JOIN `licenses` ON `events`.`license_id`=`licenses`.`id`
+JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+WHERE `type`='DENIED'
+GROUP BY `time`, `features`.`name`
+ORDER BY `numdenials` DESC;
+SQL;
+    break;
+
+default:
+	$sql = <<<SQL
+SELECT `time`, `features`.`name`, count(*)
+FROM `events`
+JOIN `licenses` ON `events`.`license_id`=`licenses`.`id`
+JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+WHERE `type`='DENIED'
+GROUP BY `time`, `features`.`name`
+ORDER BY `time` DESC, `features`.`name`;
+SQL;
 }
 
 if ( isset($debug) && $debug == 1 )
-              	print_sql ($sql);
+    print_sql ($sql);
 
 $recordset = $db->query($sql);
 
