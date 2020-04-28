@@ -55,7 +55,14 @@ if (DB::isError($db)) {
 	die ($db->getMessage());
 }
 
-$sql = "SELECT DISTINCT `feature` FROM `events` WHERE `type`='OUT'";
+$sql = <<<SQL
+SELECT DISTINCT `name`
+FROM `features`
+JOIN `licenses` ON `features`.`id`=`licenses`.`feature_id`
+JOIN `events` ON `licenses`.`id`=`events`.`license_id`
+WHERE `events`.`type`='OUT';
+
+SQL;
 
 $recordset = $db->query($sql);
 
@@ -80,24 +87,35 @@ while ($row = $recordset->fetchRow()) {
 ################################################################
 # Check what we want to sort data on
 ################################################################
+/* Original queries would error out with MySQL when sql_mode=only_full_group_by
+ * Additional debugging may be necessary.  Original queries are as follows:
+ * Sort by date:
+ * SELECT `flmevent_date`,`flmevent_user`,MAX(`flmevent_feature`),count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_date`,`flmevent_user` ORDER BY `flmevent_date`,`flmevent_user`,`flmevent_feature` DESC;
+ * Sort by user:
+ * SELECT `flmevent_date`,`flmevent_user`,MAX(`flmevent_feature`),count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_user`,`flmevent_date` ORDER BY `flmevent_user`,`flmevent_date`,`flmevent_feature` DESC;
+ * Sort by feature:
+ * SELECT `flmevent_date`,MAX(flmevent_user),`flmevent_feature`,count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_feature`,`flmevent_date` ORDER BY `flmevent_feature`,`flmevent_date`,`flmevent_user` DESC;
+ */
+
     $sql = <<<SQL
-SELECT `events`.`time`, `events`.`user`, `features`.`name`, `events`.count(*)
+SELECT `events`.`time`, `events`.`user`, MAX(`features`.`name`), count(*)
 FROM `events`
 JOIN `licenses` ON `events`.`license_id`=`licenses`.`id`
 JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
 WHERE `events`.`type`='OUT'
+GROUP BY `events`.`time`, `events`.`user`
 
 SQL;
 
 switch ($_GET['sortby']) {
 case "date":
-	$sql .= "GROUP BY `events`.`time`, `events`.`user` ORDER BY `events`.`time`, `events`.`user`, `features`.`name` DESC;";
+	$sql .= "ORDER BY `events`.`time`, `events`.`user`, MAX(`features`.`name`) DESC;";
     break;
 case "user":
-	$sql .= "GROUP BY `events`.`user`, `events`.`time` ORDER BY `events`.`user`, `events`.`time`, `features`.`name` DESC;";
+	$sql .= "ORDER BY `events`.`user`, `events`.`time`, MAX(`features`.`name`) DESC;";
     break;
 default:
-	$sql .= "GROUP BY `features`.`name`, `events`.`time` ORDER BY `features`.`name`, `events`.`time`, `events`.`user` DESC;";
+	$sql .= "ORDER BY MAX(`features`.`name`), `events`.`time`, `events`.`user` DESC;";
 }
 
 if ( isset($debug) && $debug == 1 )
