@@ -80,16 +80,28 @@ while ($row = $recordset->fetchRow()) {
 ################################################################
 # Check what we want to sort data on
 ################################################################
-if ( $_GET['sortby'] == "date"){
-	$sql = "SELECT `date`,`user`,MAX(`feature`),count(*) FROM `events` WHERE `type`='OUT' GROUP BY `date`,`user` ORDER BY `date`,`user`,`feature` DESC;";
-}else if ( $_GET['sortby'] == "user" ){
-	$sql = "SELECT `date`,`user`,MAX(`feature`),count(*) FROM `events` WHERE `type`='OUT' GROUP BY `user`,`date` ORDER BY `user`,`date`,`feature` DESC;";
-}else{
-	$sql = "SELECT `date`,MAX(user),`feature`,count(*) FROM `events` WHERE `type`='OUT' GROUP BY `feature`,`date` ORDER BY `feature`,`date`,`user` DESC;";
+    $sql = <<<SQL
+SELECT `events`.`time`, `events`.`user`, `features`.`name`, `events`.count(*)
+FROM `events`
+JOIN `licenses` ON `events`.`license_id`=`licenses`.`id`
+JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+WHERE `events`.`type`='OUT'
+
+SQL;
+
+switch ($_GET['sortby']) {
+case "date":
+	$sql .= "GROUP BY `events`.`time`, `events`.`user` ORDER BY `events`.`time`, `events`.`user`, `features`.`name` DESC;";
+    break;
+case "user":
+	$sql .= "GROUP BY `events`.`user`, `events`.`time` ORDER BY `events`.`user`, `events`.`time`, `features`.`name` DESC;";
+    break;
+default:
+	$sql .= "GROUP BY `features`.`name`, `events`.`time` ORDER BY `features`.`name`, `events`.`time`, `events`.`user` DESC;";
 }
 
 if ( isset($debug) && $debug == 1 )
-              	print_sql ($sql);
+    print_sql($sql);
 
 $recordset = $db->query($sql);
 
