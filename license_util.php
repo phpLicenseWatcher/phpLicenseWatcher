@@ -24,8 +24,7 @@ if ( isset($db_hostname) && isset($db_username) && isset($db_password) ) {
 ################################################################
 # Get current date and time
 ################################################################
-$date = date('Y-m-d');
-$time = date('H:i') . ":00";
+$time = date('Y-m-d H:i:00');
 
 for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 
@@ -64,19 +63,24 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
 	############################################################################
 	if ( isset($db_hostname) && isset($db_username) && isset($db_password) ) {
 
-		$sql = "INSERT INTO usage (server,product,date,time,users) VALUES ('$servers[$i]','" .
-		$license_array[$j]["feature"] . "', '$date', '$time'," . $license_array[$j]["licenses_used"] . ")";
-
-		if ( isset($debug) && $debug == 1 )
+        $sql = <<<SQL
+INSERT INTO `usage` (`license_id`, `time`, `num_users`)
+    SELECT `licenses`.`id`, '{$time}', {$license_array[$j]["licenses_used"]}
+    FROM `licenses`
+    JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
+    JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+    WHERE `servers`.`name`='{$servers[$i]}' AND `features`.`name`='{$license_array[$j]["feature"]}';
+SQL;
+        if ( isset($debug) && $debug == 1 )
 			print_sql ($sql);
 
-		$recordset = $db->query($sql);
+        $recordset = $db->query($sql);
 
-		if (DB::isError($recordset)) {
-			die ($recordset->getMessage());
-		}
+        if (DB::isError($recordset)) {
+            die ($recordset->getMessage());
+        }
 
-	}
+    }
 
     }
 

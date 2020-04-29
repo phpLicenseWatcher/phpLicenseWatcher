@@ -97,7 +97,7 @@ for ( $k = 0 ; $k < sizeof($log_file) ; $k++ ) {
                 $feature = trim($out2[4]);
                 $sql = <<<SQL
 INSERT IGNORE INTO `events` (`license_id`, `time`, `user`, `type`, `reason`)
-    SELECT `license`.`id`, '{$timestamp}', '{$username}', '{$log_event}', '{$log_reason}')
+    SELECT `licenses`.`id`, '{$timestamp}', '{$username}', '{$log_event}', '{$log_reason}')
     FROM `licenses`
     JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
     WHERE `features`.`name`='{$feature}';

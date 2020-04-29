@@ -17,8 +17,7 @@ if (DB::isError($db)) {
 $sql = <<<SQL
 SELECT `name`, `label`
 FROM `features`
-WHERE `show_in_lists`=1
-AND `name`='{$feature}'
+WHERE `show_in_lists`=1 AND `name`='{$feature}'
 SQL;
 
 $recordset = $db->query($sql);
