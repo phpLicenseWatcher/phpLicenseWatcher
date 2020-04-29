@@ -150,7 +150,7 @@ UPDATE `license_usage` SET `time` = timestamp(`flmusage_date`, `flmusage_time`);
 ALTER TABLE `license_usage`
     RENAME TO `usage`,
     ADD COLUMN `license_id` INT NOT NULL FIRST,
-    CHANGE COLUMN `flmusage_users` `users` INT NOT NULL,
+    CHANGE COLUMN `flmusage_users` `num_users` INT NOT NULL,
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
 

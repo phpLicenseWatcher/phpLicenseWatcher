@@ -100,7 +100,7 @@ DROP TABLE IF EXISTS `usage` ;
 CREATE TABLE IF NOT EXISTS `usage` (
   `license_id` INT NOT NULL,
   `time` DATETIME NOT NULL,
-  `users` INT NOT NULL,
+  `num_users` INT NOT NULL,
   PRIMARY KEY (`license_id`, `time`),
   CONSTRAINT `fk_usage_licenses1`
     FOREIGN KEY (`license_id`)
@@ -119,7 +119,7 @@ DROP TABLE IF EXISTS `available` ;
 CREATE TABLE IF NOT EXISTS `available` (
   `license_id` INT NOT NULL,
   `date` DATE NOT NULL,
-  `licenses` INT NOT NULL,
+  `num_licenses` INT NOT NULL,
   PRIMARY KEY (`license_id`, `date`),
   CONSTRAINT `fk_available_licenses1`
     FOREIGN KEY (`license_id`)

@@ -42,15 +42,22 @@ for ( $i = 0 ; $i < sizeof($servers); $i++ ) {
 		# Remove the : in the end of the string
 		$feature = str_replace(":", "", $out[2]);
                 # Return the number
-		$sql = "INSERT INTO available (server,date,product,num_licenses) VALUES ('$servers[$i]','" . 
-			$today . "','" . $feature . "'," . $out[6] . ")";
 
-                if ( isset($debug) && $debug == 1 )
-	              	print_sql ($sql);
+        $sql = <<<SQL
+INSERT INTO `available` (`license_id`, `date`, `num_licenses`)
+    SELECT `licenses`.`id`, '{$today}', {$out[6]}
+    FROM `licenses`
+    JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
+    JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+    WHERE `servers`.`name`='{$servers[$i]}' AND `features`.`name`='{$feature}';
+SQL;
 
-                $recordset = $db->query($sql);
+        if ( isset($debug) && $debug == 1 )
+          	print_sql ($sql);
 
-                if (DB::isError($recordset)) {
+        $recordset = $db->query($sql);
+
+        if (DB::isError($recordset)) {
 		    die ($recordset->getMessage());
 		}
 	}

@@ -14,33 +14,36 @@ if (DB::isError($db)) {
   die ($db->getMessage());
 }
 
+$sql = <<<SQL
+SELECT `name`, `label`
+FROM `features`
+WHERE `show_in_lists`=1
+AND `name`='{$feature}'
+SQL;
+
+$recordset = $db->query($sql);
+
+if (DB::isError($recordset)) {
+    die ($recordset->getMessage());
+}
+
+While ($row = $recordset->fetchRow()){
+
+   $label = $row[1];
+   if( $label == "" ){
+       $label =$row[0];
+   }
 
 
-    $sql = "SELECT feature, label FROM feature WHERE showInLists = 1 AND feature = '{$feature}' ";
-
-    $recordset = $db->query($sql);
-
-    if (DB::isError($recordset)) {
-        die ($recordset->getMessage());
-    }
-
-    While ($row = $recordset->fetchRow()){
-
-       $label = $row[1];
-       if( $label == "" ){
-           $label =$row[0];
-       }
+}
 
 
-    }
-
-
-    $recordset->free();
+$recordset->free();
 
 $db->disconnect();
 
 
-    $label = str_replace('|', ' or ', $label);
+$label = str_replace('|', ' or ', $label);
 
 ?>
 
