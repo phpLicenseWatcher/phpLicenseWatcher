@@ -93,8 +93,15 @@ for ( $k = 0 ; $k < sizeof($log_file) ; $k++ ) {
 
 				unset($out3);
 
-                $sql = "INSERT IGNORE INTO events (date, time, type, feature, user, reason) 
-                VALUES ('" . $timestamp_date . "','" . trim($out2[1]) . "','" . $log_event ."','" . $out2[4] . "','" . $username . "','" . trim($out2[6]) . "')";
+                $log_reason = trim($out2[6]);
+                $feature = trim($out2[4]);
+                $sql = <<<SQL
+INSERT IGNORE INTO `events` (`license_id`, `time`, `user`, `type`, `reason`)
+    SELECT `license`.`id`, '{$timestamp}', '{$username}', '{$log_event}', '{$log_reason}')
+    FROM `licenses`
+    JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+    WHERE `features`.`name`='{$feature}';
+SQL;
 
 		unset($out2);
 
