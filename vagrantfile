@@ -21,7 +21,7 @@ Vagrant.configure(2) do |config|
     end
 
     config.vm.define "dev_box", primary: true do |phplw|
-        phplw.vm.box = "bento/ubuntu-18.04"
+        phplw.vm.box = "bento/ubuntu-20.04"
         phplw.vm.network "forwarded_port", guest: 80, host: 50080
         phplw.vm.network "forwarded_port", guest: 3306, host: 53306
     end
