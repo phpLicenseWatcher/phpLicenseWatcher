@@ -47,7 +47,7 @@ $table = array();
 $products = array();
 
 $sql = <<<SQL
-SELECT `features`.`name`, `time`, SUM(`users`)
+SELECT `features`.`name`, `time`, SUM(`num_users`)
 FROM `usage`
 JOIN `licenses` ON `usage`.`license_id`=`licenses`.`id`
 JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
@@ -56,7 +56,6 @@ GROUP BY `features`.`name`, `time`
 ORDER BY `time` ASC;
 SQL;
 
-print $sql;
 
 $recordset = $db->query($sql);
 
