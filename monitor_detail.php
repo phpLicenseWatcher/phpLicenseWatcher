@@ -8,7 +8,7 @@ $label = $feature;
 
 $db = DB::connect($dsn, true);
 if (DB::isError($db)) {
-  die ($db->getMessage());
+    die ($db->getMessage());
 }
 
 $sql = <<<SQL
@@ -25,11 +25,11 @@ if (DB::isError($recordset)) {
 
 // $row[0] = `name`, $row[1] = `label`
 while ($row = $recordset->fetchRow()){
-   $label = $row[1];
-   if (empty($label)) {
-       //`label` is NULL, so use `name`, instead.
-       $label = $row[0];
-   }
+    $label = $row[1];
+    if (empty($label)) {
+        //`label` is NULL, so use `name`, instead.
+        $label = $row[0];
+    }
 }
 
 $recordset->free();

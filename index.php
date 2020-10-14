@@ -22,13 +22,13 @@ for ($i = 0 ; $i < sizeof($servers) ; $i++) {
 	$listingexpirationlink="<a href='details.php?listing=1&amp;server={$i}'>Listing/Expiration dates</a>";
 
 	foreach(explode(PHP_EOL, $data) as $line) {
-		// Look for an expression like this ie. kalahari: license server UP (MASTER) v6.1
-        // preg_match() explicity returns int 1 on success.
-        switch (1) {
-        case preg_match ("/: license server UP \(MASTER\)/i", $line):
-			$status_string = "UP";
-			$class = "up";
-			$lmgrdversion = preg_replace("/.*license server UP \(MASTER\)/i ", "", $line);
+    	// Look for an expression like this ie. kalahari: license server UP (MASTER) v6.1
+      	// preg_match() explicity returns int 1 on success.
+      	switch (1) {
+      	case preg_match ("/: license server UP \(MASTER\)/i", $line):
+        	$status_string = "UP";
+        	$class = "up";
+        	$lmgrdversion = preg_replace("/.*license server UP \(MASTER\)/i ", "", $line);
             break;
         case preg_match ("/: license server UP/i", $line):
             $status_string = "UP";
