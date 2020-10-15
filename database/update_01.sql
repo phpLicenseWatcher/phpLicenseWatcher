@@ -46,7 +46,7 @@ DELETE `t1` FROM `feature` `t1`
 ALTER TABLE `feature`
     RENAME TO `features`,
     CHANGE COLUMN `featureID` `id` INT NOT NULL AUTO_INCREMENT,
-    CHANGE COLUMN `showInLists` `show_in_lists` TINYINT NOT NULL,
+    CHANGE COLUMN `showInLists` `show_in_lists` TINYINT NOT NULL DEFAULT 0,
     CHANGE COLUMN `feature` `name` VARCHAR(100) NOT NULL AFTER `id`,
     ADD UNIQUE INDEX `name_UNIQUE` (`name` ASC),
     CONVERT TO CHARACTER SET utf8,
