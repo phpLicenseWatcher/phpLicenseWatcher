@@ -47,7 +47,7 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
     if ( isset($license_array) && is_array ($license_array) ) {
         for ( $j = 0 ; $j < sizeof($license_array) ; $j++ ) {
 
-	        // Only insert into the database if DB settings are set
+            // Only insert into the database if DB settings are set
             if ( isset($db_hostname) && isset($db_username) && isset($db_password) ) {
 
                 $sql = array();
@@ -88,7 +88,6 @@ SQL;
                 // populated and license usage query re-run.
                 if ($db->affectedRows() < 1) {
                     foreach ($sql as $statement) {
-                        print_sql ($statement);
                         $recordset = $db->query($statement);
                     }
                 }
