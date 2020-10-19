@@ -3,6 +3,23 @@
 require_once("common.php");
 require_once("tools.php");
 require_once("HTML/Table.php");
+require_once("DB.php");
+
+// Retrieve server list.
+if ( isset($db_hostname) && isset($db_username) && isset($db_password) ) {
+	$db = DB::connect($dsn, true);
+
+	if (DB::isError($db)) {
+		die ($db->getMessage());
+	}
+
+    $sql = "SELECT `name`, `alias` FROM `servers` WHERE `is_active` = 1;";
+    $servers = $db->getAll($sql, array(), DB_FETCHMODE_ASSOC);
+
+    $db->disconnect();
+} else {
+    die ("Check database settings in config.");
+}
 
 $tableStyle = "class='table' ";
 
@@ -16,7 +33,7 @@ $colHeaders = array("License port@server", "Description", "Status", "Current Usa
 $table->addRow($colHeaders, $headerStyle, "TH");
 
 for ($i = 0 ; $i < sizeof($servers) ; $i++) {
-	$data = run_command("{$lmutil_loc} lmstat -c {$servers[$i]}");
+	$data = run_command("{$lmutil_loc} lmstat -c {$servers[$i]['name']}");
 	$status_string = "";
 	$detaillink="<a href='details.php?listing=0&amp;server={$i}'>Details</a>";
 	$listingexpirationlink="<a href='details.php?listing=1&amp;server={$i}'>Listing/Expiration dates</a>";
@@ -66,8 +83,8 @@ for ($i = 0 ; $i < sizeof($servers) ; $i++) {
     }
 
     $table->AddRow(array(
-        $servers[$i],
-        $description[$i],
+        $servers[$i]['name'],
+        $servers[$i]['alias'],
         $status_string,
         $detaillink,
         $listingexpirationlink,
