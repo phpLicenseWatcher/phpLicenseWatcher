@@ -16,7 +16,7 @@ if (is_readable(__DIR__ . '/config.php')) {
 	require_once(__DIR__ . '/config.php');
 } else {
     print_header();
-	  print <<< HTML
+    print <<< HTML
 <h1>Missing Component</h1>
 <p>Configuration file <code>config.php</code> does not exist.  Please notify your system administrator.
 HTML;
@@ -32,8 +32,40 @@ function print_footer() {
     print file_get_contents(__DIR__ . '/footer.html');
 }
 
+function db_connect() {
+    global $db_hostname, $db_username, $db_password, $dsn;
+
+    switch (false) {
+    case isset($db_hostname):
+    case isset($db_username):
+    case isset($db_password):
+    case isset($dsn):
+        die ("Check database configuration.");
+    }
+
+    $db = DB::connect($dsn, true);
+    if (DB::isError($db)) {
+    	die ($db->getMessage());
+    }
+
+    return $db;
+}
+
+// Debug helper functions.
 function print_sql ($sql) {
-	print "<span class='red-text'>Executing SQL: </span> <span style='color: blue;'>" . $sql . "</span><br>\n";
+    global $debug;
+    if (isset($debug) && $debug == 1) {
+        $code = print_r($sql, true);
+        print "<p><span style='color: #dc143c;'>Executing SQL: </span><pre>{$code}</pre>\n";
+    }
+}
+
+function print_var ($var) {
+    global $debug;
+    if (isset($debug) && $debug == 1) {
+        $code = var_export($var, true);
+        print "<p><span style='color: #dc143c;'>Var Export: </span><pre>{$code}</pre>\n";
+    }
 }
 
 ?>

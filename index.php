@@ -6,20 +6,10 @@ require_once("HTML/Table.php");
 require_once("DB.php");
 
 // Retrieve server list.
-if ( isset($db_hostname) && isset($db_username) && isset($db_password) ) {
-	$db = DB::connect($dsn, true);
-
-	if (DB::isError($db)) {
-		die ($db->getMessage());
-	}
-
-    $sql = "SELECT `name`, `alias` FROM `servers` WHERE `is_active` = 1;";
-    $servers = $db->getAll($sql, array(), DB_FETCHMODE_ASSOC);
-
-    $db->disconnect();
-} else {
-    die ("Check database settings in config.");
-}
+$db = db_connect();
+$sql = "SELECT `name`, `alias` FROM `servers` WHERE `is_active` = 1;";
+$servers = $db->getAll($sql, array(), DB_FETCHMODE_ASSOC);
+$db->disconnect();
 
 $tableStyle = "class='table' ";
 
