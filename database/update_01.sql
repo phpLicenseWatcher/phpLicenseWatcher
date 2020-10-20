@@ -94,7 +94,7 @@ ALTER TABLE `licenses_available`
 
 -- Make sure servers in `available` also exist in `servers`.
 -- These servers will default to being inactive.
-INSERT IGNORE INTO `servers` (`name`, `alias`, `is_active`)
+INSERT IGNORE INTO `servers` (`name`, `label`, `is_active`)
     SELECT DISTINCT `available`.`flmavailable_server`, replace(`available`.`flmavailable_server`, '.', '_'), 0
     FROM `available`
     LEFT JOIN `servers` ON `available`.`flmavailable_server`=`servers`.`name`
@@ -155,7 +155,7 @@ ALTER TABLE `license_usage`
     DEFAULT CHARACTER SET = utf8;
 
 -- Make sure servers in `usage` also exist in `servers`.
-INSERT IGNORE INTO `servers` (`name`, `alias`, `is_active`)
+INSERT IGNORE INTO `servers` (`name`, `label`, `is_active`)
     SELECT DISTINCT `usage`.`flmusage_server`, replace(`usage`.`flmusage_server`, '.', '_'), 0
     FROM `usage`
     LEFT JOIN `servers` ON `usage`.`flmusage_server`=`servers`.`name`
