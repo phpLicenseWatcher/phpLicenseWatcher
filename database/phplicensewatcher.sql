@@ -31,13 +31,13 @@ DROP TABLE IF EXISTS `servers` ;
 CREATE TABLE IF NOT EXISTS `servers` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(50) NOT NULL,
-  `alias` VARCHAR(100) NOT NULL,
+  `label` VARCHAR(100) NOT NULL,
   `is_active` TINYINT NOT NULL DEFAULT 0,
   `notes` TEXT NULL,
   `lmgrd_version` TEXT NULL,
   `last_updated` DATETIME NULL DEFAULT now(),
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `name_alias_UNIQUE` (`name` ASC, `alias` ASC))
+  UNIQUE INDEX `name_label_UNIQUE` (`name` ASC, `label` ASC))
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8;

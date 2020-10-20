@@ -14,12 +14,12 @@ DELETE `t1` FROM `server` `t1`
 -- Refactor `server` table.
 ALTER TABLE `server`
     RENAME TO `servers`,
-    MODIFY COLUMN `alias` VARCHAR(100) NOT NULL,
+    CHANGE COLUMN `alias` `label` VARCHAR(100) NOT NULL,
     ADD COLUMN `is_active` TINYINT NOT NULL DEFAULT 1,
     ADD COLUMN `notes` TEXT,
     ADD COLUMN `lmgrd_version` TEXT,
     ADD COLUMN `last_updated` DATETIME DEFAULT now(),
-    ADD UNIQUE INDEX `name_alias_isactive_UNIQUE` (`name`, `alias`),
+    ADD UNIQUE INDEX `name_label_UNIQUE` (`name` ASC, `label` ASC),
     ENGINE = InnoDB,
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
@@ -46,7 +46,7 @@ DELETE `t1` FROM `feature` `t1`
 ALTER TABLE `feature`
     RENAME TO `features`,
     CHANGE COLUMN `featureID` `id` INT NOT NULL AUTO_INCREMENT,
-    CHANGE COLUMN `showInLists` `show_in_lists` TINYINT NOT NULL DEFAULT 0,
+    CHANGE COLUMN `showInLists` `show_in_lists` TINYINT NOT NULL DEFAULT 0 AFTER `label`,
     CHANGE COLUMN `feature` `name` VARCHAR(100) NOT NULL AFTER `id`,
     ADD UNIQUE INDEX `name_UNIQUE` (`name` ASC),
     CONVERT TO CHARACTER SET utf8,

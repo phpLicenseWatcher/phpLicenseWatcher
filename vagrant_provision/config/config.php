@@ -23,15 +23,6 @@ $legendpoints="";
 // IMPORTANT: Change this to 0 when used in production!
 $debug = 1;
 
-/* List your license servers below.  Don't forget the square braces as these
- * are parallel arrays.  You can list multiple servers this way.
- * $servers[] is a connection string in the form of {port}@{address}
- *     e.g. "20025@licenses.subdomain.myuniversity.edu"
- * $description[] could be used to note what license is being managed.
- * $log_file[] can be left as an empty string if you don't want a log file.
- */
-$servers[] = "";
-$description[] = "";
-$log_file[] = "";
-
+// License servers are now in the database.
+// e.g. INSERT INTO `servers` (`name`, `alias`, `is_active`) VALUES ('port@domain.tld', 'alias/description', 1);
 ?>
