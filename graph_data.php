@@ -55,8 +55,7 @@ if (DB::isError($recordset)) {
 }
 
 while ($row = $recordset->fetchRow()){
-    $date = explode(' ', $row[1]);
-    $date = $date[0];
+    $date = $row[1];
 
     if ($days == 1) {
         $date = date('H:i', strtotime($date));

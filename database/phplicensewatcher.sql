@@ -14,8 +14,8 @@ DROP TABLE IF EXISTS `features` ;
 CREATE TABLE IF NOT EXISTS `features` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL,
-  `show_in_lists` TINYINT NOT NULL DEFAULT 0,
   `label` TEXT NULL DEFAULT NULL,
+  `show_in_lists` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `name_UNIQUE` (`name` ASC))
 ENGINE = InnoDB
