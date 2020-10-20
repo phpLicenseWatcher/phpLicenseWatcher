@@ -7,7 +7,7 @@ require_once("DB.php");
 
 // Retrieve server list.
 $db = db_connect();
-$sql = "SELECT `name`, `alias` FROM `servers` WHERE `is_active` = 1;";
+$sql = "SELECT `name`, `label` FROM `servers` WHERE `is_active` = 1;";
 $servers = $db->getAll($sql, array(), DB_FETCHMODE_ASSOC);
 $db->disconnect();
 
@@ -74,7 +74,7 @@ for ($i = 0 ; $i < sizeof($servers) ; $i++) {
 
     $table->AddRow(array(
         $servers[$i]['name'],
-        $servers[$i]['alias'],
+        $servers[$i]['label'],
         $status_string,
         $detaillink,
         $listingexpirationlink,

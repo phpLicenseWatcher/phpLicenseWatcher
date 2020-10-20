@@ -1,6 +1,6 @@
 <?php
 
-include_once(__DIR__.'/tools.php');
+require_once(__DIR__.'/tools.php');
 require_once(__DIR__."/common.php");
 
 // Load PEAR DB abstraction library
@@ -43,8 +43,8 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
             $sql = array();
             // Populate feature, if needed.
             $sql[0] = <<<SQL
-INSERT IGNORE INTO `features` (`name`)
-    VALUES ('{$license_array[$j]["feature"]}');
+INSERT IGNORE INTO `features` (`name`, `show_in_lists`)
+    VALUES ('{$license_array[$j]["feature"]}', 1);
 SQL;
 
             // Populate server/feature to licenses, if needed.
