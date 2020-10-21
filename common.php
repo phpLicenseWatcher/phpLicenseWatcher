@@ -51,6 +51,21 @@ function db_connect() {
     return $db;
 }
 
+function db_get_servers($db) {
+    global $db_type;
+    if (get_class($db) !== "DB_{$db_type}") {
+        die ("DB not connected when requesting server list.");
+    }
+
+    $sql = "SELECT `name`, `label` FROM `servers` WHERE `is_active` = 1;";
+    $servers = $db->getAll($sql, array(), DB_FETCHMODE_ASSOC);
+    if (DB::isError($db)) {
+        die ($db->getMessage());
+    }
+
+    return $servers;
+}
+
 // Debug helper functions.
 function print_sql ($sql) {
     global $debug;

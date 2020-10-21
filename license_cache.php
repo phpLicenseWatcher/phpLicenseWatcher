@@ -2,17 +2,12 @@
 require_once(__DIR__."/common.php");
 require_once("DB.php");
 
-print"<pre>";
-print_r(__DIR__."/common.php", true);
-print"</pre>"; die;
-
-//$db = db_connnect();
-$sql = "SELECT `name`, `label` FROM `servers` WHERE `is_active` = 1;";
-$servers = $db->getAll($sql, array(), DB_FETCHMODE_ASSOC);
+$db = db_connect();
+$servers = db_get_servers($db);
 $today = date("Y-m-d");
 
-for ( $i = 0 ; $i < sizeof($servers); $i++ ) {
-    $fp = popen($lmutil_loc . " lmstat -a -c " . $servers[$i], "r");
+foreach ($servers as $server) {
+    $fp = popen($lmutil_loc . " lmstat -a -c " . $server['name'], "r");
     while ( !feof ($fp) ) {
         $line = fgets ($fp, 1024);
 
@@ -29,7 +24,7 @@ INSERT INTO `available` (`license_id`, `date`, `num_licenses`)
     FROM `licenses`
     JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
     JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-    WHERE `servers`.`name`='{$servers[$i]["name"]}' AND `features`.`name`='{$feature}';
+    WHERE `servers`.`name`='{$server["name"]}' AND `features`.`name`='{$feature}';
 SQL;
 
             $recordset = $db->query($sql);

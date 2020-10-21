@@ -7,16 +7,13 @@ require_once(__DIR__."/common.php");
 require_once("DB.php");
 
 $db = db_connect();
-
-// Get server list from DB
-$sql = "SELECT `name` FROM `servers` WHERE `is_active` = 1;";
-$servers = $db->getAll($sql, array(), DB_FETCHMODE_ASSOC);
+$servers = db_get_servers($db);
 
 // Get current date and time
 $time = date('Y-m-d H:i:00');
 
-for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
-    $fp = popen($lmutil_loc . " lmstat -a -c " . $servers[$i]['name'], "r");
+foreach ($servers as $server) {
+    $fp = popen($lmutil_loc . " lmstat -a -c " . $server['name'], "r");
 
     while ( !feof ($fp) ) {
         $line = fgets ($fp, 1024);
@@ -25,7 +22,7 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
     	// Users of Allegro_Viewer: (Total of 5 licenses available
     	if ( preg_match("/^(Users of) (.*)/i", $line, $out ) )  {
             if ( preg_match("/(Total of) (.*) (license[s]? issued;  Total of) (.*) (license[s]? in use)/i", $line, $items ) ) {
-                $license_array[] = array (
+                $licenses[] = array (
                     "feature" => substr($out[2],0,strpos($out[2],":")),
                     "licenses_used" => $items[4] ) ;
                 unset($out);
@@ -35,16 +32,15 @@ for ( $i = 0 ; $i < sizeof($servers) ; $i++ ) {
     }
 
     pclose($fp);
-    // $conn->debug=true;
 
-    if ( isset($license_array) && is_array ($license_array) ) {
-        for ( $j = 0 ; $j < sizeof($license_array) ; $j++ ) {
+    if ( isset($licenses) && is_countable($licenses) ) {
+        foreach ($licenses as $license) {
 
             $sql = array();
             // Populate feature, if needed.
             $sql[0] = <<<SQL
 INSERT IGNORE INTO `features` (`name`, `show_in_lists`)
-    VALUES ('{$license_array[$j]["feature"]}', 1);
+    VALUES ('{$license["feature"]}', 1);
 SQL;
 
             // Populate server/feature to licenses, if needed.
@@ -52,17 +48,17 @@ SQL;
 INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
     SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id`
     FROM `servers`, `features`
-    WHERE `servers`.`name` = '{$servers[$i]["name"]}' AND `features`.`name` = '{$license_array[$j]["feature"]}';
+    WHERE `servers`.`name` = '{$server["name"]}' AND `features`.`name` = '{$license["feature"]}';
 SQL;
 
             // Insert license usage.  Needs feature and license populated, first.
             $sql[2] = <<<SQL
 INSERT INTO `usage` (`license_id`, `time`, `num_users`)
-    SELECT `licenses`.`id`, '{$time}', {$license_array[$j]["licenses_used"]}
+    SELECT `licenses`.`id`, '{$time}', {$license["licenses_used"]}
     FROM `licenses`
     JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
     JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-    WHERE `servers`.`name`='{$servers[$i]["name"]}' AND `features`.`name`='{$license_array[$j]["feature"]}';
+    WHERE `servers`.`name`='{$server["name"]}' AND `features`.`name`='{$license["feature"]}';
 SQL;
 
             $recordset = $db->query($sql[2]);
@@ -84,7 +80,7 @@ SQL;
                 }
             }
         }
-        unset($license_array);
+        unset($licenses);
     }
 }
 
