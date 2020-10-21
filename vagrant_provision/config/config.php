@@ -24,5 +24,5 @@ $legendpoints="";
 $debug = 1;
 
 // License servers are now in the database.
-// e.g. INSERT INTO `servers` (`name`, `alias`, `is_active`) VALUES ('port@domain.tld', 'alias/description', 1);
+// e.g. INSERT INTO `servers` (`name`, `label`, `is_active`) VALUES ('port@domain.tld', 'label/description', 1);
 ?>

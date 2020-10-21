@@ -10,14 +10,19 @@
 
 require_once "common.php";
 require_once "tools.php";
+require_once "DB.php";
 require_once "HTML/Table.php";
+
+$db = db_connect();
+$servers = db_get_servers($db);
+$db->disconnect();
 
 // Date when the licenses will expire
 $expire_date = mktime(0, 0, 0, date("m"), date("d") + $lead_time, date("Y"));
 $today = mktime (0, 0, 0, date("m"), date("d"), date("Y"));
 
-for ($i = 0; $i < sizeof($servers); $i++) {
-    build_license_expiration_array($lmutil_loc, $servers[$i], $expiration_array[$i]);
+foreach ($servers as $i => $server) {
+    build_license_expiration_array($lmutil_loc, $server['name'], $expiration_array[$i]);
 }
 
 $table = new HTML_Table("class='table' style='width:100%;' ");
@@ -40,7 +45,7 @@ for ($i = 0; $i < sizeof($expiration_array); $i++) {
                     if ($myarray[$j]["days_to_expiration"] < 0) {
                         $myarray[$j]["days_to_expiration"] = "<span style='weight: bold;'>Already expired</span>";
                         $table->addRow(array(
-                             $servers[$i],
+                             $servers[$i]['name'],
                              $description[$i],
                              $key,
                              $myarray[$j]["expiration_date"],
