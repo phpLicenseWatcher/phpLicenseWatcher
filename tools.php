@@ -136,12 +136,18 @@ function build_select_box ($array, $name, $checked_val="xzxz") {
  * @return string number of licenses available as string
  */
 function num_licenses_available($myfeature) {
-    global $servers, $lmutil_loc;
+    global $lmutil_loc;
+
+    $db = db_connect();
+    $servers = db_get_servers($db);
+    $db->disconnect();
+
     $license_file = "";
 
     // Build LM_LICENSE_FILE
-    for ( $i = 0 ; $i < sizeof($servers); $i++ )
-        $license_file .= $servers[$i] . ":";
+    foreach ($servers as $server) {
+        $license_file .= "{$server['name']}:";
+    }
 
     $fp = popen("{$lmutil_loc} lmstat -f {$myfeature} -c {$license_file}", "r");
         while ( !feof ($fp) ) {
@@ -165,12 +171,18 @@ function num_licenses_available($myfeature) {
  * @return integer number of licenses
  */
 function num_licenses_used($myfeature) {
-    global $servers, $lmstat_loc;
+    global $lmstat_loc;
+
+    $db = db_connect();
+    $servers = db_get_servers($db);
+    $db->disconnect();
+
     $license_file = "";
 
     // Build LM_LICENSE_FILE
-    for ( $i = 0 ; $i < sizeof($servers); $i++ )
-        $license_file .= $servers[$i] . ":";
+    foreach ($servers as $server) {
+        $license_file .= "{$server['name']}:";
+    }
 
     $fp = popen("{$lmstat_loc} -f {$myfeature} -c {$license_file}", "r");
     $num_licenses = 0;

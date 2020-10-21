@@ -3,10 +3,9 @@ require_once __DIR__ . "/common.php";
 require_once "HTML/Table.php";
 require_once 'DB.php';
 
-// First let's get license usage for the product specified in $feature
-// Connect to the database.  Use persistent connections.
 $db = db_connect();
 
+// Get license usage for the product specified in $feature
 $sql = <<<SQL
 SELECT DISTINCT `name`
 FROM `features`
@@ -16,7 +15,6 @@ WHERE `events`.`type`='OUT';
 SQL;
 
 $recordset = $db->query($sql);
-
 if (DB::isError($recordset)) {
 	die ($recordset->getMessage());
 }
