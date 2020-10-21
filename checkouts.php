@@ -5,10 +5,7 @@ require_once 'DB.php';
 
 // First let's get license usage for the product specified in $feature
 // Connect to the database.  Use persistent connections.
-$db = DB::connect($dsn, true);
-if (DB::isError($db)) {
-	die ($db->getMessage());
-}
+$db = db_connect();
 
 $sql = <<<SQL
 SELECT DISTINCT `name`

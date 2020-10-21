@@ -19,7 +19,7 @@ foreach ($servers as $server) {
             $feature = str_replace(":", "", $out[2]);
 
             $sql = <<<SQL
-INSERT INTO `available` (`license_id`, `date`, `num_licenses`)
+INSERT IGNORE INTO `available` (`license_id`, `date`, `num_licenses`)
     SELECT `licenses`.`id`, '{$today}', {$out[6]}
     FROM `licenses`
     JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`

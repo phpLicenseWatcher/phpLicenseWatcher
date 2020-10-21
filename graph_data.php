@@ -27,12 +27,7 @@ if ($days <= 0) {
     $days = 7;
 }
 
-
-// Connect to the database.  Use persistent connections
-$db = DB::connect($dsn, true);
-if (DB::isError($db)) {
-    die ($db->getMessage());
-}
+$db = db_connect();
 
 $result = array("cols"=>array(), "rows"=>array() );
 $result["cols"][] = array("id" => "", "label" => "Date", "pattern" => "", "type" => "string");

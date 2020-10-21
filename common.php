@@ -33,17 +33,37 @@ function print_footer() {
 }
 
 function db_connect() {
-    global $db_hostname, $db_username, $db_password, $dsn;
+    global $db_type, $db_hostname, $db_username, $db_password, $db_database;
 
+    // Make sure DB config exists.
     switch (false) {
+    case isset($db_type):
     case isset($db_hostname):
     case isset($db_username):
     case isset($db_password):
-    case isset($dsn):
+    case isset($db_database):
         die ("Check database configuration.");
     }
 
-    $db = DB::connect($dsn, true);
+    $dsn = array(
+        'phptype'  => $db_type,
+        'username' => $db_username,
+        'password' => $db_password,
+        'hostspec' => $db_hostname,
+        'database' => $db_database,
+    );
+
+    // q.v. https://pear.php.net/manual/en/package.database.db.db-common.setoption.php
+    $options = array(
+        'autofree'       => false,
+        'debug'          => 0,
+        'persistent'     => true,
+        'portability'    => DB_PORTABILITY_NONE,
+        'seqname_format' => '%s_seq',
+        'ssl'            => false,
+    );
+
+    $db = DB::connect($dsn, $options);
     if (DB::isError($db)) {
     	die ($db->getMessage());
     }

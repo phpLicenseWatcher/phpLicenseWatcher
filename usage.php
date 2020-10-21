@@ -2,10 +2,7 @@
 require_once("common.php");
 require_once("DB.php");
 
-$db = DB::connect($dsn, true);
-if (DB::isError($db)) {
-    die ($db->getMessage());
-}
+$db = db_connect();
 
 $sql = <<<SQL
 SELECT `name`, `label`

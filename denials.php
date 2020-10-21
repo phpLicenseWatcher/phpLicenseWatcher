@@ -14,11 +14,7 @@ $headerStyle = "style='background: yellow;'";
 $colHeaders = array("Date", "Feature", "Total number of denials");
 $table->addRow($colHeaders, $headerStyle, "TH");
 
-// Connect to the database.   Use persistent connections.
-$db = DB::connect($dsn, true);
-if (DB::isError($db)) {
-    die ($db->getMessage());
-}
+$db = db_connect();
 
 // Get a list of features that have been denied.
 $sql = <<<SQL

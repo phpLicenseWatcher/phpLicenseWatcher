@@ -54,12 +54,30 @@ $test_values[]  = $test ? "Is Executable" : "Not Executable (maybe check permiss
 $test_results[] = $test ? PASS_MARK : FAIL_MARK;
 
 $test = (bool) function() {
-    if (isset($db_hostname) && isset($db_username) && isset($db_password)) {
-    	$db = DB::connect($dsn, true);
-        return !DB::isError($db);
+    switch (false) {
+    case isset($db_type):
+    case isset($db_username):
+    case isset($db_password):
+    case isset($db_hostname):
+    case isset($db_database):
+        return false;
     }
 
-    return false;
+    $dsn = array(
+        'phptype'  => $db_type,
+        'username' => $db_username,
+        'password' => $db_password,
+        'hostspec' => $db_hostname,
+        'database' => $db_database,
+    );
+
+    $db = DB::connect($dsn, array('persistent' => false));
+    if (DB::isError($db)) {
+        return false;
+    }
+
+    $db->disconnect();
+    return true;
 };
 $test_names[]   = "Database Connectivity";
 $test_values[]  = $test ? "Connection OK" : "Connection Failed.";

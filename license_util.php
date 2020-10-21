@@ -53,7 +53,7 @@ SQL;
 
             // Insert license usage.  Needs feature and license populated, first.
             $sql[2] = <<<SQL
-INSERT INTO `usage` (`license_id`, `time`, `num_users`)
+INSERT IGNORE INTO `usage` (`license_id`, `time`, `num_users`)
     SELECT `licenses`.`id`, '{$time}', {$license["licenses_used"]}
     FROM `licenses`
     JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`

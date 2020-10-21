@@ -6,10 +6,7 @@ require_once("DB.php");
 $feature = preg_replace("/[^a-zA-Z0-9_|]+/", "", htmlspecialchars($_GET['feature'])) ;
 $label = $feature;
 
-$db = DB::connect($dsn, true);
-if (DB::isError($db)) {
-    die ($db->getMessage());
-}
+$db = db_connect();
 
 $sql = <<<SQL
 SELECT `name`, `label`
