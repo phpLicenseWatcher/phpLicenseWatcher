@@ -84,19 +84,40 @@ function db_get_servers(&$db) {
     return $servers;
 }
 
-function db_get_server_by_id(&$db, $id) {
+function db_get_server_by_ids(&$db, $ids) {
     global $db_type;
     if (get_class($db) !== "DB_{$db_type}") {
         die ("DB not connected when doing server lookup by ID.");
     }
 
-    $sql = "SELECT `id`, `name`, `label` FROM `servers` WHERE `id` = ? AND `is_active` = ?;";
-    $server = $db->getRow($sql, array($id, 1), DB_FETCHMODE_ASSOC);
+    // Ensure IDs are ints and placed in $params.
+    // int 1 is appened to $params so that "`is_active` = 1" can be tested.
+    if (is_array($ids)) {
+        $params = array_map('intval', $ids);
+        $params[] = 1;
+    } else {
+        $params = array(intval($ids), 1);
+    }
+
+    // Build string "(?,?,? ... )" so that "WHERE `id` IN (?,?,? ... )" is tested.
+    $param_holders = "(?";
+    for ($i = 2; $i < count($params); $i++) {
+        $param_holders .=",?";
+    }
+    $param_holders .=")";
+
+    $sql = "SELECT `id`, `name`, `label` FROM `servers` WHERE `id` IN {$param_holders} AND `is_active` = ?;";
+    $servers = $db->getAll($sql, $params, DB_FETCHMODE_ASSOC);
     if (DB::isError($db)) {
         die ($db->getMessage());
     }
 
-    return $server;
+    // $servers is an array, but when sizeof is 1, return array element.
+    if (count($servers) === 1) {
+        return $servers[0];
+    } else {
+        return $servers;
+    }
 }
 
 // Debug helper functions.

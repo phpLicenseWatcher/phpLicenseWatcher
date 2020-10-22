@@ -10,8 +10,17 @@ if (isset($_GET['refresh']) && $_GET['refresh'] > 0 && ! $disable_autorefresh) {
 
 // find server from master list
 $server_id = preg_replace("/[^0-9,]+/", "", htmlspecialchars($_GET['server']));
+
+// This is a hack so we can support both specifying multiple
+// servers as comma separated arguments or multiple_servers array
+if ( isset($_GET['multiple_servers']) ) {
+    $ids = $_GET['multiple_servers'];
+} else {
+    $ids = explode(",", $server_id);
+}
+
 db_connect($db);
-$server = db_get_server_by_id($db, $server_id);
+$server = db_get_server_by_ids($db, $ids);
 $db->disconnect();
 
 print_header();
@@ -83,7 +92,7 @@ HTML;
         unset($feature_table);
     }
 
-    Center columns 2. Columns start with 0 index
+    // Center columns 2. Columns start with 0 index
     $table->updateColAttributes(1,"align=\"center\"");
     $table->display();
 
@@ -109,6 +118,7 @@ HTML;
     } else {
         $current_server = explode(",", $server);
     }
+
 
     // We'll need timestamp class to get a human readable time difference
 

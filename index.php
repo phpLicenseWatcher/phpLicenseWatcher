@@ -18,7 +18,7 @@ $table = new HTML_Table($tableStyle);
 
 // Define a table header
 $headerStyle = "";
-$colHeaders = array("License port@server", "Description", "Status", "Current Usage", "Available features/license", "lmgrd version");
+$colHeaders = array("ID", "License port@server", "Description", "Status", "Current Usage", "Available features/license", "lmgrd version");
 $table->addRow($colHeaders, $headerStyle, "TH");
 
 foreach ($servers as $server) {
@@ -72,6 +72,7 @@ foreach ($servers as $server) {
     }
 
     $table->AddRow(array(
+        $server['id'],
         $server['name'],
         $server['label'],
         $status_string,
@@ -81,7 +82,7 @@ foreach ($servers as $server) {
     ));
 
 	// Set the background color of status cell
-	$table->updateCellAttributes(($table->getRowCount() - 1) , 2, "class='{$class}'");
+	$table->updateCellAttributes(($table->getRowCount() - 1) , 3, "class='{$class}'");
 	//$table->updateCellAttributes( 1 , 0, "");
 }
 
