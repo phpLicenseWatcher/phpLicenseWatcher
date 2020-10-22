@@ -3,7 +3,7 @@ require_once __DIR__ . "/common.php";
 require_once "HTML/Table.php";
 require_once 'DB.php';
 
-$db = db_connect();
+db_connect($db);
 
 // Get license usage for the product specified in $feature
 $sql = <<<SQL

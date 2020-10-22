@@ -6,9 +6,8 @@ require_once("HTML/Table.php");
 require_once("DB.php");
 
 // Retrieve server list.
-$db = db_connect();
-$sql = "SELECT `name`, `label` FROM `servers` WHERE `is_active` = 1;";
-$servers = $db->getAll($sql, array(), DB_FETCHMODE_ASSOC);
+db_connect($db);
+$servers = db_get_servers($db);
 $db->disconnect();
 
 $tableStyle = "class='table' ";
@@ -22,11 +21,11 @@ $headerStyle = "";
 $colHeaders = array("License port@server", "Description", "Status", "Current Usage", "Available features/license", "lmgrd version");
 $table->addRow($colHeaders, $headerStyle, "TH");
 
-for ($i = 0 ; $i < sizeof($servers) ; $i++) {
-	$data = run_command("{$lmutil_loc} lmstat -c {$servers[$i]['name']}");
+foreach ($servers as $server) {
+	$data = run_command("{$lmutil_loc} lmstat -c {$server['name']}");
 	$status_string = "";
-	$detaillink="<a href='details.php?listing=0&amp;server={$i}'>Details</a>";
-	$listingexpirationlink="<a href='details.php?listing=1&amp;server={$i}'>Listing/Expiration dates</a>";
+	$detaillink="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
+	$listingexpirationlink="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
 
 	foreach(explode(PHP_EOL, $data) as $line) {
     	// Look for an expression like this ie. kalahari: license server UP (MASTER) v6.1
@@ -73,8 +72,8 @@ for ($i = 0 ; $i < sizeof($servers) ; $i++) {
     }
 
     $table->AddRow(array(
-        $servers[$i]['name'],
-        $servers[$i]['label'],
+        $server['name'],
+        $server['label'],
         $status_string,
         $detaillink,
         $listingexpirationlink,

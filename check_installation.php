@@ -71,7 +71,7 @@ $test = (bool) function() {
         'database' => $db_database,
     );
 
-    $db = DB::connect($dsn, array('persistent' => false));
+    $db =& DB::connect($dsn, array('persistent' => false));
     if (DB::isError($db)) {
         return false;
     }

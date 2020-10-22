@@ -2,7 +2,7 @@
 require_once(__DIR__."/common.php");
 require_once("DB.php");
 
-$db = db_connect();
+db_connect($db);
 $servers = db_get_servers($db);
 $today = date("Y-m-d");
 

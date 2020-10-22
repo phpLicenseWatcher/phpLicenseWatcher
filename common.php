@@ -32,7 +32,7 @@ function print_footer() {
     print file_get_contents(__DIR__ . '/footer.html');
 }
 
-function db_connect() {
+function db_connect(&$db) {
     global $db_type, $db_hostname, $db_username, $db_password, $db_database;
 
     // Make sure DB config exists.
@@ -63,27 +63,40 @@ function db_connect() {
         'ssl'            => false,
     );
 
-    $db = DB::connect($dsn, $options);
+    $db =& DB::connect($dsn, $options);
     if (DB::isError($db)) {
     	die ($db->getMessage());
     }
-
-    return $db;
 }
 
-function db_get_servers($db) {
+function db_get_servers(&$db) {
     global $db_type;
     if (get_class($db) !== "DB_{$db_type}") {
         die ("DB not connected when requesting server list.");
     }
 
-    $sql = "SELECT `name`, `label` FROM `servers` WHERE `is_active` = 1;";
-    $servers = $db->getAll($sql, array(), DB_FETCHMODE_ASSOC);
+    $sql = "SELECT `id`, `name`, `label` FROM `servers` WHERE `is_active` = ?;";
+    $servers = $db->getAll($sql, array(1), DB_FETCHMODE_ASSOC);
     if (DB::isError($db)) {
         die ($db->getMessage());
     }
 
     return $servers;
+}
+
+function db_get_server_by_id(&$db, $id) {
+    global $db_type;
+    if (get_class($db) !== "DB_{$db_type}") {
+        die ("DB not connected when doing server lookup by ID.");
+    }
+
+    $sql = "SELECT `id`, `name`, `label` FROM `servers` WHERE `id` = ? AND `is_active` = ?;";
+    $server = $db->getRow($sql, array($id, 1), DB_FETCHMODE_ASSOC);
+    if (DB::isError($db)) {
+        die ($db->getMessage());
+    }
+
+    return $server;
 }
 
 // Debug helper functions.

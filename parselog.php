@@ -26,11 +26,7 @@ require_once("DB.php");
 #  Connect to the database
 #   Use persistent connections
 ################################################################
-$db = DB::connect($dsn, true);
-
-if (DB::isError($db)) {
-     die ($db->getMessage());
-}
+db_connect($db);
 
 
 #########################################################

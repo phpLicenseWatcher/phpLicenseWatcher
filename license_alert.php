@@ -13,7 +13,7 @@ require_once "tools.php";
 require_once "DB.php";
 require_once "HTML/Table.php";
 
-$db = db_connect();
+db_connect($db);
 $servers = db_get_servers($db);
 $db->disconnect();
 

@@ -14,7 +14,7 @@ $headerStyle = "style='background: yellow;'";
 $colHeaders = array("Date", "Feature", "Total number of denials");
 $table->addRow($colHeaders, $headerStyle, "TH");
 
-$db = db_connect();
+db_connect($db);
 
 // Get a list of features that have been denied.
 $sql = <<<SQL

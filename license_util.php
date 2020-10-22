@@ -6,7 +6,7 @@ require_once(__DIR__."/common.php");
 // Load PEAR DB abstraction library
 require_once("DB.php");
 
-$db = db_connect();
+db_connect($db);
 $servers = db_get_servers($db);
 
 // Get current date and time

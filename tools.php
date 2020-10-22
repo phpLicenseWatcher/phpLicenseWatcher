@@ -138,7 +138,7 @@ function build_select_box ($array, $name, $checked_val="xzxz") {
 function num_licenses_available($myfeature) {
     global $lmutil_loc;
 
-    $db = db_connect();
+    db_connect($db);
     $servers = db_get_servers($db);
     $db->disconnect();
 
@@ -173,7 +173,7 @@ function num_licenses_available($myfeature) {
 function num_licenses_used($myfeature) {
     global $lmstat_loc;
 
-    $db = db_connect();
+    db_connect($db);
     $servers = db_get_servers($db);
     $db->disconnect();
 

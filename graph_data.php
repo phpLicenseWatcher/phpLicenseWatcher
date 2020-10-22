@@ -27,7 +27,7 @@ if ($days <= 0) {
     $days = 7;
 }
 
-$db = db_connect();
+db_connect($db);
 
 $result = array("cols"=>array(), "rows"=>array() );
 $result["cols"][] = array("id" => "", "label" => "Date", "pattern" => "", "type" => "string");

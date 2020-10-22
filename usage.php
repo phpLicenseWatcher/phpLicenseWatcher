@@ -2,7 +2,7 @@
 require_once("common.php");
 require_once("DB.php");
 
-$db = db_connect();
+db_connect($db);
 
 $sql = <<<SQL
 SELECT `name`, `label`
