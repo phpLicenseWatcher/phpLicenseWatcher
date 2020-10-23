@@ -19,22 +19,38 @@ if ( isset($_GET['multiple_servers']) ) {
     $ids = explode(",", $server_id);
 }
 
-db_connect($db);
-$server = db_get_server_by_ids($db, $ids);
-$db->disconnect();
+$html_body = "";
+switch($_GET['listing']) {
+case 0:
+    list_features_and_expirations();
+    break;
+case 1:
+    list_licenses_in_use();
+    break;
+default:
+    return null;
+}
 
 print_header();
-$title = <<<HTML
-<h1>Flexlm Licenses in Detail</h1>
-<hr/>
-HTML;
+print "<h1>Flexlm Licenses in Detail</h1><hr/>";
+print $html_body;
+print_footer();
+exit;
 
 // List available features and their expiration dates
-if ( $_GET['listing'] === 1 ) {
-    print <<<HTML
+function list_features_and_expirations() {
+    global $lead_time, $ids, $html_body;
+
+    $ids = is_array($ids) ? $ids[0] : $ids; // Only one server is used, here.
+    db_connect($db);
+    $server = db_get_server_by_ids($db, $ids);
+    $db->disconnect();
+
+    $html_body .= <<<HTML
 <p>This is a list of licenses (features) available on this particular license server.
 If there are multiple entries under "Expiration dates" it means there are different entries for the same license.
 If expiration is in red it means expiration is within {$lead_time} days.</p>
+
 HTML;
 
     $today = mktime(0,0,0,date("m"),date("d"),date("Y"));
@@ -43,12 +59,12 @@ HTML;
     $table = new HTML_Table("class='table' style='width:100%;' ");
 
     // First row should be the name of the license server and it's description
-    $colHeaders = array("Server: {$servers[$server_key]['name']} ( {$servers[$server_key]['label']} )");
+    $colHeaders = array("Server: {$server['name']} ( {$server['label']} )");
     $table->addRow($colHeaders, "colspan='4'", "th");
 
-    build_license_expiration_array($lmutil_loc, $servers[$server_key]['name'], $expiration_array);
+    build_license_expiration_array($lmutil_loc, $server['name'], $expiration_array);
 
-    # Define a table header
+    // Define a table header
     $colHeaders = array("Feature", "Vendor Daemon", "Total licenses", "Number licenses, Days to expiration, Date of expiration");
     $table->addRow($colHeaders, "", "th");
 
@@ -68,9 +84,12 @@ HTML;
             // Keep track of total number of licenses for a particular feature
             // this is since you can have licenses with different expiration
             $total_licenses += $feature_array[$p]["num_licenses"];
-            $feature_table->addRow(array($feature_array[$p]["num_licenses"] . " license(s) expire(s) in ". $feature_array[$p]["days_to_expiration"] . " day(s) Date of expiration: " . $feature_array[$p]["expiration_date"] ), "colspan=\"3\"");
+            $feature_table->addRow(array(
+                "{$feature_array[$p]['num_licenses']} license(s) expire(s) in {$feature_array[$p]['days_to_expiration']} day(s) Date of expiration: {$feature_array[$p]['expiration_date']}" ),
+                "colspan=\"3\""
+            );
 
-                // Check whether license is close to expiration date
+            // Check whether license is close to expiration date
             if ( $feature_array[$p]["days_to_expiration"] < 4000 ) {
                 if ( $feature_array[$p]["days_to_expiration"] <= $lead_time && $feature_array[$p]["days_to_expiration"] >= 0 ) {
                     $feature_table->updateRowAttributes( ($feature_table->getRowCount() - 1) , "class=\"expires_soon\"");
@@ -83,10 +102,10 @@ HTML;
         }
 
         $table->addRow(array(
-        $key,
-        $feature_array[0]["vendor_daemon"],
-        $total_licenses,
-        $feature_table->toHTML(),
+            $key,
+            $feature_array[0]["vendor_daemon"],
+            $total_licenses,
+            $feature_table->toHtml(),
         ));
 
         unset($feature_table);
@@ -94,11 +113,10 @@ HTML;
 
     // Center columns 2. Columns start with 0 index
     $table->updateColAttributes(1,"align=\"center\"");
-    $table->display();
+    $html_body .= $table->toHtml();
+}
 
-} else {
-    // if ( $_GET['listing'] === 0 )
-    // Licenses currently being used
+function list_licenses_in_use() {
     echo "<p>Following is the list of licenses currently being used. Licenses that are currently not in use are not shown.</p>";
 
     // If person is filtering for certain features
@@ -256,8 +274,5 @@ HTML;
             pclose($fp);
         }
     } // end for loop
-      // End of current usage
-} // end if ( $listing == 1 )
+} // end function list_licenses_for_use()
 ?>
-
-<?php print_footer(); ?>
