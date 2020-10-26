@@ -6,7 +6,7 @@ include_once('HTML/Table.php');
 
 define("PASS_MARK", "<span class='green-text'>&#10004; GOOD</span>");  // green heavy checkmark
 define("FAIL_MARK", "<span class='red-text'>&#10006; FAIL</span>");    // red cross mark
-define("REQUIRED_PHP", "5.3.0");
+define("REQUIRED_PHP", "7.0.0");
 
 // Parallel arrays
 $test_names   = array();

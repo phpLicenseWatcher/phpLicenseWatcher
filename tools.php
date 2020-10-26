@@ -1,10 +1,8 @@
 <?php
 
 /**
- * This build
- *
- * @param string $lumil_loc
- * @param $server
+ * @param string $lumil_binary Full path and executable file for lmutil.
+ * @param $server Server name being queried.  "{port}@{domain}.{tld}".
  * @param &$expiration_array
  * @return integer 1
  */
@@ -107,6 +105,8 @@ function convert_to_mysql_date($date) {
     $date = mktime(0, 0, 0, $stringArray[0], $stringArray[1], $stringArray[2]);
     return date("Y-m-d", $date);
 }
+
+// Do we need this?  Remove build_select_box() function if it is not needed.
 
 /**
  * Takes a result set, with the first column being the "id" or value and the
@@ -243,6 +243,8 @@ function cache_store($command , $data) {
     $cacheFile = $cache_dir . $hash;
     file_put_contents($cacheFile, $data);
 }
+
+// Do we need this?  Remove timespan class if it is not needed.
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                             #
