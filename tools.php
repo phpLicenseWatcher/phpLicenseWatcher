@@ -1,12 +1,13 @@
 <?php
 
 /**
- * @param string $lumil_binary Full path and executable file for lmutil.
  * @param $server Server name being queried.  "{port}@{domain}.{tld}".
  * @param &$expiration_array
  * @return integer 1
  */
-function build_license_expiration_array($lmutil_binary, $server, &$expiration_array) {
+function build_license_expiration_array($server, &$expiration_array) {
+    global $lmutil_binary; // from config.php
+
     $total_licenses = 0;
     $file = popen("{$lmutil_binary} lmcksum -c {$server}", "r");
     $today = time();

@@ -27,7 +27,7 @@ case 0:
     list_licenses_in_use($servers, $html_body);
     break;
 case 1:
-    list_features_and_expirations($lead_time, $servers, $html_body);
+    list_features_and_expirations($servers, $html_body);
     break;
 default:
     return null;
@@ -40,10 +40,12 @@ print_footer();
 exit;
 
 // List available features and their expiration dates
-function list_features_and_expirations($lead_time, $servers, &$html_body) {
+function list_features_and_expirations($servers, &$html_body) {
+    global $lead_time; // from config.php
+
     // Only one server is used, here.
-    // Assume its the first when multiple servers are given.
-    $server = is_array($servers) ? $servers[0] : $servers;
+    // Assume it's the first when multiple servers are given.
+    $server = array_key_exists(0, $servers) ? $servers[0] : $servers;
     unset ($servers);
 
     $html_body .= <<<HTML
@@ -62,7 +64,7 @@ HTML;
     $colHeaders = array("Server: {$server['name']} ( {$server['label']} )");
     $table->addRow($colHeaders, "colspan='4'", "th");
 
-    build_license_expiration_array($lmutil_binary, $server['name'], $expiration_array);
+    build_license_expiration_array($server['name'], $expiration_array);
 
     // Define a table header
     $colHeaders = array("Feature", "Vendor Daemon", "Total licenses", "Number licenses, Days to expiration, Date of expiration");
