@@ -22,7 +22,7 @@ $colHeaders = array("ID", "License port@server", "Description", "Status", "Curre
 $table->addRow($colHeaders, $headerStyle, "TH");
 
 foreach ($servers as $server) {
-	$data = run_command("{$lmutil_loc} lmstat -c {$server['name']}");
+	$data = run_command("{$lmutil_binary} lmstat -c {$server['name']}");
 	$status_string = "";
 	$detaillink="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
 	$listingexpirationlink="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";

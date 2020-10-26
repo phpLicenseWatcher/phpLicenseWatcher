@@ -22,7 +22,7 @@ $expire_date = mktime(0, 0, 0, date("m"), date("d") + $lead_time, date("Y"));
 $today = mktime (0, 0, 0, date("m"), date("d"), date("Y"));
 
 foreach ($servers as $i => $server) {
-    build_license_expiration_array($lmutil_loc, $server['name'], $expiration_array[$i]);
+    build_license_expiration_array($lmutil_binary, $server['name'], $expiration_array[$i]);
 }
 
 $table = new HTML_Table("class='table' style='width:100%;' ");

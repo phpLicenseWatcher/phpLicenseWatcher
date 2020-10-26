@@ -8,9 +8,9 @@
  * @param &$expiration_array
  * @return integer 1
  */
-function build_license_expiration_array($lmutil_loc, $server, &$expiration_array) {
+function build_license_expiration_array($lmutil_binary, $server, &$expiration_array) {
     $total_licenses = 0;
-    $file = popen("{$lmutil_loc} lmcksum -c {$server}", "r");
+    $file = popen("{$lmutil_binary} lmcksum -c {$server}", "r");
     $today = time();
 
     // Let's read in the file line by line
@@ -136,7 +136,7 @@ function build_select_box ($array, $name, $checked_val="xzxz") {
  * @return string number of licenses available as string
  */
 function num_licenses_available($myfeature) {
-    global $lmutil_loc;
+    global $lmutil_binary;
 
     db_connect($db);
     $servers = db_get_servers($db);
@@ -149,7 +149,7 @@ function num_licenses_available($myfeature) {
         $license_file .= "{$server['name']}:";
     }
 
-    $fp = popen("{$lmutil_loc} lmstat -f {$myfeature} -c {$license_file}", "r");
+    $fp = popen("{$lmutil_binary} lmstat -f {$myfeature} -c {$license_file}", "r");
         while ( !feof ($fp) ) {
     	$line = fgets ($fp, 1024);
 
@@ -171,7 +171,7 @@ function num_licenses_available($myfeature) {
  * @return integer number of licenses
  */
 function num_licenses_used($myfeature) {
-    global $lmstat_loc;
+    global $lmstat_command;
 
     db_connect($db);
     $servers = db_get_servers($db);
@@ -184,7 +184,7 @@ function num_licenses_used($myfeature) {
         $license_file .= "{$server['name']}:";
     }
 
-    $fp = popen("{$lmstat_loc} -f {$myfeature} -c {$license_file}", "r");
+    $fp = popen("{$lmstat_command} -f {$myfeature} -c {$license_file}", "r");
     $num_licenses = 0;
 
     while ( !feof ($fp) ) {
@@ -201,7 +201,7 @@ function num_licenses_used($myfeature) {
 }
 
 function run_command($command) {
-    global $lmutil_loc;
+    global $lmutil_binary;
     $data = "";
 
     if (!cache_check($command, $data)) {

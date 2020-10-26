@@ -7,7 +7,7 @@ $servers = db_get_servers($db);
 $today = date("Y-m-d");
 
 foreach ($servers as $server) {
-    $fp = popen($lmutil_loc . " lmstat -a -c " . $server['name'], "r");
+    $fp = popen($lmutil_binary . " lmstat -a -c " . $server['name'], "r");
     while ( !feof ($fp) ) {
         $line = fgets ($fp, 1024);
 

@@ -48,7 +48,7 @@ $test_names[]   = "Pear DB Class";
 $test_values[]  = $test ? "Installed" : "Not Found";
 $test_results[] = $test ? PASS_MARK : FAIL_MARK;
 
-$test           = isset($lmutil_loc) && is_executable($lmutil_loc);
+$test           = isset($lmutil_binary) && is_executable($lmutil_binary);
 $test_names[]   = "<code>lmutil</code>";
 $test_values[]  = $test ? "Is Executable" : "Not Executable (maybe check permissions?)";
 $test_results[] = $test ? PASS_MARK : FAIL_MARK;

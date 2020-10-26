@@ -13,7 +13,7 @@ $servers = db_get_servers($db);
 $time = date('Y-m-d H:i:00');
 
 foreach ($servers as $server) {
-    $fp = popen($lmutil_loc . " lmstat -a -c " . $server['name'], "r");
+    $fp = popen($lmutil_binary . " lmstat -a -c " . $server['name'], "r");
 
     while ( !feof ($fp) ) {
         $line = fgets ($fp, 1024);
