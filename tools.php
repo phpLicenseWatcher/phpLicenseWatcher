@@ -74,13 +74,6 @@ function compare_dates ($date1, $date2) {
     $unixdate2 = strtotime($date2);
 
     return ($unixdate1 <=> $unixdate2);
-    // if ($unixdate1 > $unixdate2) {
-    //     return 1;
-    // } elseif ($unixdate1 < $unxidate2) {
-    //     return -1;
-    // } elseif ($unixdate1 === $unxidate2) {
-    //     return 0;
-    // }
 }
 
 /**
@@ -107,27 +100,28 @@ function convert_to_mysql_date($date) {
     return date("Y-m-d", $date);
 }
 
-// Do we need this?  Remove build_select_box() function if it is not needed.
-
 /**
  * Takes a result set, with the first column being the "id" or value and the
  * second column being the text you want displayed
  *
+ * ** Is this function used?  Remove from codebase if it is not used. **
+ *
+ * @param &$html HTML text block that is being built for the view.
  * @param $array
  * @param $name name you want assigned to this form element
  * @param $checked_val value of the item that should be checked (optional)
  */
-function build_select_box ($array, $name, $checked_val="xzxz") {
-    print "<select name=\"{$name}\">";
+function build_select_box (&$html, $array, $name, $checked_val="xzxz") {
+    $html .= "<select name=\"{$name}\">";
     for ($i = 0; $i < sizeof($array); $i++) {
-        print "<option value=\"{$array[$i]}\"";
+        $html .= "<option value=\"{$array[$i]}\"";
         if ($array[$i] == $checked_val) {
-            print " selected";
+            $html .= " selected";
         }
 
-        print ">{$array[$i]}</option>";
+        $html .= ">{$array[$i]}</option>";
     }
-    print "</select>";
+    $html .= "</select>";
 }
 
 /**
@@ -136,7 +130,7 @@ function build_select_box ($array, $name, $checked_val="xzxz") {
  * @param string $myFeature
  * @return string number of licenses available as string
  */
-function num_licenses_available($myfeature) {
+function num_licenses_available($feature) {
     global $lmutil_binary;
 
     db_connect($db);
@@ -150,8 +144,8 @@ function num_licenses_available($myfeature) {
         $license_file .= "{$server['name']}:";
     }
 
-    $fp = popen("{$lmutil_binary} lmstat -f {$myfeature} -c {$license_file}", "r");
-        while ( !feof ($fp) ) {
+    $fp = popen("{$lmutil_binary} lmstat -f {$feature} -c {$license_file}", "r");
+    while ( !feof ($fp) ) {
     	$line = fgets ($fp, 1024);
 
         // Look for features in the output. You will see stuff like
@@ -168,10 +162,12 @@ function num_licenses_available($myfeature) {
 /**
  * Get the number of used licenses for a particular feature.
  *
+ * ** Is this function used?  Remove from codebase if it is not used. **
+ *
  * @param string $myfeature
  * @return integer number of licenses
  */
-function num_licenses_used($myfeature) {
+function num_licenses_used($feature) {
     global $lmstat_command;
 
     db_connect($db);
@@ -185,7 +181,7 @@ function num_licenses_used($myfeature) {
         $license_file .= "{$server['name']}:";
     }
 
-    $fp = popen("{$lmstat_command} -f {$myfeature} -c {$license_file}", "r");
+    $fp = popen("{$lmstat_command} -f {$feature} -c {$license_file}", "r");
     $num_licenses = 0;
 
     while ( !feof ($fp) ) {
@@ -245,8 +241,6 @@ function cache_store($command , $data) {
     file_put_contents($cacheFile, $data);
 }
 
-// Do we need this?  Remove timespan class if it is not needed.
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                             #
 # B00zy's timespan script v1.2                                                #
@@ -278,42 +272,22 @@ function cache_store($command , $data) {
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+// Code updates from PHP4 by Peter Bailie (RPI DotCIO Research Computing).
 define('day', 60*60*24 );
 define('hour', 60*60 );
 define('minute', 60 );
 
 class timespan
 {
-    var $years;
-    var $months;
-    var $weeks;
-    var $days;
-    var $hours;
-    var $minutes;
-    var $seconds;
+    public $years;
+    public $months;
+    public $weeks;
+    public $days;
+    public $hours;
+    public $minutes;
+    public $seconds;
 
-    function leap($time) {
-        if (date('L',$time) and (date('z',$time) > 58))
-            return (double)(60*60*24*366);
-        else {
-            $de = getdate($time);
-            $mkt = mktime(0,0,0,$de['mon'],$de['mday'],($de['year'] - 1));
-            if ((date('z',$time) <= 58) and date('L',$mkt))
-                return (double)(60*60*24*366);
-            else
-                return (double)(60*60*24*365);
-        }
-    }
-
-    function readable() {
-        $values = array('years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds');
-        foreach ($values as $k => $v)
-            if ($this->{$v})
-                $fmt .= ($fmt ? ', ' : '') . $this->{$v} . " $v";
-        return $fmt . ($fmt ? '.' : '') ;
-    }
-
-    function timespan($after,$before) {
+    public function __construct ($after, $before) {
         // Set variables to zero, instead of null.
         $this->years = 0;
         $this->months = 0;
@@ -369,6 +343,27 @@ class timespan
         $duration %= 60;
 
         $this->seconds = $duration;
+    }
+
+    private function leap($time) {
+        if (date('L',$time) and (date('z',$time) > 58))
+            return (double)(60*60*24*366);
+        else {
+            $de = getdate($time);
+            $mkt = mktime(0,0,0,$de['mon'],$de['mday'],($de['year'] - 1));
+            if ((date('z',$time) <= 58) and date('L',$mkt))
+                return (double)(60*60*24*366);
+            else
+                return (double)(60*60*24*365);
+        }
+    }
+
+    public function readable() {
+        $values = array('years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds');
+        foreach ($values as $k => $v)
+            if ($this->{$v})
+                $fmt .= ($fmt ? ', ' : '') . $this->{$v} . " $v";
+        return $fmt . ($fmt ? '.' : '') ;
     }
 }
 

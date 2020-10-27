@@ -1,7 +1,7 @@
 <?php
 
 require_once("common.php");
-require_once('./tools.php');
+require_once('tools.php');
 require_once("HTML/Table.php");
 
 if (isset($_GET['refresh']) && $_GET['refresh'] > 0 && ! $disable_autorefresh) {
@@ -33,8 +33,9 @@ default:
     return null;
 }
 
+// Show view.
 print_header();
-print "<h1>Flexlm Licenses in Detail</h1><hr/>";
+print "<h1>Flexlm Licenses in Detail</h1><hr>";
 print $html_body;
 print_footer();
 exit;
@@ -142,7 +143,7 @@ HTML;
     // Loop through the available servers
     foreach ($servers as $server) {
         // Execute lmutil lmstat -A -c 27000@license or similar
-        $fp = popen($lmutil_binary . " lmstat -A -c " . $server['name'], "r");
+        $fp = popen("{$lmutil_binary} lmstat -A -c {$server['name']}", "r");
 
         // Feature counter
         $i = -1;
@@ -178,12 +179,12 @@ HTML;
         // Check whether anyone is using licenses from this particular license server
         if ( $i > -1 ) {
             // Create a new table
-            $tableStyle = "class='table' width=\"100%\"";
+            $tableStyle = "class='table' width='100%'";
 
             $table = new HTML_Table($tableStyle);
 
             // Show a banner with the name of the serve@port plus description
-            $colHeaders = array("Server: " . $servers[$current_server[$n]] . " ( " . $description[$current_server[$n]] . " )");
+            $colHeaders = array("Server: {$server['name']} ({$server['label']})");
             $table->addRow($colHeaders, "colspan='4'", "TH");
 
             $colHeaders = array("Feature", "# cur. avail", "Details","Time checked out");
@@ -194,18 +195,18 @@ HTML;
 
             // Loop through the used features
             for ( $j = 0 ; $j <= $i ; $j++ ) {
-                if ( ! isset($_GET['filter_feature']) || in_array($license_array[$j]["feature"], $_GET['filter_feature']) ) {
-                    $feature = $license_array[$j]["feature"] ;
-                    $graph_url = "monitor_detail.php?feature=$feature";
+                if ( ! isset($_GET['filter_feature']) || in_array($license_array[$j]['feature'], $_GET['filter_feature']) ) {
+                    $feature = $license_array[$j]['feature'] ;
+                    $graph_url = "monitor_detail.php?feature={$feature}";
 
                     // How many licenses are currently used
-                    $licenses_available = $license_array[$j]["num_licenses"] - $license_array[$j]["licenses_used"];
-                    $license_info = "Total of " . $license_array[$j]["num_licenses"] . " licenses, " .
-                    $license_array[$j]["licenses_used"] . " currently in use, <b>" . $licenses_available . " available</b>";
-                    $license_info .= "<br/><a href='$graph_url'>Historical Usage</a>";
-                    $table->addRow(array($license_array[$j]["feature"], "$licenses_available", $license_info), "style=\"background: $color[$j];\"");
+                    $licenses_available = $license_array[$j]['num_licenses'] - $license_array[$j]['licenses_used'];
+                    $license_info = "Total of {$license_array[$j]['num_licenses']} licenses, " .
+                    $license_array[$j]['licenses_used'] . " currently in use, <span style='weight: bold'>{$licenses_available} available</span>";
+                    $license_info .= "<br/><a href='{$graph_url}'>Historical Usage</a>";
+                    $table->addRow(array($license_array[$j]['feature'], "$licenses_available", $license_info), "style='background: $color[$j];'");
 
-                    for ( $k = 0; $k < sizeof($users[$current_server[$n]][$j]) ; $k++ ) {
+                    for ( $k = 0; $k < sizeof($users[$server['name']][$j]); $k++ ) {
                         /* ---------------------------------------------------------------------------
                          * I want to know how long a license has been checked out. This
                          * helps in case some people forgot to close an application and
@@ -214,7 +215,7 @@ HTML;
                          * jdoe machine1 /dev/pts/4 (v4.0) (licenserver/27000 444), start Thu 12/5 9:57
                          * the date after start is when license was checked out
                          * ---------------------------------------------------------------------------- */
-                        $line = explode(", start ", $users[$current_server[$n]][$j][$k]);
+                        $line = explode(", start ", $users[$server['name']][$j][$k]);
                         preg_match("/(.+?) (.+?) (\d+):(\d+)/i", $line[1], $line2);
 
                         // Convert the date and time ie 12/5 9:57 to UNIX time stamp
@@ -245,7 +246,7 @@ HTML;
                         }
 
                         // Output the user line
-                        $user_line = $users[$current_server[$n]][$j][$k];
+                        $user_line = $users[$server['name']][$j][$k];
                         $user_line_parts = explode( ' ', trim($user_line) );
                         $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> " ;
                         $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> " ;
@@ -260,7 +261,7 @@ HTML;
             }
 
         } else {
-            echo("<p style=\"color: red;\">No licenses are currently being used on " . $servers[$current_server[$n]]. " ( " . $description[$current_server[$n]] . " )</p>");
+            $html_body .= "<p style=\"color: red;\">No licenses are currently being used on {$server['name']} ({$servers['label']})</p>";
         }
         pclose($fp);
     } // END for loop

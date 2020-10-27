@@ -1,7 +1,7 @@
 <?php
 // Config file for Vagrant VM
 $lmutil_binary="/opt/flexnetserver/lmutil";
-$lmstat_command="{$lmutil_binary} lmstat";
+//$lmstat_command="{$lmutil_binary} lmstat";
 $notify_address="";
 $lead_time=30;
 $disable_autorefresh=0;
@@ -24,5 +24,5 @@ $legendpoints="";
 $debug = 1;
 
 // License servers are now in the database.
-// e.g. INSERT INTO `servers` (`name`, `label`, `is_active`) VALUES ('port@domain.tld', 'label/description', 1);
+// e.g. INSERT INTO `servers` (`name`, `label`, `is_active`) VALUES ('port@host.domain.tld', 'label/description', 1);
 ?>
