@@ -42,7 +42,7 @@ exit;
 
 // List available features and their expiration dates
 function list_features_and_expirations($servers, &$html_body) {
-    global $lead_time; // from config.php
+    global $colors, $lead_time; // from config.php
 
     // Only one server is used, here.  Assume it's index [0].
     $server = $servers[0];
@@ -205,7 +205,7 @@ HTML;
                     $license_info = "Total of {$license_array[$j]['num_licenses']} licenses, " .
                     $license_array[$j]['licenses_used'] . " currently in use, <span style='weight: bold'>{$licenses_available} available</span>";
                     $license_info .= "<br/><a href='{$graph_url}'>Historical Usage</a>";
-                    $table->addRow(array($license_array[$j]['feature'], "$licenses_available", $license_info), "style='background: $color[$j];'");
+                    $table->addRow(array($license_array[$j]['feature'], $licenses_available, $license_info), "style='background: {$color[$j]};'");
 
                     for ( $k = 0; $k < sizeof($users[$server['name']][$j]); $k++ ) {
                         /* ---------------------------------------------------------------------------
@@ -251,7 +251,7 @@ HTML;
                         $user_line_parts = explode( ' ', trim($user_line) );
                         $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> " ;
                         $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> " ;
-                        $table->addRow(array( "&nbsp;", "" ,$user_line_formated, $time_difference), "style=\"background: $color[$j];\"");
+                        $table->addRow(array( "&nbsp;", "" ,$user_line_formated, $time_difference), "style='background: {$color[$j]};'");
                     }
                 }
             }
