@@ -44,9 +44,8 @@ exit;
 function list_features_and_expirations($servers, &$html_body) {
     global $lead_time; // from config.php
 
-    // Only one server is used, here.
-    // Assume it's the first when multiple servers are given.
-    $server = array_key_exists(0, $servers) ? $servers[0] : $servers;
+    // Only one server is used, here.  Assume it's index [0].
+    $server = $servers[0];
     unset ($servers);
 
     $html_body .= <<<HTML
@@ -119,6 +118,8 @@ HTML;
 } // END function list_features_and_expirations()
 
 function list_licenses_in_use($servers, &$html_body) {
+    global $lmutil_binary, $colors; // from config.php
+
     $html_body .= <<<HTML
 <p>Following is the list of licenses currently being used.
 Licenses that are currently not in use are not shown.</p>
@@ -257,11 +258,12 @@ HTML;
 
             // Display the table
             if ( $table->getRowCount() > 2 ) {
-                $table->display();
+                $html_body .= $table->toHtml();
             }
 
         } else {
-            $html_body .= "<p style=\"color: red;\">No licenses are currently being used on {$server['name']} ({$servers['label']})</p>";
+            // color #dc143c is "crimson", which is better than "red" for contrast ratio against white background.
+            $html_body .= "<p style='color: crimson;'>No licenses are currently being used on {$server['name']} ({$server['label']})</p>";
         }
         pclose($fp);
     } // END for loop

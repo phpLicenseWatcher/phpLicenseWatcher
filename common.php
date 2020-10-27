@@ -115,8 +115,7 @@ function db_get_servers(&$db, $ids=null) {
         die ($db->getMessage());
     }
 
-    // $servers is an array, but when count() is 1, return array element instead.
-    return count($servers) === 1 ? $servers[0] : $servers;
+    return $servers;
 }
 
 // Debug helper functions.
