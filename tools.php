@@ -215,11 +215,13 @@ function run_command($command) {
     return $data;
 }
 
-function cache_check($command , &$data) {
+function cache_check($command, &$data) {
+    global $cache_dir;
     $result = false;
-    $cache_dir = '/tmp/';
-    $hash = md5( $command );
-    $cacheFile = $cache_dir . $hash ;
+    $hash = md5($command);
+    $cacheFile = "{$cache_dir}{$hash}.cache";
+
+    print_var($cacheFile);
 
     if (file_exists($cacheFile)) {
         if (time() - filemtime($cacheFile) > 2 * 3600) {
@@ -234,10 +236,10 @@ function cache_check($command , &$data) {
     return $result;
 }
 
-function cache_store($command , $data) {
-    $cache_dir = '/tmp/';
+function cache_store($command, $data) {
+    global $cache_dir;
     $hash = md5($command);
-    $cacheFile = $cache_dir . $hash;
+    $cacheFile = "{$cache_dir}{$hash}.cache";
     file_put_contents($cacheFile, $data);
 }
 

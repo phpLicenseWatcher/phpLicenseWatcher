@@ -2,6 +2,7 @@
 // Config file for Vagrant VM
 $lmutil_binary="/opt/flexnetserver/lmutil";
 //$lmstat_command="{$lmutil_binary} lmstat";
+$cache_dir="/var/cache/phplw";
 $notify_address="";
 $lead_time=30;
 $disable_autorefresh=0;
