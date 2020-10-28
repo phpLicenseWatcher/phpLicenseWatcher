@@ -50,6 +50,8 @@ You may develop code for this repository on your host.  Make sure the VM is runn
     * Virtualbox typically assigns the VM an IP of `10.0.2.15`.  This is not visible from the host due to Virtualbox's NAT firewall.  Instead, certain ports are forwarded to the host at `localhost`.
     * Virtualbox's NAT firewall is meant to block connections to the VM from the Internet.
     * Your host can be seen from within the VM at `10.0.2.2`.
+* Server statuses (shown on `index.php`) get cached for two hours.  Should this cache go stale before expiration, you can delete all cache files within the vagrant box.  The path and files are `/var/cache/phplw/*.cache`
+* The PHP error log is within the Vagrant box at `/var/log/apache2/phplw_error.log`.
 
 ### Troubleshooting
 * Many problems can be solved by issuing a "full-update". `vagrant up --provision-with full-update`
