@@ -1,7 +1,7 @@
 <?php
 
 ################################################################################################
-# This build 
+# This build
 ################################################################################################
 function build_license_expiration_array($lmutil_loc, $server, &$expiration_array) {
 
@@ -13,7 +13,7 @@ function build_license_expiration_array($lmutil_loc, $server, &$expiration_array
 
   # Let's read in the file line by line
   while (!feof ($file)) {
-    
+
     $line = fgets ($file, 1024);
 
     if ( preg_match("/INCREMENT .*/i", $line, $out ) || preg_match("/FEATURE .*/i", $line, $out ) ) {
@@ -33,17 +33,17 @@ function build_license_expiration_array($lmutil_loc, $server, &$expiration_array
         $license[4] = str_replace("-0", "-2036", $license[4]);
 	$license[4] = str_replace("permanent", "05-jul-2036", $license[4]);
         $unixdate2 = strtotime($license[4]);
-        
+
         # Convert the date you got into UNIX time
         $unixdate2 = strtotime($license[4]);
 	}
-	
-	
+
+
     $days_to_expiration = ceil ((1 + strtotime($license[4]) - $today) / 86400);
 
     ##############################################################################
     # If there is more than 4000 days = 10 years+ until expiration I will
-    # consider the license to be permanent 
+    # consider the license to be permanent
     ##############################################################################
     if ( $days_to_expiration > 4000 ) {
         $license[4] = "permanent";
@@ -61,13 +61,13 @@ function build_license_expiration_array($lmutil_loc, $server, &$expiration_array
 
 
   }
-  
+
   #echo("<pre>");
   #print_r($expiration_array);
 
 
   pclose($file);
-  
+
   return 1;
 }
 
@@ -154,14 +154,14 @@ be checked
 ##################################################################
 function num_licenses_available($myfeature) {
 
-    global $servers, $lmutil_loc; 
+    global $servers, $lmutil_loc;
 
     $LICENSE_FILE="";
-    
+
     # Build LM_LICENSE_FILE
    for ( $i = 0 ; $i < sizeof($servers); $i++ )
         $LICENSE_FILE .= $servers[$i] . ":";
-   
+
    $fp = popen($lmutil_loc . " lmstat -f " . $myfeature  . " -c " . $LICENSE_FILE, "r");
 
    while ( !feof ($fp) ) {
@@ -178,7 +178,7 @@ function num_licenses_available($myfeature) {
 	}
 
    }
-    
+
 }
 
 ##################################################################
@@ -187,14 +187,14 @@ function num_licenses_available($myfeature) {
 ##################################################################
 function num_licenses_used($myfeature) {
 
-    global $servers, $lmstat_loc; 
+    global $servers, $lmstat_loc;
 
     $LICENSE_FILE="";
-    
+
     # Build LM_LICENSE_FILE
    for ( $i = 0 ; $i < sizeof($servers); $i++ )
         $LICENSE_FILE .= $servers[$i] . ":";
-   
+
    $fp = popen($lmstat_loc . " -f " . $myfeature  . " -c " . $LICENSE_FILE, "r");
 
     $num_licenses = 0;
@@ -213,7 +213,7 @@ function num_licenses_used($myfeature) {
     pclose($fp);
 
     return $num_licenses;
-    
+
 }
 
 
@@ -287,7 +287,7 @@ class timespan
     function timespan($after,$before)
         {
         # Set variables to zero, instead of null.
-        
+
         $this->years = 0;
         $this->months = 0;
         $this->weeks = 0;
@@ -311,7 +311,7 @@ class timespan
             $this->years += 1;
             $duration -= (int)$year;
             $dec -= (int)$year;
-            
+
             $year = $this->leap($dec);
             }
 
@@ -357,11 +357,11 @@ class timespan
 
 function run_command( $command ){
     global $lmutil_loc;
-    
+
     $data = "";
-    
+
     if( !cache_check($command, $data) ){
-   
+
         $fp = popen( $command , "r");
 
         $data = "";
@@ -369,49 +369,38 @@ function run_command( $command ){
             $data .= fgets ($fp, 1024);
         }
         pclose($fp);
-    
+
         cache_store( $command , $data );
-        
+
     }
-    
+
     return $data;
 }
 
-
-
-
-function cache_check( $command , &$data ){
+function cache_check($command , &$data) {
+    global $cache_dir;
     $result = false;
-    
-    $cache_dir = '/tmp/';
-    $hash = md5( $command );
-    $cacheFile = $cache_dir . $hash ;
-    
-    if( file_exists( $cacheFile ) ){
-        
+    $hash = md5($command);
+    $cacheFile = $cache_dir . $hash;
+
+    if (file_exists($cacheFile)){
         if (time()-filemtime($cacheFile) > 2 * 3600) {
-          // file older than 2 hours
+            // file older than 2 hours
         } else {
-          // file younger than 2 hours
+            // file younger than 2 hours
             $data = file_get_contents($cacheFile);
             $result = true;
         }
-        
     }
-    
+
     return $result;
-    
 }
 
 function cache_store( $command , $data ){
-    
-     $cache_dir = '/tmp/';
+    global $cache_dir;
     $hash = md5( $command );
     $cacheFile = $cache_dir . $hash ;
-    
     file_put_contents($cacheFile, $data );
-    
 }
-
 
 ?>

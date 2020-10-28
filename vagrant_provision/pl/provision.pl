@@ -21,6 +21,7 @@ my @REPO_PATH = (rootdir(), "home", "vagrant", "github_phplw");
 my @FLEXNETSERVER_PATH = (rootdir(), "opt", "flexnetserver");
 my @HTML_PATH = (rootdir(), "var", "www", "html");
 my @APACHE_PATH = (rootdir(), "etc", "apache2");
+my @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 
 # Packages needed by OS
 my @REQUIRED_PACKAGES = ("apache2", "php", "php-xml", "php-gd", "php-mysql", "mysql-server", "mysql-client", "lsb", "composer");
@@ -30,7 +31,13 @@ my $NOT_SUPERUSER = "vagrant";
 my $NOT_SUPERUSER_UID = getpwnam $NOT_SUPERUSER;
 my $NOT_SUPERUSER_GID = getgrnam $NOT_SUPERUSER;
 
-# List of Flex LM binaries
+# Cache files owner
+my $CACHE_OWNER = "www-data";
+my $CACHE_OWNER_UID = getpwnam $CACHE_OWNER;
+my $CACHE_OWNER_GID = getgrnam $CACHE_OWNER;
+my $CACHE_PERMISSIONS = 0700;
+
+# List of Flex LM binaries and ownership
 my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
 my $FLEXLM_OWNER = "www-data";
 my $FLEXLM_OWNER_UID = getpwnam $FLEXLM_OWNER;
@@ -86,6 +93,12 @@ foreach (@REQUIRED_PACKAGES) {
 # Run composer to retrieve PHP dependencies
 # Composer cannot be run as superuser.
 exec_cmd("su -c \"composer -d" . catfile(@REPO_PATH) . " install\" $NOT_SUPERUSER");
+
+# Prepare cache directory
+$dest = catdir(@CACHE_PATH);
+mkdir $dest, 0701;
+chown $CACHE_OWNER_UID, $CACHE_OWNER_GID, $dest;
+print "Created cache file directory: $dest\n";
 
 # Copy Flex LM files to system.
 @source_path = (@REPO_PATH, "vagrant_provision", "flex_lm");
