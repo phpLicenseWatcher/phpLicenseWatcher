@@ -182,6 +182,7 @@ print "Setup logrotate for apache logs viewable on host\n";
 $source = catfile(@source_path, $LOGROTATE_CONF_FILE);
 $dest   = catfile(@dest_path, $LOGROTATE_CONF_FILE);
 copy $source, $dest;
+print "\n";
 
 # Setup apache conf
 # First disable all currently active conf files
