@@ -51,7 +51,7 @@ You may develop code for this repository on your host.  Make sure the VM is runn
     * Virtualbox typically assigns the VM an IP of `10.0.2.15`.  This is not visible from the host due to Virtualbox's NAT firewall.  Instead, certain ports are forwarded to the host at `localhost`.
     * Virtualbox's NAT firewall is meant to block connections to the VM from the Internet.
     * Your host can be seen from within the VM at `10.0.2.2`.
-* Server statuses (shown on `index.php`) get cached for two hours.  Should this cache go stale before expiration, you can delete all cache files within the vagrant box.  The path and files are `/var/cache/phplw/*.cache`
+* Server statuses (shown on `index.php`) get cached for two hours.  Should this cache go stale before expiration, you can delete all of the cache files with `vagrant up --provision-with delete-cache`.
 
 ### Troubleshooting
 * Many problems can be solved by issuing a "full-update". `vagrant up --provision-with full-update`
@@ -71,6 +71,7 @@ Command | Purpose
 `vagrant up --provision-with update` | Update the VM with your latest code.  You'll also have to refresh your web browser.
 `vagrant up --provision-with full-update` | Remove all code and packages from guest.  Reinstall development code from working branch.  Reinstall composer packages.  Reinstall provision configuration file.  Do this only if you need a complete reset.
 `vagrant up --provision-with composer-update` | Checks composer for&mdash;and installs&mdash;all updates to packages.
+`vagrant up --provision-with delete-cache` | Removes all server status cache files.  Do this if the cache goes stale.
 `vagrant ssh` | Opens a secure shell connection to the VM.
 
 ### Forwarded Ports
