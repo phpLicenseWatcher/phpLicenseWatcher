@@ -12,6 +12,8 @@ lmutil
 **/*~
 
 # Logs
+/logs/**
+!/logs/readme.txt
 *.log
 
 # Compiled source

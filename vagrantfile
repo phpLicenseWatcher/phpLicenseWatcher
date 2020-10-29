@@ -4,7 +4,7 @@
 REPO_PATH      = "/home/vagrant/github_phplw"
 PROV_SCRIPT    = "vagrant_provision/pl/provision.pl"
 UPDATE_SCRIPT  = "vagrant_provision/pl/update_code.pl"
-PROV_LOG       = ".vagrant/provision.log"
+PROV_LOG       = "logs/provision.log"
 
 Vagrant.require_version ">= 2.2.0"
 
