@@ -1,5 +1,5 @@
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=1;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=1;
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
 
 -- -----------------------------------------------------
@@ -14,10 +14,10 @@ DROP TABLE IF EXISTS `features` ;
 CREATE TABLE IF NOT EXISTS `features` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL,
-  `label` TEXT NULL DEFAULT NULL,
+  `label` VARCHAR(100) NULL DEFAULT NULL,
   `show_in_lists` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `name_UNIQUE` (`name` ASC))
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8;
@@ -33,11 +33,11 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `name` VARCHAR(50) NOT NULL,
   `label` VARCHAR(100) NOT NULL,
   `is_active` TINYINT NOT NULL DEFAULT 0,
-  `notes` TEXT NULL,
-  `lmgrd_version` TEXT NULL,
+  `status` VARCHAR(25) NULL,
+  `lmgrd_version` VARCHAR(15) NULL,
   `last_updated` DATETIME NULL DEFAULT now(),
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `name_label_UNIQUE` (`name` ASC, `label` ASC))
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8;
@@ -53,8 +53,8 @@ CREATE TABLE IF NOT EXISTS `licenses` (
   `server_id` INT NOT NULL,
   `feature_id` INT NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `serverid_featureid_UNIQUE` (`server_id` ASC, `feature_id` ASC),
-  INDEX `fk_licenses_features1_idx` (`feature_id` ASC),
+  UNIQUE INDEX `serverid_featureid_UNIQUE` (`server_id` ASC, `feature_id` ASC) VISIBLE,
+  INDEX `fk_licenses_features1_idx` (`feature_id` ASC) VISIBLE,
   CONSTRAINT `fk_licenses_servers1`
     FOREIGN KEY (`server_id`)
     REFERENCES `servers` (`id`)
@@ -80,8 +80,8 @@ CREATE TABLE IF NOT EXISTS `events` (
   `license_id` INT NOT NULL,
   `time` DATETIME NOT NULL,
   `user` VARCHAR(80) NOT NULL,
-  `type` TEXT NOT NULL,
-  `reason` TEXT NOT NULL,
+  `type` VARCHAR(255) NOT NULL,
+  `reason` VARCHAR(255) NOT NULL,
   PRIMARY KEY (`license_id`, `time`, `user`),
   CONSTRAINT `fk_events_licenses1`
     FOREIGN KEY (`license_id`)

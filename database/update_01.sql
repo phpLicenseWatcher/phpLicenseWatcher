@@ -16,10 +16,10 @@ ALTER TABLE `server`
     RENAME TO `servers`,
     CHANGE COLUMN `alias` `label` VARCHAR(100) NOT NULL,
     ADD COLUMN `is_active` TINYINT NOT NULL DEFAULT 1,
-    ADD COLUMN `notes` TEXT,
-    ADD COLUMN `lmgrd_version` TEXT,
+    ADD COLUMN `status` VARCHAR(25),
+    ADD COLUMN `lmgrd_version` VARCHAR(15),
     ADD COLUMN `last_updated` DATETIME DEFAULT now(),
-    ADD UNIQUE INDEX `name_label_UNIQUE` (`name` ASC, `label` ASC),
+    ADD UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE,
     ENGINE = InnoDB,
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
@@ -48,7 +48,7 @@ ALTER TABLE `feature`
     CHANGE COLUMN `featureID` `id` INT NOT NULL AUTO_INCREMENT,
     CHANGE COLUMN `showInLists` `show_in_lists` TINYINT NOT NULL DEFAULT 0 AFTER `label`,
     CHANGE COLUMN `feature` `name` VARCHAR(100) NOT NULL AFTER `id`,
-    ADD UNIQUE INDEX `name_UNIQUE` (`name` ASC),
+    ADD UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE,
     CONVERT TO CHARACTER SET utf8,
     DEFAULT CHARACTER SET = utf8;
 
@@ -62,8 +62,8 @@ CREATE TABLE IF NOT EXISTS `licenses` (
     `server_id` INT NOT NULL,
     `feature_id` INT NOT NULL,
     PRIMARY KEY (`id`),
-    UNIQUE INDEX `serverid_featureid_UNIQUE` (`server_id` ASC, `feature_id` ASC),
-    INDEX `fk_licenses_features1_idx` (`feature_id` ASC),
+    UNIQUE INDEX `serverid_featureid_UNIQUE` (`server_id` ASC, `feature_id` ASC) VISIBLE,
+    INDEX `fk_licenses_features1_idx` (`feature_id` ASC) VISIBLE,
     CONSTRAINT `fk_licenses_servers1`
         FOREIGN KEY (`server_id`)
         REFERENCES `servers` (`id`)
@@ -210,8 +210,8 @@ CREATE TABLE IF NOT EXISTS `events` (
     `license_id` INT NOT NULL,
     `time` DATETIME NOT NULL,
     `user` VARCHAR(80) NOT NULL,
-    `type` TEXT NOT NULL,
-    `reason` TEXT NOT NULL,
+    `type` VARCHAR(255) NOT NULL,
+    `reason` VARCHAR(255) NOT NULL,
     PRIMARY KEY (`license_id`, `time`, `user`),
     CONSTRAINT `fk_events_licenses1`
         FOREIGN KEY (`license_id`)
