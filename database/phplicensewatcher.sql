@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS `features` (
   UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_as_cs;
 
 
 -- -----------------------------------------------------
@@ -37,10 +38,13 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `lmgrd_version` VARCHAR(15) NULL,
   `last_updated` DATETIME NULL DEFAULT now(),
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE,
+  CONSTRAINT `name_fqdn`
+    CHECK (REGEXP_LIKE(`name`, '^[0-9]+@[0-9a-zA-z\.\-]+\.[a-zA-Z\-]{2,}$')))
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_as_cs;
 
 
 -- -----------------------------------------------------
@@ -67,8 +71,8 @@ CREATE TABLE IF NOT EXISTS `licenses` (
     ON UPDATE CASCADE)
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
-DEFAULT CHARACTER SET = utf8
-COLLATE = utf8_bin;
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_as_cs;
 
 
 -- -----------------------------------------------------
@@ -89,7 +93,8 @@ CREATE TABLE IF NOT EXISTS `events` (
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_as_cs;
 
 
 -- -----------------------------------------------------
@@ -108,7 +113,8 @@ CREATE TABLE IF NOT EXISTS `usage` (
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_as_cs;
 
 
 -- -----------------------------------------------------
@@ -127,7 +133,8 @@ CREATE TABLE IF NOT EXISTS `available` (
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_as_cs;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
