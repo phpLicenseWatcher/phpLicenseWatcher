@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `last_updated` DATETIME NULL DEFAULT now(),
   PRIMARY KEY (`id`),
   UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE,
-  CONSTRAINT `name_fqdn`
-    CHECK (REGEXP_LIKE(`name`, '^[0-9]+@[0-9a-zA-z\.\-]+\.[a-zA-Z\-]{2,}$')))
+  CONSTRAINT `name_port@fqdn`
+    CHECK (REGEXP_LIKE(`name`, '^[0-9]{1,5}@[0-9a-zA-z\.\-]+\.[a-zA-Z\-]{2,}$')))
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
