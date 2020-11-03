@@ -70,47 +70,62 @@ function db_connect(&$db) {
 }
 
 /**
- * Retrieve `id`, `name`, and `label` of one or more servers from DB.
+ * Retrieve details of one or more servers from DB.
  *
- * When $ids is specified, it is expected to be an array of server ids to lookup.
- * When $ids is omitted as an argument, ALL active servers are retrieved from DB.
+ * $cols are the columns queried.  Can be a string or array of strings.
+ * When $cols is omitted or NULL, all columns are queried.
+ * $ids are the server IDs to lookup.  Can be an int or array of ints.
+ * When $ids is omitted as an argument, all ACTIVE servers are retrieved from DB.
  *
- * @param object $db
- * @param $ids
- * @return mixed details of a single server or an array of servers.
+ * @param object $db DB object with open connection.
+ * @param $cols optional list of columns to lookup per row.  Lookup all cols when null.
+ * @param $ids optional list if server IDs to lookup.  Lookup all IDs when null.
+ * @return array list of servers.
  */
-function db_get_servers(&$db, $ids=null) {
+function db_get_servers(&$db, $cols=null, $ids=null) {
     global $db_type;
     if (get_class($db) !== "DB_{$db_type}") {
         die ("DB not connected when doing server lookup by ID.");
     }
 
-    // $sql statement depends on whether a list of lookup $ids is provided or not.
-    if (is_null($ids)) {
-        // When $ids is null, retrieve entire server list.
-        $sql = "SELECT `id`, `name`, `label` FROM `servers` WHERE `is_active` = ?;";
-        $params = array(1);
+    // Determine columns to query.  Query all columms when $cols is null.
+    if (is_null($cols)) {
+        $cols_queried = "*";
     } else {
-        // Ensure IDs are ints and placed in $params.
-        // int 1 is appened to $params so that "`is_active` = 1" can be tested.
-        if (is_array($ids)) {
-            $params = array_map('intval', $ids);
-            $params[] = 1;
-        } else {
-            $params = array(intval($ids), 1);
+        if (!is_array($cols)) {
+            $cols = array($cols);
         }
 
-        // Build string "(?,?,? ... )" so that "WHERE `id` IN (?,?,? ... )" is tested.
-        $param_holders = "(?";
-        for ($i = 2; $i < count($params); $i++) {
-            $param_holders .=",?";
-        }
-        $param_holders .=")";
-
-        $sql = "SELECT `id`, `name`, `label` FROM `servers` WHERE `id` IN {$param_holders} AND `is_active` = ?;";
+        // creates something like "`id`, `name`, `label`"
+        $cols_queried = "`". implode("`, `", $cols) . "`";
     }
 
-    $servers = $db->getAll($sql, $params, DB_FETCHMODE_ASSOC);
+    // Determine server IDs to query.  Query all servers when $ids is null.
+    if (is_null($ids)) {
+        $ids_quered = "";  // so that query is "WHERE `is_active`=1"
+    } else {
+        // Ensure that $ids is an array.
+        if (!is_array($ids)) {
+            $ids = array($ids);
+        }
+
+        // Remove IDs that are not ints.  Non-int IDs are mapped to -1 and ...
+        $ids = array_map(function($id) {
+            return ctype_digit($id) ? intval($id) : -1;
+        }, $ids);
+
+        // ... then filtered out of the $ids list.
+        $ids = array_filter($ids, function($id) {
+            return $id > -1;
+        });
+
+        // Build something like "`id` IN (3, 5, 7, 11) AND" so that query says
+        // "WHERE `id` IN (3, 5, 7, 11) AND `is_active`=1"
+        $ids_queried = "`id` IN (" . implode(", ", $ids) . ") AND";
+    }
+
+    $sql = "SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} `is_active` = 1;";
+    $servers = $db->getAll($sql, arrray(), DB_FETCHMODE_ASSOC);
     if (DB::isError($db)) {
         die ($db->getMessage());
     }
