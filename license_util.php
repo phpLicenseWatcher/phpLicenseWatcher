@@ -7,7 +7,7 @@ require_once(__DIR__."/common.php");
 require_once("DB.php");
 
 db_connect($db);
-$servers = db_get_servers($db);
+$servers = db_get_servers($db, array('name'));
 
 // Get current date and time
 $time = date('Y-m-d H:i:00');

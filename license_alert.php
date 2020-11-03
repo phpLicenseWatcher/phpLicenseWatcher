@@ -14,7 +14,7 @@ require_once "DB.php";
 require_once "HTML/Table.php";
 
 db_connect($db);
-$servers = db_get_servers($db);
+$servers = db_get_servers($db, array('name'));
 $db->disconnect();
 
 // Date when the licenses will expire

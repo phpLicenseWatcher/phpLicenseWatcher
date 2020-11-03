@@ -134,7 +134,7 @@ function num_licenses_available($feature) {
     global $lmutil_binary;
 
     db_connect($db);
-    $servers = db_get_servers($db);
+    $servers = db_get_servers($db, array('name'));
     $db->disconnect();
 
     $license_file = "";
@@ -171,7 +171,7 @@ function num_licenses_used($feature) {
     global $lmstat_command;
 
     db_connect($db);
-    $servers = db_get_servers($db);
+    $servers = db_get_servers($db, array('name'));
     $db->disconnect();
 
     $license_file = "";

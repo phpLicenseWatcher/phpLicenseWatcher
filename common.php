@@ -78,54 +78,43 @@ function db_connect(&$db) {
  * When $ids is omitted as an argument, all ACTIVE servers are retrieved from DB.
  *
  * @param object $db DB object with open connection.
- * @param $cols optional list of columns to lookup per row.  Lookup all cols when null.
- * @param $ids optional list if server IDs to lookup.  Lookup all IDs when null.
+ * @param array $cols optional list of columns to lookup per row.  Lookup all cols when omitted/empty.
+ * @param array $ids optional list if server IDs to lookup.  Lookup all IDs when omitted/empty.
  * @return array list of servers.
  */
-function db_get_servers(&$db, $cols=null, $ids=null) {
+function db_get_servers(object &$db, array $cols=array(), array $ids=array()) {
     global $db_type;
     if (get_class($db) !== "DB_{$db_type}") {
         die ("DB not connected when doing server lookup by ID.");
     }
 
-    // Determine columns to query.  Query all columms when $cols is null.
-    if (is_null($cols)) {
+    // Determine columns to query.  Query all columms when $cols is empty.
+    if (empty($cols)) {
         $cols_queried = "*";
     } else {
-        if (!is_array($cols)) {
-            $cols = array($cols);
-        }
-
-        // creates something like "`id`, `name`, `label`"
+        // creates column list like "`id`, `name`, `label`" to be used in SELECT query.
         $cols_queried = "`". implode("`, `", $cols) . "`";
     }
 
-    // Determine server IDs to query.  Query all servers when $ids is null.
-    if (is_null($ids)) {
-        $ids_quered = "";  // so that query is "WHERE `is_active`=1"
+    // Determine server IDs to query.  Query all servers when $ids is empty.
+    if (empty($ids)) {
+        $ids_queried = "";  // so that query is "WHERE `is_active`=?"
     } else {
-        // Ensure that $ids is an array.
-        if (!is_array($ids)) {
-            $ids = array($ids);
-        }
+        // Remove IDs that are not numeric.
+        $ids = array_filter($ids, 'ctype_digit');
 
-        // Remove IDs that are not ints.  Non-int IDs are mapped to -1 and ...
-        $ids = array_map(function($id) {
-            return ctype_digit($id) ? intval($id) : -1;
-        }, $ids);
+        // Ensure IDs are ints.
+        $ids = array_map('intval', $ids);
 
-        // ... then filtered out of the $ids list.
-        $ids = array_filter($ids, function($id) {
-            return $id > -1;
-        });
-
-        // Build something like "`id` IN (3, 5, 7, 11) AND" so that query says
-        // "WHERE `id` IN (3, 5, 7, 11) AND `is_active`=1"
-        $ids_queried = "`id` IN (" . implode(", ", $ids) . ") AND";
+        // Build something like "`id` IN (?, ?, ?, ?) AND" so that query says
+        // "WHERE `id` IN (?, ?, ?, ?) AND `is_active`=?"
+        $place_holders = array_fill(0, count($ids), "?");
+        $ids_queried = "`id` IN (" . implode(", ", $place_holders) . ") AND";
     }
 
-    $sql = "SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} `is_active` = 1;";
-    $servers = $db->getAll($sql, arrray(), DB_FETCHMODE_ASSOC);
+    $sql = "SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} `is_active`=?;";
+    $params = array_merge($ids, array(1)); // Replaces '?' placeholders with values.
+    $servers = $db->getAll($sql, $params, DB_FETCHMODE_ASSOC);
     if (DB::isError($db)) {
         die ($db->getMessage());
     }

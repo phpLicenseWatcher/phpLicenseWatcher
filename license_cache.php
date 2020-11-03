@@ -3,7 +3,7 @@ require_once(__DIR__."/common.php");
 require_once("DB.php");
 
 db_connect($db);
-$servers = db_get_servers($db);
+$servers = db_get_servers($db, array('name'));
 $today = date("Y-m-d");
 
 foreach ($servers as $server) {
