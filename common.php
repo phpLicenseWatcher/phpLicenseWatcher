@@ -63,7 +63,7 @@ function db_connect(&$db) {
         'ssl'            => false,
     );
 
-    $db =& DB::connect($dsn, $options);
+    $db = DB::connect($dsn, $options);
     if (DB::isError($db)) {
     	die ($db->getMessage());
     }

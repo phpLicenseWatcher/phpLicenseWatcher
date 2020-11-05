@@ -221,8 +221,6 @@ function cache_check($command, &$data) {
     $hash = md5($command);
     $cacheFile = "{$cache_dir}{$hash}.cache";
 
-    print_var($cacheFile);
-
     if (file_exists($cacheFile)) {
         if (time() - filemtime($cacheFile) > 2 * 3600) {
             // file older than 2 hours

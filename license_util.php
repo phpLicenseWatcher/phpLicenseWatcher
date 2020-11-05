@@ -2,18 +2,72 @@
 
 require_once(__DIR__.'/tools.php');
 require_once(__DIR__."/common.php");
-
-// Load PEAR DB abstraction library
 require_once("DB.php");
+
+define ('SERVER_UP', "UP");
+define ('SERVER_DOWN', "DOWN");
+define ('SERVER_VENDOR_DOWN', "VENDOR DOWN");
 
 db_connect($db);
 $servers = db_get_servers($db, array('name'));
 
-// Get current date and time
-$time = date('Y-m-d H:i:00');
+// Update statuses of all servers.
+$update_data = array();
+foreach ($servers as $index => $server) {
+    // Retrieve server details via lmstat.
+    $fp=popen("{$lmutil_binary} lmstat -c {$server['name']}", "r");
+
+    $stdout = "";
+    while (!feof($fp)) {
+        $stdout .= fgets($fp);
+    }
+    pclose($fp);
+
+    print_var($stdout);
+
+    // Determine status and lmgrd version;
+    $status = null;
+    $lmgrd_version = null;
+
+    // If server is up, also read its lmgrd version.
+    if (preg_match("/license server UP (?:\(MASTER\) )?(?<lmgrd_version>v\d+[\d\.]*)$/im", $stdout, $matches)) {
+        $status = SERVER_UP;
+        $lmgrd_version = $matches['lmgrd_version'];
+    }
+
+    // This can override $status is UP.
+    if (preg_match("/vendor daemon is down/im", $stdout)) {
+        $status = SERVER_VENDOR_DOWN;
+    }
+
+    // If $status isn't determined by now, assume it is DOWN.
+    if (is_null($status)) {
+        $status = SERVER_DOWN;
+    }
+
+    // Use same $index as $servers[$index], making parrallel arrays.
+    $update_data[$index] = array($status, $lmgrd_version, $server['name']);
+    // Servers that are not up are discarded so they are not (futilely) checked for license info.
+    if ($update_data[$index][0] !== SERVER_UP) {
+        unset ($servers[$index]);
+    }
+
+}
+
+    print_var($update_data);
+    print_var($servers);
+
+$sql = $db->prepare("UPDATE `servers` SET `status`=?, `lmgrd_version`=?, `last_updated`=NOW() WHERE `name`=?;");
+$db->query("LOCK TABLES `servers` WRITE;");
+foreach($update_data as $data) {
+    $db->execute($sql, $data);
+}
+$db->query("UNLOCK TABLES;");
+
+exit;
 
 foreach ($servers as $server) {
-    $fp = popen($lmutil_binary . " lmstat -a -c " . $server['name'], "r");
+    $fp=popen("{$lmutil_binary} lmstat -a -c {$server['name']}", "r");
 
     while ( !feof ($fp) ) {
         $line = fgets ($fp, 1024);
