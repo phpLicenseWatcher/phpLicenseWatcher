@@ -6,6 +6,6 @@
 
     "require": {
         "pear-pear.php.net/html_table": "^1.8.4",
-        "pear-pear.php.net/db": "^1.9.3"
+        "pear-pear.php.net/db": "^1.10.0"
     }
 }

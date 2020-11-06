@@ -5,80 +5,51 @@ require_once("tools.php");
 require_once("HTML/Table.php");
 require_once("DB.php");
 
-// Retrieve server list.
+// Retrieve server list.  All columns.  All IDs.
 db_connect($db);
 $servers = db_get_servers($db);
 $db->disconnect();
 
-$tableStyle = "class='table' ";
+$table_style = "class='table' ";
 
 // Create a new table object
-$table = new HTML_Table($tableStyle);
+$table = new HTML_Table($table_style);
 //$table->setColAttributes(1,"align=\"center\"");
 
 // Define a table header
-$headerStyle = "";
-$colHeaders = array("ID", "License port@server", "Description", "Status", "Current Usage", "Available features/license", "lmgrd version");
-$table->addRow($colHeaders, $headerStyle, "TH");
+$header_style = "";
+$col_headers = array("ID", "License port@server", "Description", "Status", "Current Usage", "Available features/license", "lmgrd version","Last Update");
+$table->addRow($col_headers, $header_style, "TH");
 
 foreach ($servers as $server) {
-	$data = run_command("{$lmutil_binary} lmstat -c {$server['name']}");
-	$status_string = "";
-	$detaillink="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
-	$listingexpirationlink="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
-
-	foreach(explode(PHP_EOL, $data) as $line) {
-    	// Look for an expression like this ie. kalahari: license server UP (MASTER) v6.1
-      	// preg_match() explicity returns int 1 on success.
-      	switch (1) {
-      	case preg_match ("/: license server UP \(MASTER\)/i", $line):
-        	$status_string = "UP";
-        	$class = "up";
-        	$lmgrdversion = preg_replace("/.*license server UP \(MASTER\)/i ", "", $line);
-            break;
-        case preg_match ("/: license server UP/i", $line):
-            $status_string = "UP";
-            $class = "up";
-            $lmgrdversion = preg_replace("/.*license server UP/i ", "", $line);
-        }
-
-        switch(1) {
-        case preg_match("/Cannot connect to license server/i", $line, $out):
-        case preg_match("/Cannot read data/i", $line, $out):
-        case preg_match("/Error getting status/i", $line, $out):
-            $status_string = "DOWN";
-            $class = "down";
-            $lmgrdversion = "";
-            $detaillink="No details";
-            $listingexpirationlink = "";
-            break 2;
-        // Checking if vendor daemon has died even if lmgrd is still running
-        case preg_match("/vendor daemon is down/i", $line, $out):
-            $status_string = "VENDOR DOWN";
-            $class = "warning";
-            $lmgrdversion = preg_replace(".*license server UP \(MASTER\) /i", "", $line);
-            preg_replace(".*license server UP /i", "", $line);
-            break 2;
-        }
-    }
-
-    // If I don't get explicit reason that the server is UP set the status to DOWN
-    if ($status_string === "") {
-        $status_string = "DOWN";
+    switch ($server['status']) {
+    case SERVER_UP:
+        $class = "up";
+        $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
+        $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
+        break;
+    case SERVER_VENDOR_DOWN:
+        $class = "warning";
+	    $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
+	    $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
+        break;
+    case SERVER_DOWN:
+    default:
         $class = "down";
-        $lmgrdversion = "";
-        $detaillink = "No details";
-        $listingexpirationlink = "";
+        $detail_link="No Details";
+        $listing_expiration_link="";
+        break;
     }
 
     $table->AddRow(array(
         $server['id'],
         $server['name'],
         $server['label'],
-        $status_string,
-        $detaillink,
-        $listingexpirationlink,
-        $lmgrdversion
+        $server['status'],
+        $detail_link,
+        $listing_expiration_link,
+        $server['lmgrd_version'],
+        date_format(date_create($server['last_updated']), "M j Y h:i:s A")
     ));
 
 	// Set the background color of status cell

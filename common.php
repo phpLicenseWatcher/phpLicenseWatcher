@@ -24,6 +24,10 @@ HTML;
 	  exit;
 }
 
+define ('SERVER_UP', "UP");
+define ('SERVER_DOWN', "DOWN");
+define ('SERVER_VENDOR_DOWN', "VENDOR DOWN");
+
 function print_header() {
     print file_get_contents(__DIR__ . '/header.html');
 }
