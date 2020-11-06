@@ -35,8 +35,6 @@ function update_servers(&$db, &$servers) {
         }
         pclose($fp);
 
-        print_var($stdout);
-
         $status = null;
         $lmgrd_version = null;
 
