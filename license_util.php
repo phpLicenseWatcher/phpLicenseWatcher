@@ -83,71 +83,77 @@ function update_licenses(&$db, $servers) {
     foreach ($servers as $server) {
         $fp=popen("{$lmutil_binary} lmstat -a -c {$server['name']}", "r");
 
+        $licenses = array();
         while ( !feof ($fp) ) {
-            $line = fgets ($fp, 1024);
+            $stdout = fgets ($fp, 1024);
 
-        	// Look for features in the output. You will see stuff like
-        	// Users of Allegro_Viewer: (Total of 5 licenses available
-        	if ( preg_match("/^(Users of) (.*)/i", $line, $out ) )  {
-                if ( preg_match("/(Total of) (.*) (license[s]? issued;  Total of) (.*) (license[s]? in use)/i", $line, $items ) ) {
-                    $licenses[] = array (
-                        "feature" => substr($out[2],0,strpos($out[2],":")),
-                        "licenses_used" => $items[4]);
-                    unset($out);
-                    unset($items);
-                }
+        	// Look for features and licenses used in stdout.  Example of stdout:
+        	// "Users of Allegro_Viewer: (Total of 5 licenses issued;  Total of 1 license in use)\n"
+            // Features is "Allegro_Viewer" and licenses used is 1.
+            if (preg_match("/^Users of (?<feature>.*):  \(Total of \d* license[s]? issued;  Total of (?<licenses_used>\d*) license[s]? in use\)$/", $stdout, $matches)) {
+                $licenses[] = array(
+                    'feature' => $matches['feature'],
+                    'licenses_used' => $matches['licenses_used']
+                );
             }
         }
 
         pclose($fp);
 
-        if ( isset($licenses) && is_countable($licenses) ) {
-            foreach ($licenses as $license) {
+        // INSERT licence data to DB
+        $db->query("LOCK TABLES `features`, `licenses`, `usage` WRITE");
+        foreach ($licenses as $license) {
+            $sql = array();
+            $data = array();
+            $queries = array();
 
-                $sql = array();
-                // Populate feature, if needed.
-                $sql[0] = <<<SQL
-    INSERT IGNORE INTO `features` (`name`, `show_in_lists`)
-        VALUES ('{$license["feature"]}', 1);
-    SQL;
+            // Populate feature, if needed.
+            // ? = $license['feature']
+            $data[0] = array($license['features']);
+            $sql[0] = <<<SQL
+INSERT IGNORE INTO `features` (`name`, `show_in_lists`)
+    VALUES (?, 1);
+SQL;
 
-                // Populate server/feature to licenses, if needed.
-                $sql[1] = <<<SQL
-    INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
-        SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id`
-        FROM `servers`, `features`
-        WHERE `servers`.`name` = '{$server["name"]}' AND `features`.`name` = '{$license["feature"]}';
-    SQL;
+            // Populate server/feature to licenses, if needed.
+            // ?, ? = $server['name'], $license['feature']
+            $data[1] = array($server['name'], $license['feature']);
+            $sql[1] = <<<SQL
+INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
+    SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id`
+    FROM `servers`, `features`
+    WHERE `servers`.`name` = ? AND `features`.`name` = ?;
+SQL;
 
-                // Insert license usage.  Needs feature and license populated, first.
-                $sql[2] = <<<SQL
-    INSERT IGNORE INTO `usage` (`license_id`, `time`, `num_users`)
-        SELECT `licenses`.`id`, NOW(), {$license["licenses_used"]}
-        FROM `licenses`
-        JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
-        JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-        WHERE `servers`.`name`='{$server["name"]}' AND `features`.`name`='{$license["feature"]}';
-    SQL;
 
-                $recordset = $db->query($sql[2]);
-                if (DB::isError($recordset)) {
-                    die ($recordset->getMessage());
-                }
+            // Insert license usage.  Needs feature and license populated, first.
+            // ?, ?, ? = $license['licenses_used'], $server['name'], $license['feature']
+            $data[2] = array($license['licenses_used'], $server['name'], $license['feature']);
+            $sql[2] = <<<SQL
+INSERT IGNORE INTO `usage` (`license_id`, `time`, `num_users`)
+    SELECT `licenses`.`id`, NOW(), ?
+    FROM `licenses`
+    JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
+    JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+    WHERE `servers`.`name`=? AND `features`.`name`=?;
+SQL;
 
-                // when affectedRows < 1, feature and license needs to be
-                // populated and license usage query re-run.
-                if ($db->affectedRows() < 1) {
-                    foreach ($sql as $statement) {
-                        $recordset = $db->query($statement);
-                        if (DB::isError($recordset)) {
-                            die ($recordset->getMessage());
-                        }
-                    }
+            foreach($sql as $i => $statement) {
+                $queries[$i] = $db->prepare($statement);
+            }
+
+            $db->execute($queries[2], $data[2]));
+
+            // when affectedRows < 1, feature and license needs to be
+            // populated and license usage query re-run.
+            if ($db->affectedRows() < 1) {
+                foreach ($queries as $i => $query) {
+                    $db->query($query, $data[$i]);
                 }
             }
-            unset($licenses);
-        }
-    }
+        } // END foreach($licenses as $license)
+        $db->query("UNLOCK TABLES;");
+    } // END foreach($servers as $server)
 } // END function update_licenses()
 
 ?>
