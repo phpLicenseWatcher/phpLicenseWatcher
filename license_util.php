@@ -109,7 +109,7 @@ function update_licenses(&$db, $servers) {
 
             // Populate feature, if needed.
             // ? = $license['feature']
-            $data[0] = array($license['features']);
+            $data[0] = array($license['feature']);
             $sql[0] = <<<SQL
 INSERT IGNORE INTO `features` (`name`, `show_in_lists`)
     VALUES (?, 1);
@@ -124,7 +124,6 @@ INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
     FROM `servers`, `features`
     WHERE `servers`.`name` = ? AND `features`.`name` = ?;
 SQL;
-
 
             // Insert license usage.  Needs feature and license populated, first.
             // ?, ?, ? = $license['licenses_used'], $server['name'], $license['feature']
@@ -142,7 +141,7 @@ SQL;
                 $queries[$i] = $db->prepare($statement);
             }
 
-            $db->execute($queries[2], $data[2]));
+            $db->execute($queries[2], $data[2]);
 
             // when affectedRows < 1, feature and license needs to be
             // populated and license usage query re-run.
