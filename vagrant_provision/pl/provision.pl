@@ -20,17 +20,25 @@ print STDERR "Root required.\n" and exit 1 if ($> != 0);
 my @REPO_PATH = (rootdir(), "home", "vagrant", "github_phplw");
 my @FLEXNETSERVER_PATH = (rootdir(), "opt", "flexnetserver");
 my @HTML_PATH = (rootdir(), "var", "www", "html");
+my @LOGROTATE_PATH = (rootdir(), "etc", "logrotate.d");
 my @APACHE_PATH = (rootdir(), "etc", "apache2");
+my @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 
-# Packages needed by OS
-my @REQUIRED_PACKAGES = ("apache2", "php", "php-xml", "php-gd", "php-mysql", "mysql-server", "mysql-client", "lsb", "composer");
+# Packages needed for phplw.
+my @REQUIRED_PACKAGES = ("apache2", "php", "php-xml", "php-gd", "php-mysql", "mysql-server", "mysql-client", "lsb", "composer", "zip", "unzip");
 
 # Non super user account.  Some package systems run better when not as root.
 my $NOT_SUPERUSER = "vagrant";
 my $NOT_SUPERUSER_UID = getpwnam $NOT_SUPERUSER;
 my $NOT_SUPERUSER_GID = getgrnam $NOT_SUPERUSER;
 
-# List of Flex LM binaries
+# Cache files owner
+my $CACHE_OWNER = "www-data";
+my $CACHE_OWNER_UID = getpwnam $CACHE_OWNER;
+my $CACHE_OWNER_GID = getgrnam $CACHE_OWNER;
+my $CACHE_PERMISSIONS = 0700;
+
+# List of Flex LM binaries and ownership
 my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
 my $FLEXLM_OWNER = "www-data";
 my $FLEXLM_OWNER_UID = getpwnam $FLEXLM_OWNER;
@@ -47,7 +55,8 @@ my $DB_PASS = "vagrant";
 
 # Other relevant files
 my $SQL_FILE = "phplicensewatcher.sql";
-my $CONF_FILE = "phplw.conf";
+my $LOGROTATE_CONF_FILE = "phplw.conf";
+my $APACHE_CONF_FILE = "phplw.conf";
 my $UPDATE_CODE = "update_code.pl";
 
 # IP address to bind MySQL to.
@@ -86,6 +95,12 @@ foreach (@REQUIRED_PACKAGES) {
 # Run composer to retrieve PHP dependencies
 # Composer cannot be run as superuser.
 exec_cmd("su -c \"composer -d" . catfile(@REPO_PATH) . " install\" $NOT_SUPERUSER");
+
+# Prepare cache directory
+$dest = catdir(@CACHE_PATH);
+mkdir $dest, 0701;
+chown $CACHE_OWNER_UID, $CACHE_OWNER_GID, $dest;
+print "Created cache file directory: $dest\n";
 
 # Copy Flex LM files to system.
 @source_path = (@REPO_PATH, "vagrant_provision", "flex_lm");
@@ -160,6 +175,15 @@ exec_cmd("mysql -e \"FLUSH PRIVILEGES;\"");
 $file = catfile(@REPO_PATH, $SQL_FILE);
 exec_cmd("mysql --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < $file");
 
+# Setup logrotate for Apache error logs on the host.
+print "Setup logrotate for apache logs viewable on host\n";
+@source_path = (@REPO_PATH, "vagrant_provision", "logrotate");
+@dest_path   = @LOGROTATE_PATH;
+$source = catfile(@source_path, $LOGROTATE_CONF_FILE);
+$dest   = catfile(@dest_path, $LOGROTATE_CONF_FILE);
+copy $source, $dest;
+print "\n";
+
 # Setup apache conf
 # First disable all currently active conf files
 print "Setting up Apache2\n";
@@ -174,12 +198,12 @@ foreach (glob($files)) {
 # Copy phpLicenseWatcher conf file
 @source_path = (@REPO_PATH, "vagrant_provision", "apache");
 @dest_path   = (@APACHE_PATH, "sites-available");
-$source = catfile(@source_path, $CONF_FILE);
-$dest   = catfile(@dest_path, $CONF_FILE);
+$source = catfile(@source_path, $APACHE_CONF_FILE);
+$dest   = catfile(@dest_path, $APACHE_CONF_FILE);
 copy $source, $dest;
 
-# Activate phpLicenseWatcher conf file
-$conf = $CONF_FILE;
+# Activate phpLicenseWatcher Apache conf file
+$conf = $APACHE_CONF_FILE;
 $conf =~ s{\.[^.]+$}{};  # Removes ".conf" extension
 exec_cmd("a2ensite $conf");
 exec_cmd("apachectl restart");

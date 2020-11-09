@@ -24,7 +24,7 @@ Download and install for your operating system:
 3. Go to the root folder of the cloned repository.
 4. On the command line: `vagrant up`
     * There will be a long series of build messages printed to the console.
-    * Build messages will be logged in the repository at `.vagrant/provision.log` (not tracked by git).
+    * Build messages will be logged in the repository at `logs/provision.log` (not tracked by git).
     * Depending on the speed of your Internet connection and the speed of your host computer, it can take 30 minutes or more to build the VM.
     * Once the VM is built, it doesn't take nearly as long to start up the VM another time.
 
@@ -41,6 +41,7 @@ You may develop code for this repository on your host.  Make sure the VM is runn
 * You can view the VM server webpage at `http://localhost:50080`
 * A MySQL database viewer can connect to the VM server at `localhost`, port `53306`.
     * MySQL Workbench can connect to the VM server with user and password as `vagrant`.  Database Schema is also `vagrant`.
+* Should Apache generate a 500 error, the error will be logged to `phplw_errors.log` which can be viewed from within the `logs` folder in this repository (log files should be rotated by the vagrant box, but are not tracked by git).
 
 ### Tips and Tricks
 * You can use secure copy ('scp') to upload a file to the VM without it being tracked by git:<br />
@@ -50,6 +51,7 @@ You may develop code for this repository on your host.  Make sure the VM is runn
     * Virtualbox typically assigns the VM an IP of `10.0.2.15`.  This is not visible from the host due to Virtualbox's NAT firewall.  Instead, certain ports are forwarded to the host at `localhost`.
     * Virtualbox's NAT firewall is meant to block connections to the VM from the Internet.
     * Your host can be seen from within the VM at `10.0.2.2`.
+* Server statuses (shown on `index.php`) get cached for two hours.  Should this cache go stale before expiration, you can delete all of the cache files with `vagrant up --provision-with delete-cache`.
 
 ### Troubleshooting
 * Many problems can be solved by issuing a "full-update". `vagrant up --provision-with full-update`
@@ -69,6 +71,7 @@ Command | Purpose
 `vagrant up --provision-with update` | Update the VM with your latest code.  You'll also have to refresh your web browser.
 `vagrant up --provision-with full-update` | Remove all code and packages from guest.  Reinstall development code from working branch.  Reinstall composer packages.  Reinstall provision configuration file.  Do this only if you need a complete reset.
 `vagrant up --provision-with composer-update` | Checks composer for&mdash;and installs&mdash;all updates to packages.
+`vagrant up --provision-with delete-cache` | Removes all server status cache files.  Do this if the cache goes stale.
 `vagrant ssh` | Opens a secure shell connection to the VM.
 
 ### Forwarded Ports
