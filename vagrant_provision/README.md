@@ -60,6 +60,9 @@ You may develop code for this repository on your host.  Make sure the VM is runn
     2. Update the locally cached Ubuntu image.  This may reduce time needed to provision a new VM. `vagrant box update`
     3. Build a new VM. `vagrant up`
 * The vagrant box gets occasional patches in this github repository, which can make your current VM obsolete.  Sometimes, a "full-update" will bring your VM current, but that is not a guarantee.  When a "full-update" doesn't work, please rebuild the VM as described above.
+* If you are getting a "connection was reset" error in your web browser, Apache may not be running.
+    1. Enter the Vagrant box via ssh. `vagrant ssh`
+    2. Start Apache. `sudo apachectl start` or `sudo apachectl restart`
 
 ### Common Commands
 Command | Purpose
