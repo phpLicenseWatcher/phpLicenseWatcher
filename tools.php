@@ -1,8 +1,8 @@
 <?php
 
 /**
- * @param $server Server name being queried.  "{port}@{domain}.{tld}".
- * @param &$expiration_array
+ * @param string $server Server name being queried.  "{port}@{domain}.{tld}".
+ * @param array &$expiration_array
  * @return integer 1
  */
 function build_license_expiration_array($server, &$expiration_array) {
@@ -64,7 +64,7 @@ function build_license_expiration_array($server, &$expiration_array) {
 /**
  * Compare two dates
  *
- * @param $date2
+ * @param $date1
  * @param $date2
  * @return integer 1 when $date1 > $date2, -1 when $date < $date2, 0 when equal.
  */
@@ -83,7 +83,7 @@ function compare_dates ($date1, $date2) {
  * @return string US date
  */
 function convert_from_mysql_date($date) {
-    $stringArray = explode("-", $string);
+    $stringArray = explode("-", $date);
     $date = mktime(0, 0, 0, $stringArray[1], $stringArray[2], $stringArray[0]);
     return date("m/d/Y", $date);
 }
@@ -107,19 +107,19 @@ function convert_to_mysql_date($date) {
  * ** Is this function used?  Remove from codebase if it is not used. **
  *
  * @param &$html HTML text block that is being built for the view.
- * @param $array
- * @param $name name you want assigned to this form element
- * @param $checked_val value of the item that should be checked (optional)
+ * @param $options Options for selectbox.
+ * @param $name Name you want assigned to this form element
+ * @param $checked_val Value of the item that should be checked (optional)
  */
-function build_select_box (&$html, $array, $name, $checked_val="xzxz") {
+function build_select_box (&$html, $options, $name, $checked_val=null) {
     $html .= "<select name=\"{$name}\">";
-    for ($i = 0; $i < sizeof($array); $i++) {
-        $html .= "<option value=\"{$array[$i]}\"";
-        if ($array[$i] == $checked_val) {
+    foreach ($options as $option) {
+        $html .= "<option value=\"{$option}\"";
+        if ($option === $checked_val) {
             $html .= " selected";
         }
 
-        $html .= ">{$array[$i]}</option>";
+        $html .= ">{$option}</option>";
     }
     $html .= "</select>";
 }
@@ -131,7 +131,7 @@ function build_select_box (&$html, $array, $name, $checked_val="xzxz") {
  * @return string number of licenses available as string
  */
 function num_licenses_available($feature) {
-    global $lmutil_binary;
+    global $lmutil_binary; // from config.php
 
     db_connect($db);
     $servers = db_get_servers($db, array('name'));
@@ -168,7 +168,7 @@ function num_licenses_available($feature) {
  * @return integer number of licenses
  */
 function num_licenses_used($feature) {
-    global $lmstat_command;
+    global $lmutil_binary;  // from config.php
 
     db_connect($db);
     $servers = db_get_servers($db, array('name'));
@@ -181,7 +181,7 @@ function num_licenses_used($feature) {
         $license_file .= "{$server['name']}:";
     }
 
-    $fp = popen("{$lmstat_command} -f {$feature} -c {$license_file}", "r");
+    $fp = popen("{$lmutil_binary} lmstat -f {$feature} -c {$license_file}", "r");
     $num_licenses = 0;
 
     while ( !feof ($fp) ) {
@@ -197,6 +197,12 @@ function num_licenses_used($feature) {
     return $num_licenses;
 }
 
+/**
+ * Run cli command.  Use disk cache.
+ *
+ * @param string $command  path and exectuable of cli command to run.
+ * @return string Output from $command, possibly from disk cache.
+ */
 function run_command($command) {
     global $lmutil_binary;
     $data = "";
@@ -215,17 +221,24 @@ function run_command($command) {
     return $data;
 }
 
+/**
+ * Check if $data from $command is cached.
+ *
+ * Return result from disk cache if cache is less than two hours old.
+ *
+ * @param string $command Command run to check cache against.
+ * @param string &$data Data retrieved from disk cache.
+ * @return boolean true when $data is retrieved from cache, false otherwise.
+ */
 function cache_check($command, &$data) {
-    global $cache_dir;
+    global $cache_dir; // from config.php
     $result = false;
     $hash = md5($command);
     $cacheFile = "{$cache_dir}{$hash}.cache";
 
     if (file_exists($cacheFile)) {
-        if (time() - filemtime($cacheFile) > 2 * 3600) {
-            // file older than 2 hours
-        } else {
-            // file younger than 2 hours
+        if (time() - filemtime($cacheFile) <= 2 * 3600) {
+            // Cache file younger than 2 hours.  Read data from cache.
             $data = file_get_contents($cacheFile);
             $result = true;
         }
@@ -234,8 +247,14 @@ function cache_check($command, &$data) {
     return $result;
 }
 
+/**
+ * Write data to disk cache.
+ *
+ * @param $command Command run (used to hash cache file)
+ * @param $data Data written to disk cache.
+ */
 function cache_store($command, $data) {
-    global $cache_dir;
+    global $cache_dir; // from config.php
     $hash = md5($command);
     $cacheFile = "{$cache_dir}{$hash}.cache";
     file_put_contents($cacheFile, $data);

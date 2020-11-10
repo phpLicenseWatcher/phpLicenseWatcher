@@ -1,5 +1,6 @@
 <?php
 
+// Load Composer libraries.
 if (is_readable(__DIR__ . '/vendor/autoload.php')) {
     require_once(__DIR__ . '/vendor/autoload.php');
 } else {
@@ -12,6 +13,7 @@ HTML;
     exit;
 }
 
+// Load local config.
 if (is_readable(__DIR__ . '/config.php')) {
 	require_once(__DIR__ . '/config.php');
 } else {
@@ -24,19 +26,38 @@ HTML;
 	  exit;
 }
 
+// Constants
+// Server status messages.
 define ('SERVER_UP', "UP");
 define ('SERVER_DOWN', "DOWN");
 define ('SERVER_VENDOR_DOWN', "VENDOR DOWN");
 
+// $lmutil_loc has been renamed $lmutil_binary, but master branch still has $lmutil_loc.
+if (isset($lmutil_loc) && !isset($lmutil_binary)) {
+    $lmutil_binary = $lmutil_loc;
+    unset($lmutil_loc);
+}
+
+// Common functions
+/** Print HTML header */
 function print_header() {
     print file_get_contents(__DIR__ . '/header.html');
 }
 
+/** Print HTML footer */
 function print_footer() {
     print file_get_contents(__DIR__ . '/footer.html');
 }
 
+/**
+ * Open persistent DB connection.
+ *
+ * By reference, $db should recieve a DB connection object from Pear/DB.
+ *
+ * @param &$db DB connection object
+ */
 function db_connect(&$db) {
+    // From config.php
     global $db_type, $db_hostname, $db_username, $db_password, $db_database;
 
     // Make sure DB config exists.
@@ -87,7 +108,7 @@ function db_connect(&$db) {
  * @return array list of servers.
  */
 function db_get_servers(object &$db, array $cols=array(), array $ids=array()) {
-    global $db_type;
+    global $db_type; // from config.php
     if (get_class($db) !== "DB_{$db_type}") {
         die ("DB not connected when doing server lookup by ID.");
     }
@@ -126,20 +147,31 @@ function db_get_servers(object &$db, array $cols=array(), array $ids=array()) {
     return $servers;
 }
 
-// Debug helper functions.
+/**
+ * Debug helper function to print preformatted SQL code to browser.
+ *
+ * This is extremely similar to print_var().  Possibly remove this function in the future.
+ *
+ * @param string $sql SQL code to be shown in browser.
+ */
 function print_sql ($sql) {
-    global $debug;
+    global $debug; // from config.php
     if (isset($debug) && $debug == 1) {
         $code = print_r($sql, true);
-        print "<p><span style='color: #dc143c;'>Executing SQL: </span><pre>{$code}</pre>\n";
+        print "<p><span style='color: crimson;'>Executing SQL: </span><pre>{$code}</pre>\n";
     }
 }
 
+/**
+ * Debug helper function to print preformatted var_export() to browser
+ *
+ * @param mixed $var variable to be exported to browser view.
+ */
 function print_var ($var) {
-    global $debug;
+    global $debug; // from config.php
     if (isset($debug) && $debug == 1) {
         $code = var_export($var, true);
-        print "<p><span style='color: #dc143c;'>Var Export: </span><pre>{$code}</pre>\n";
+        print "<p><span style='color: crimson;'>Var Export: </span><pre>{$code}</pre>\n";
     }
 }
 
