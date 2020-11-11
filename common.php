@@ -102,7 +102,7 @@ function db_connect(&$db) {
  * $ids are the server IDs to lookup.  Can be an int or array of ints.
  * When $ids is omitted as an argument, all ACTIVE servers are retrieved from DB.
  *
- * @param object $db DB object with open connection.
+ * @param object &$db DB object with open connection.
  * @param array $cols optional list of columns to lookup per row.  Lookup all cols when omitted/empty.
  * @param array $ids optional list if server IDs to lookup.  Lookup all IDs when omitted/empty.
  * @return array list of servers.

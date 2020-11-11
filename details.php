@@ -117,6 +117,12 @@ HTML;
     $html_body .= $table->toHtml();
 } // END function list_features_and_expirations()
 
+/**
+ * Determine licenses in use and build a data view for display.
+ *
+ * @param $servers list of servers to poll
+ * @param &$html_body data view to build
+ */
 function list_licenses_in_use($servers, &$html_body) {
     global $lmutil_binary, $colors; // from config.php
 
@@ -141,34 +147,36 @@ HTML;
     // Get names of different colors
     $color = explode(",", $colors);
 
+    $licenses = array();
+
     // Loop through the available servers
     foreach ($servers as $server) {
-        // Execute lmutil lmstat -A -c 27000@license or similar
+        // Execute lmutil lmstat -A -c port@server_fqdn
         $fp = popen("{$lmutil_binary} lmstat -A -c {$server['name']}", "r");
 
-        // Feature counter
+        // License counter
         $i = -1;
 
         // Loop through the output. Look for lines starting with Users. Then look for any
         // consecutive entries showing who is using it
-        while ( !feof ($fp) ) {
+        while (!feof($fp)) {
             $line = fgets ($fp, 1024);
 
-            // Look for features in the output. You will see stuff like
-            // Users of Allegro_Viewer: (Total of 5 licenses available
-            if ( preg_match('/(Users of) (.*)(\(Total of) (\d+) (.*) (Total of) (\d+) /i', $line, $out) && !preg_match("/No such feature exists/i", $line) ) {
+            // Look for features in a $line.  Example $line:
+            // Users of Allegro_Viewer:  (Total of 5 licenses issued;  Total of 2 licenses in use)
+            switch (1) {
+            case preg_match('/^Users of ([\w\- ]+):  \(Total of (\d+) licenses issued;  Total of (\d+)/i', $line, $matches):
                 $i++;
-                $license_array[$i]["feature"] = $out[2];
-                $license_array[$i]["num_licenses"] = $out[4];
-                $license_array[$i]["licenses_used"] = $out[7];
-            }
-
-            // NJI: Sometimes a vendor gives a "uncounted" file, with infinite licenses.
-            if ( preg_match('/(Users of) (.*)(\(Uncounted, node-locked)/i', $line, $out) ) {
+                $licenses[$i]['feature'] = $matches[1];
+                $licenses[$i]['num_licenses'] = $matches[2];
+                $licenses[$i]['licenses_used'] = $matches[3];
+                break;
+            case preg_match('/^Users of ([\w\- ]+):  \(Uncounted, node-locked/i', $line, $matches):
                 $i++;
-                $license_array[$i]["feature"] = $out[2];
-                $license_array[$i]["num_licenses"] = "uncounted";
-                $license_array[$i]["licenses_used"] = "uncounted";
+                $licenses[$i]['feature'] = $matches[1];
+                $licenses[$i]['num_licenses'] = "uncounted";
+                $licenses[$i]['licenses_used'] = "uncounted";
+                break;
             }
 
             // Count the number of licenses. Each used license has ", start" string in it
@@ -196,16 +204,16 @@ HTML;
 
             // Loop through the used features
             for ( $j = 0 ; $j <= $i ; $j++ ) {
-                if ( ! isset($_GET['filter_feature']) || in_array($license_array[$j]['feature'], $_GET['filter_feature']) ) {
-                    $feature = $license_array[$j]['feature'] ;
+                if ( ! isset($_GET['filter_feature']) || in_array($licenses[$j]['feature'], $_GET['filter_feature']) ) {
+                    $feature = $licenses[$j]['feature'] ;
                     $graph_url = "monitor_detail.php?feature={$feature}";
 
                     // How many licenses are currently used
-                    $licenses_available = $license_array[$j]['num_licenses'] - $license_array[$j]['licenses_used'];
-                    $license_info = "Total of {$license_array[$j]['num_licenses']} licenses, " .
-                    $license_array[$j]['licenses_used'] . " currently in use, <span style='weight: bold'>{$licenses_available} available</span>";
+                    $licenses_available = $licenses[$j]['num_licenses'] - $licenses[$j]['licenses_used'];
+                    $license_info = "Total of {$licenses[$j]['num_licenses']} licenses, " .
+                    $licenses[$j]['licenses_used'] . " currently in use, <span style='weight: bold'>{$licenses_available} available</span>";
                     $license_info .= "<br/><a href='{$graph_url}'>Historical Usage</a>";
-                    $table->addRow(array($license_array[$j]['feature'], $licenses_available, $license_info), "style='background: {$color[$j]};'");
+                    $table->addRow(array($licenses[$j]['feature'], $licenses_available, $license_info), "style='background: {$color[$j]};'");
 
                     for ( $k = 0; $k < sizeof($users[$server['name']][$j]); $k++ ) {
                         /* ---------------------------------------------------------------------------
@@ -266,6 +274,6 @@ HTML;
             $html_body .= "<p style='color: crimson;'>No licenses are currently being used on {$server['name']} ({$server['label']})</p>";
         }
         pclose($fp);
-    } // END for loop
+    } // END foreach ($servers as $server)
 } // END function list_licenses_for_use()
 ?>
