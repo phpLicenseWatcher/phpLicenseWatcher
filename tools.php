@@ -106,22 +106,29 @@ function convert_to_mysql_date($date) {
  *
  * ** Is this function used?  Remove from codebase if it is not used. **
  *
- * @param &$html HTML text block that is being built for the view.
  * @param $options Options for selectbox.
  * @param $name Name you want assigned to this form element
- * @param $checked_val Value of the item that should be checked (optional)
+ * @param $checked_value Value of the item that should be checked (optional)
+ * @return string HTML code for selectbox.
  */
-function build_select_box (&$html, $options, $name, $checked_val=null) {
-    $html .= "<select name=\"{$name}\">";
+function build_select_box ($options, $name, $checked_value="") {
+    $name = strtolower($name);
+    $checked_value = strtolower($checked_value);
+
+    $html = "<select onChange='this.form.submit();' name='{$name}'>\n";
     foreach ($options as $option) {
-        $html .= "<option value=\"{$option}\"";
-        if ($option === $checked_val) {
+        $option_value = strtolower($option);
+        $option_selectable = ucwords($option);
+
+        $html .= "<option value='{$option_value}'";
+        if ($option_value === $checked_value) {
             $html .= " selected";
         }
 
-        $html .= ">{$option}</option>";
+        $html .= ">{$option}</option>\n";
     }
-    $html .= "</select>";
+    $html .= "</select>\n";
+    return $html;
 }
 
 /**

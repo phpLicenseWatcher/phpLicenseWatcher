@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/common.php";
+require_once __DIR__ . "/tools.php";
 require_once "HTML/Table.php";
 require_once 'DB.php';
 
@@ -87,6 +88,9 @@ while ($row = $recordset->fetchRow()) {
 $recordset->free();
 $db->disconnect();
 
+// function build_select_box (&$html, $options, $name, $checked_val=null) {
+$select_box = build_select_box(array("Date", "User", "Feature"), "sortby", $_GET['sortby']);
+
 // Print View
 print_header();
 
@@ -94,11 +98,7 @@ print <<< HTML
 <h1>License Checkouts</h1>
 <form>
 <p>Sort by
-<select onChange='this.form.submit();' name="sortby">
-	<option value="date">Date</option>
-	<option value="user">User</option>
-	<option value="feature">Feature</option>
-</select>
+{$select_box}
 </p>
 </form>
 HTML;
