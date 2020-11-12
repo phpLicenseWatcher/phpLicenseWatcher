@@ -38,7 +38,7 @@
    * PHP 7.x, PHP XML Extension, PHP GD Extension
    * MySQL-server, MySQL-client, PHP MySQL Extension
    * You need the Linux Standard Base (LSB) to run Linux-precompiled FlexLM binaries.
-   * Composer to load PEAR dependencies.
+   * Composer to load additional dependencies.
 
    For example, using Ubuntu 20.04:
    ```
