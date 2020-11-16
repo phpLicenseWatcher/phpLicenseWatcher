@@ -55,7 +55,6 @@ $test_results[] = $test ? PASS_MARK : FAIL_MARK;
 
 $test = (bool) function() {
     switch (false) {
-    case isset($db_type):
     case isset($db_username):
     case isset($db_password):
     case isset($db_hostname):
@@ -63,20 +62,12 @@ $test = (bool) function() {
         return false;
     }
 
-    $dsn = array(
-        'phptype'  => $db_type,
-        'username' => $db_username,
-        'password' => $db_password,
-        'hostspec' => $db_hostname,
-        'database' => $db_database,
-    );
-
-    $db =& DB::connect($dsn, array('persistent' => false));
-    if (DB::isError($db)) {
+    $db = new mysqli($db_host, $db_user, $db_password, $db_database);
+    if (!is_null($db->connect_error)) {
         return false;
     }
 
-    $db->disconnect();
+    $db->close();
     return true;
 };
 $test_names[]   = "Database Connectivity";

@@ -9,7 +9,7 @@ $disable_autorefresh=0;
 $disable_license_removal=1;
 $collection_interval=10;
 
-$db_type="mysqli";
+//$db_type="mysqli";
 $db_hostname="localhost";
 $db_username="vagrant";
 $db_password="vagrant";

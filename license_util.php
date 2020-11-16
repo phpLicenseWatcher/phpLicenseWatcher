@@ -2,14 +2,13 @@
 
 require_once(__DIR__.'/tools.php');
 require_once(__DIR__."/common.php");
-require_once("DB.php");
 
 db_connect($db);
 $servers = db_get_servers($db, array('name'));
 
 update_servers($db, $servers);
-update_licenses($db, $servers);
-$db->disconnect();
+//update_licenses($db, $servers);
+$db->close();
 exit;
 
 /**
@@ -35,39 +34,37 @@ function update_servers(&$db, &$servers) {
         }
         pclose($fp);
 
-        $status = null;
-        $lmgrd_version = null;
+        // DB update data as parralel arrays, using server's $index
+        $status[$index] = SERVER_DOWN; // assume server is down unless determined otherwise.
+        $lmgrd_version[$index] = "";
+        $name[$index] = $server['name'];
 
         // If server is up, also read its lmgrd version.
         if (preg_match("/license server UP (?:\(MASTER\) )?(?<lmgrd_version>v\d+[\d\.]*)$/im", $stdout, $matches)) {
-            $status = SERVER_UP;
-            $lmgrd_version = $matches['lmgrd_version'];
+            $status[$index] = SERVER_UP;
+            $lmgrd_version[$index] = $matches['lmgrd_version'];
         }
 
-        // This can override $status is UP.
+        // This can override $status[$index] is UP.
         if (preg_match("/vendor daemon is down/im", $stdout)) {
-            $status = SERVER_VENDOR_DOWN;
+            $status[$index] = SERVER_VENDOR_DOWN;
         }
 
-        // If $status isn't determined by now, assume it is DOWN.
-        if (is_null($status)) {
-            $status = SERVER_DOWN;
-        }
-
-        // Use same $index as $servers[$index], making parrallel arrays.
-        $update_data[$index] = array($status, $lmgrd_version, $server['name']);
-        // Servers that are not up are discarded so they are not checked for license info, below.
-        if ($update_data[$index][0] !== SERVER_UP) {
+        // Servers that are not SERVER_UP are discarded so they are not checked for license info, later.
+        if ($status[$index] !== SERVER_UP) {
             unset ($servers[$index]);
         }
     }
 
     // Server statuses DB update
-    $query = $db->prepare("UPDATE `servers` SET `status`=?, `lmgrd_version`=?, `last_updated`=NOW() WHERE `name`=?;");
     $db->query("LOCK TABLES `servers` WRITE;");
-    foreach($update_data as $row) {
-        $db->execute($query, $row);
+    $query = $db->prepare("UPDATE `servers` SET `status`=?, `lmgrd_version`=?, `last_updated`=NOW() WHERE `name`=?;");
+    foreach($name as $index => $_n) {
+        $query->bind_param("sss", $status[$index], $lmgrd_version[$index], $name[$index]);
+        $query->execute();
     }
+
+    $query->close();
     $db->query("UNLOCK TABLES;");
 } // END function update_servers()
 

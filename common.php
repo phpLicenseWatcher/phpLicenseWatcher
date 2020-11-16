@@ -58,11 +58,10 @@ function print_footer() {
  */
 function db_connect(&$db) {
     // From config.php
-    global $db_type, $db_hostname, $db_username, $db_password, $db_database;
+    global $db_hostname, $db_username, $db_password, $db_database;
 
     // Make sure DB config exists.
     switch (false) {
-    case isset($db_type):
     case isset($db_hostname):
     case isset($db_username):
     case isset($db_password):
@@ -70,27 +69,10 @@ function db_connect(&$db) {
         die ("Check database configuration.");
     }
 
-    $dsn = array(
-        'phptype'  => $db_type,
-        'username' => $db_username,
-        'password' => $db_password,
-        'hostspec' => $db_hostname,
-        'database' => $db_database,
-    );
-
-    // q.v. https://pear.php.net/manual/en/package.database.db.db-common.setoption.php
-    $options = array(
-        'autofree'       => false,
-        'debug'          => 0,
-        'persistent'     => true,
-        'portability'    => DB_PORTABILITY_NONE,
-        'seqname_format' => '%s_seq',
-        'ssl'            => false,
-    );
-
-    $db = DB::connect($dsn, $options);
-    if (DB::isError($db)) {
-    	die ($db->getMessage());
+    // Using persistent connection as denoted by 'p:' in host string.
+    $db = new mysqli("p:{$db_hostname}", $db_username, $db_password, $db_database);
+    if (!is_null($db->connect_error)) {
+        die("Connect Error {$db->connect_errno}: {$db->connect_error}");
     }
 }
 
@@ -102,15 +84,14 @@ function db_connect(&$db) {
  * $ids are the server IDs to lookup.  Can be an int or array of ints.
  * When $ids is omitted as an argument, all ACTIVE servers are retrieved from DB.
  *
- * @param object &$db DB object with open connection.
+ * @param object &$db mysqli DB object with open connection.
  * @param array $cols optional list of columns to lookup per row.  Lookup all cols when omitted/empty.
  * @param array $ids optional list if server IDs to lookup.  Lookup all IDs when omitted/empty.
  * @return array list of servers.
  */
 function db_get_servers(object &$db, array $cols=array(), array $ids=array()) {
-    global $db_type; // from config.php
-    if (get_class($db) !== "DB_{$db_type}") {
-        die ("DB not connected when doing server lookup by ID.");
+    if (get_class($db) !== "mysqli") {
+        die ("DB not connected when calling db_get_servers().");
     }
 
     // Determine columns to query.  Query all columms when $cols is empty.
@@ -118,7 +99,7 @@ function db_get_servers(object &$db, array $cols=array(), array $ids=array()) {
         $cols_queried = "*";
     } else {
         // creates column list like "`id`, `name`, `label`" to be used in SELECT query.
-        $cols_queried = "`". implode("`, `", $cols) . "`";
+        $cols_queried = "`" . implode("`, `", $cols) . "`";
     }
 
     // Determine server IDs to query.  Query all servers when $ids is empty.
@@ -131,19 +112,18 @@ function db_get_servers(object &$db, array $cols=array(), array $ids=array()) {
         // Ensure IDs are ints.
         $ids = array_map('intval', $ids);
 
-        // Build something like "`id` IN (?, ?, ?, ?) AND" so that query says
-        // "WHERE `id` IN (?, ?, ?, ?) AND `is_active`=?"
-        $place_holders = array_fill(0, count($ids), "?");
-        $ids_queried = "`id` IN (" . implode(", ", $place_holders) . ") AND";
+        // Build something like "`id` IN (2, 3, 5, 8) AND" so that query says
+        // "WHERE `id` IN (2, 3, 5, 8) AND `is_active`=1"
+        $ids_queried = "`id` IN (" . implode(", ", $ids) . ") AND";
     }
 
-    $sql = "SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} `is_active`=?;";
-    $params = array_merge($ids, array(1)); // Replaces '?' placeholders with values.
-    $servers = $db->getAll($sql, $params, DB_FETCHMODE_ASSOC);
-    if (DB::isError($db)) {
-        die ($db->getMessage());
+    $result = $db->query("SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} `is_active`=1;");
+    if (!$result) {
+        die ($db->$error);
     }
 
+    $servers = $result->fetch_all(MYSQLI_ASSOC);
+    $result->free();
     return $servers;
 }
 

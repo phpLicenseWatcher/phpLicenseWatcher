@@ -3,12 +3,11 @@
 require_once("common.php");
 require_once("tools.php");
 require_once("HTML/Table.php");
-require_once("DB.php");
 
 // Retrieve server list.  All columns.  All IDs.
 db_connect($db);
 $servers = db_get_servers($db);
-$db->disconnect();
+$db->close();
 
 $table_style = "class='table' ";
 
