@@ -119,7 +119,7 @@ function db_get_servers(object &$db, array $cols=array(), array $ids=array()) {
 
     $result = $db->query("SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} `is_active`=1;");
     if (!$result) {
-        die ($db->$error);
+        die ($db->error);
     }
 
     $servers = $result->fetch_all(MYSQLI_ASSOC);

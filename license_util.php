@@ -7,7 +7,7 @@ db_connect($db);
 $servers = db_get_servers($db, array('name'));
 
 update_servers($db, $servers);
-//update_licenses($db, $servers);
+update_licenses($db, $servers);
 $db->close();
 exit;
 
@@ -40,9 +40,9 @@ function update_servers(&$db, &$servers) {
         $name[$index] = $server['name'];
 
         // If server is up, also read its lmgrd version.
-        if (preg_match("/license server UP (?:\(MASTER\) )?(?<lmgrd_version>v\d+[\d\.]*)$/im", $stdout, $matches)) {
+        if (preg_match("/license server UP (?:\(MASTER\) )?(v\d+[\d\.]*)$/im", $stdout, $matches)) {
             $status[$index] = SERVER_UP;
-            $lmgrd_version[$index] = $matches['lmgrd_version'];
+            $lmgrd_version[$index] = $matches[1];
         }
 
         // This can override $status[$index] is UP.
@@ -107,6 +107,7 @@ function update_licenses(&$db, $servers) {
             // Populate feature, if needed.
             // ? = $license['feature']
             $data[0] = array($license['feature']);
+            $type[0] = "s"; // needed for mysqli_stmt::bind_param()
             $sql[0] = <<<SQL
 INSERT IGNORE INTO `features` (`name`, `show_in_lists`)
     VALUES (?, 1);
@@ -115,6 +116,7 @@ SQL;
             // Populate server/feature to licenses, if needed.
             // ?, ? = $server['name'], $license['feature']
             $data[1] = array($server['name'], $license['feature']);
+            $type[1] = "ss"; // needed for mysqli_stmt::bind_param()
             $sql[1] = <<<SQL
 INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
     SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id`
@@ -125,6 +127,7 @@ SQL;
             // Insert license usage.  Needs feature and license populated, first.
             // ?, ?, ? = $license['licenses_used'], $server['name'], $license['feature']
             $data[2] = array($license['licenses_used'], $server['name'], $license['feature']);
+            $type[2] = "sss"; // needed for mysqli_stmt::bind_param()
             $sql[2] = <<<SQL
 INSERT IGNORE INTO `usage` (`license_id`, `time`, `num_users`)
     SELECT `licenses`.`id`, NOW(), ?
@@ -134,17 +137,21 @@ INSERT IGNORE INTO `usage` (`license_id`, `time`, `num_users`)
     WHERE `servers`.`name`=? AND `features`.`name`=?;
 SQL;
 
-            foreach($sql as $i => $statement) {
-                $queries[$i] = $db->prepare($statement);
+            // Prepare each query and bind parameter data
+            foreach($sql as $i => $query) {
+                $queries[$i] = $db->prepare($query);
+                // q.v. https://www.php.net/functions.arguments#functions.variable-arg-list for '...' token
+                $queries[$i]->bind_param($type[$i], ...$data[$i]);
             }
 
-            $db->execute($queries[2], $data[2]);
+            // Attempt to INSERT license usage...
+            $queries[2]->execute();
 
-            // when affectedRows < 1, feature and license needs to be
-            // populated and license usage query re-run.
-            if ($db->affectedRows() < 1) {
-                foreach ($queries as $i => $query) {
-                    $db->query($query, $data[$i]);
+            // when affectedRows < 1, feature and license first needs to be
+            // populated and then license usage query re-run.
+            if ($db->affected_rows < 1) {
+                foreach ($queries as $query) {
+                    $query->execute();
                 }
             }
         } // END foreach($licenses as $license)
