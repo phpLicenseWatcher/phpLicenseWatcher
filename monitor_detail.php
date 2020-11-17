@@ -1,7 +1,5 @@
 <?php
-
-require_once("common.php");
-require_once("DB.php");
+require_once "common.php";
 
 $feature = preg_replace("/[^a-zA-Z0-9_|]+/", "", htmlspecialchars($_GET['feature'])) ;
 $label = $feature;
@@ -14,14 +12,13 @@ FROM `features`
 WHERE `show_in_lists`=1 AND `name`='{$feature}'
 SQL;
 
-$recordset = $db->query($sql);
-
-if (DB::isError($recordset)) {
-    die ($recordset->getMessage());
+$result = $db->query($sql);
+if (!$result) {
+    die ($db->error);
 }
 
 // $row[0] = `name`, $row[1] = `label`
-while ($row = $recordset->fetchRow()){
+while ($row = $result->fetch_row()){
     $label = $row[1];
     if (empty($label)) {
         //`label` is NULL, so use `name`, instead.
@@ -29,8 +26,8 @@ while ($row = $recordset->fetchRow()){
     }
 }
 
-$recordset->free();
-$db->disconnect();
+$result->free();
+$db->close();
 $label = str_replace('|', ' or ', $label);
 
 // Print View.

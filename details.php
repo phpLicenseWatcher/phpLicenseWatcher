@@ -1,8 +1,8 @@
 <?php
 
-require_once("common.php");
-require_once('tools.php');
-require_once("HTML/Table.php");
+require_once "common.php";
+require_once "tools.php";
+require_once "HTML/Table.php";
 
 if (isset($_GET['refresh']) && $_GET['refresh'] > 0 && ! $disable_autorefresh) {
     echo('<meta http-equiv="refresh" content="' . intval($_GET['refresh']) . '"/>');

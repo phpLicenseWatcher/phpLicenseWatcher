@@ -3,7 +3,6 @@
 /**
  * @param string $server Server name being queried.  "{port}@{domain}.{tld}".
  * @param array &$expiration_array
- * @return integer 1
  */
 function build_license_expiration_array($server, &$expiration_array) {
     global $lmutil_binary; // from config.php
@@ -46,7 +45,6 @@ function build_license_expiration_array($server, &$expiration_array) {
                 // $days_to_expiration = "permanent";
             }
 
-
             // Add to the expiration array
             $expiration_array[$license[1]][] = array (
         	    "vendor_daemon"      => $license[2],
@@ -58,7 +56,6 @@ function build_license_expiration_array($server, &$expiration_array) {
     }
 
     pclose($file);
-    return 1;
 } // END function build_license_expiration_array()
 
 /**
@@ -73,6 +70,7 @@ function compare_dates ($date1, $date2) {
     $unixdate1 = strtotime($date1);
     $unixdate2 = strtotime($date2);
 
+    // q.v. https://wiki.php.net/rfc/combined-comparison-operator for '<=>' (spaceship) operater.
     return ($unixdate1 <=> $unixdate2);
 }
 

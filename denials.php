@@ -1,13 +1,12 @@
 <?php
 require_once "common.php";
+require_once "tools.php";
 require_once "HTML/Table.php";
-require_once "DB.php";
 
 // Create a new table object
+$tableStyle = "border='1' cellpadding='1' cellspacing='2' ";
 $table = new HTML_Table($tableStyle);
 $table->setColAttributes(1, "align='right'");
-
-$tableStyle = "border='1' cellpadding='1' cellspacing='2' ";
 
 // Define a table header
 $headerStyle = "style='background: yellow;'";
@@ -25,23 +24,20 @@ JOIN `events` ON `licenses`.`id`=`events`.`license_id`
 WHERE `events`.`type`='DENIED';
 SQL;
 
-$recordset = $db->query($sql);
-
-if (DB::isError($recordset)) {
-    die ($recordset->getMessage());
+$result = $db->query($sql);
+if (!$result) {
+    die ($db->error);
 }
-
 
 // Color code features so it is easier to group them.
 // Get a list of different colors.
 $color = explode(",", $colors);
-for ($i = 0; $row = $recordset->fetchRow(); $i++) {
+for ($i = 0; $row = $result->fetch_row(); $i++) {
     $features_color[$row[0]] = $color[$i];
 }
-
+$result->free();
 
 // Check what we want to sort data on.
-
 /* Debugging Notes: original queries are as follows:
  * Sort by date:
  * SELECT `date`,`feature`,count(*) FROM `events` WHERE `type`='DENIED' GROUP BY `feature`,`date` ORDER BY `feature`,`date` DESC;
@@ -50,8 +46,14 @@ for ($i = 0; $row = $recordset->fetchRow(); $i++) {
  * Sort by feature:
  * SELECT `date`,`feature`,count(*) FROM `events` WHERE `type`='DENIED' GROUP BY `date`,`feature` ORDER BY `date` DESC,`feature`;
  */
-switch ($_GET['sortby']) {
+if (isset($_GET['sortby'])) {
+    $sort_by = $_GET['sortby'];
+} else {
+    // default sort by "feature"
+    $sort_by = "date";
+}
 
+switch ($sort_by) {
 case "feature":
     $sql = <<<SQL
 SELECT `time`, `features`.`name`, count(*)
@@ -64,7 +66,7 @@ ORDER BY `features`.`name`, `time` DESC;
 SQL;
     break;
 
-case "numdenials":
+case "number":
     $sql = <<<SQL
 SELECT `time`, `features`.`name`, count(*) AS `numdenials`
 FROM `events`
@@ -88,22 +90,23 @@ ORDER BY `time` DESC, `features`.`name`;
 SQL;
 }
 
-$recordset = $db->query($sql);
+$result = $db->query($sql);
 
-if (DB::isError($recordset)) {
-    die ($recordset->getMessage());
+if (!$result) {
+    die ($db->error);
 }
 
-while ($row = $recordset->fetchRow()) {
+while ($row = $result->fetch_row()) {
     $table->AddRow($row, "style='background: {$features_color[$row[1]]};'");
 }
 
-$recordset->free();
-
-$db->disconnect();
+$result->free();
+$db->close();
 
 // Right align the 3 column
 $table->updateColAttributes(2, "align='right'");
+
+$select_box = build_select_box (array("Date", "Feature", "Number"), "sortby", $sort_by);
 
 // Print View
 print_header();
@@ -112,18 +115,12 @@ print <<<HTML
 <h1>License Denials</h1>
 <form>
 <p>Sort by
-<select onChange='this.form.submit();' name="sortby">
-    <option value="date">Date</option>
-    <option value="feature">Feature</option>
-    <option value="numdenials">Number of denials</option>
-</select>
-<input type="submit" value="Submit"/></p>
+{$select_box}
 </form>
 
 HTML;
 
-if (isset($debug) && $debug === 1)
-    print_sql($sql);
+print_sql($sql);
 
 $table->display();
 print_footer();

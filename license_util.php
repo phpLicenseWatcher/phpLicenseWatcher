@@ -1,11 +1,9 @@
 <?php
-
-require_once(__DIR__.'/tools.php');
-require_once(__DIR__."/common.php");
+require_once "tools.php";
+require_once "common.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name'));
-
 update_servers($db, $servers);
 update_licenses($db, $servers);
 $db->close();
@@ -77,6 +75,7 @@ function update_servers(&$db, &$servers) {
 function update_licenses(&$db, $servers) {
     global $lmutil_binary;
 
+    $db->query("LOCK TABLES `features`, `licenses`, `usage` WRITE");
     foreach ($servers as $server) {
         $fp=popen("{$lmutil_binary} lmstat -a -c {$server['name']}", "r");
 
@@ -98,7 +97,6 @@ function update_licenses(&$db, $servers) {
         pclose($fp);
 
         // INSERT licence data to DB
-        $db->query("LOCK TABLES `features`, `licenses`, `usage` WRITE");
         foreach ($licenses as $license) {
             $sql = array();
             $data = array();
@@ -154,9 +152,16 @@ SQL;
                     $query->execute();
                 }
             }
+
+            // Release each prepared query.
+            foreach ($queries as &$query) {
+                $query->close();
+            }
+            unset($query);
         } // END foreach($licenses as $license)
-        $db->query("UNLOCK TABLES;");
     } // END foreach($servers as $server)
+
+    $db->query("UNLOCK TABLES;");
 } // END function update_licenses()
 
 ?>

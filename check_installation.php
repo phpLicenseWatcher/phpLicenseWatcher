@@ -1,8 +1,7 @@
 <?php
 
-require_once("common.php");
-include_once('DB.php');
-include_once('HTML/Table.php');
+require_once "common.php";
+include_once "HTML/Table.php";
 
 define("PASS_MARK", "<span class='green-text'>&#10004; GOOD</span>");  // green heavy checkmark
 define("FAIL_MARK", "<span class='red-text'>&#10006; FAIL</span>");    // red cross mark
@@ -36,16 +35,6 @@ $test_results[] = $test ? PASS_MARK : FAIL_MARK;
 $test           = extension_loaded("xml");
 $test_names[]   = "PHP Extension \"xml\" (required by pear DB class)";
 $test_values[]  = $test ? "Installed and Enabled" : "Not Found";
-$test_results[] = $test ? PASS_MARK : FAIL_MARK;
-
-$test           = class_exists("HTML_Table");
-$test_names[]   = "Pear HTML Table Class";
-$test_values[]  = $test ? "Installed" : "Not Found";
-$test_results[] = $test ? PASS_MARK : FAIL_MARK;
-
-$test           = class_exists("DB");
-$test_names[]   = "Pear DB Class";
-$test_values[]  = $test ? "Installed" : "Not Found";
 $test_results[] = $test ? PASS_MARK : FAIL_MARK;
 
 $test           = isset($lmutil_binary) && is_executable($lmutil_binary);

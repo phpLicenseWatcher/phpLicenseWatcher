@@ -1,6 +1,5 @@
 <?php
-require_once("common.php");
-require_once("DB.php");
+require_once "common.php";
 
 db_connect($db);
 
@@ -11,14 +10,14 @@ WHERE `show_in_lists`=1
 ORDER BY `name`;
 SQL;
 
-$recordset = $db->query($sql);
-if (DB::isError($recordset)) {
-    die ($recordset->getMessage());
+$result = $db->query($sql);
+if (!$result) {
+    die ($db->error);
 }
 
 // Build a list of features to display in view.
 // $row[0] = `name`, $row[1] = `label`
-while ($row = $recordset->fetchRow()) {
+while ($row = $result->fetch_row()) {
    $label = $row[1];
    if (empty($label)) {
        // Actual `label` is NULL, so we'll use `name` instead.
@@ -27,8 +26,8 @@ while ($row = $recordset->fetchRow()) {
    $html_labels[] = "<li><a href='monitor_detail.php?feature={$row[0]}'>{$label}</a></li>";
 }
 
-$recordset->free();
-$db->disconnect();
+$result->free();
+$db->close();
 
 // Print View
 print_header();

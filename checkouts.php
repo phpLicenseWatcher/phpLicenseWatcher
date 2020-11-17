@@ -1,8 +1,7 @@
 <?php
-require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/tools.php";
+require_once "common.php";
+require_once "tools.php";
 require_once "HTML/Table.php";
-require_once 'DB.php';
 
 db_connect($db);
 
@@ -15,17 +14,18 @@ JOIN `events` ON `licenses`.`id`=`events`.`license_id`
 WHERE `events`.`type`='OUT';
 SQL;
 
-$recordset = $db->query($sql);
-if (DB::isError($recordset)) {
-	die ($recordset->getMessage());
+$result = $db->query($sql, MYSQLI_STORE_RESULT);
+if (!$result) {
+	die ($db->error);
 }
 
 // Color code the features so it is easier to group them
 // Get a list of different colors
 $color = explode(",", $colors);
-for ($i = 0; $row = $recordset->fetchRow(); $i++) {
+for ($i = 0; $row = $result->fetch_row(); $i++) {
     $features_color[$row[0]] = $color[$i];
 }
+$result->free();
 
 // Check what we want to sort data on
 
@@ -47,7 +47,14 @@ WHERE `events`.`type`='OUT'
 GROUP BY `events`.`time`, `events`.`user`
 SQL;
 
-switch ($_GET['sortby']) {
+if (isset($_GET['sortby'])) {
+    $sort_by = $_GET['sortby'];
+} else {
+    // default sort by date.
+    $sort_by = "date";
+}
+
+switch($sort_by) {
 case "date":
     $sql .= "ORDER BY `events`.`time`, `events`.`user`, MAX(`features`.`name`) DESC;";
     break;
@@ -58,10 +65,9 @@ default:
     $sql .= "ORDER BY MAX(`features`.`name`), `events`.`time`, `events`.`user` DESC;";
 }
 
-$recordset = $db->query($sql);
-
-if (DB::isError($recordset)) {
-    die ($recordset->getMessage());
+$result = $db->query($sql, MYSQLI_STORE_RESULT);
+if (!$result) {
+    die ($db->error);
 }
 
 // Create a new table object
@@ -81,15 +87,15 @@ $table->updateColAttributes(3, "align='enter'");
 $table->updateColAttributes(2, "align='right'");
 
 // Add data rows to table
-while ($row = $recordset->fetchRow()) {
+while ($row = $result->fetch_row()) {
     $table->AddRow($row, "style='background: {$features_color[$row[2]]};'");
 }
 
-$recordset->free();
-$db->disconnect();
+$result->free();
+$db->close();
 
 // function build_select_box (&$html, $options, $name, $checked_val=null) {
-$select_box = build_select_box(array("Date", "User", "Feature"), "sortby", $_GET['sortby']);
+$select_box = build_select_box(array("Date", "User", "Feature"), "sortby", $sort_by);
 
 // Print View
 print_header();
@@ -102,10 +108,7 @@ print <<< HTML
 </p>
 </form>
 HTML;
-
-if (isset($debug) && $debug == true)
-    print_sql($sql);
-
+print_sql($sql); // debug
 $table->display();
 print_footer();
 ?>

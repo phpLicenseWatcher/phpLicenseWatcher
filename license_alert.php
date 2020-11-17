@@ -1,21 +1,20 @@
 <?php
 ############################################################################
 # Purpose: This script is used to e-mail alerts on licenses that are
-# 	   due to expire some time in the future. This script should
-#	   be run out of cron preferably every day. Check config.php
-#	   to configure e-mail address reports should be sent to
-#	   as well as how much ahead should the user be warned about
-#	   expiration ie. 10 days before license expires.
+#          due to expire some time in the future. This script should
+#          be run out of cron preferably every day. Check config.php
+#          to configure e-mail address reports should be sent to
+#          as well as how much ahead should the user be warned about
+#          expiration ie. 10 days before license expires.
 ############################################################################
 
 require_once "common.php";
 require_once "tools.php";
-require_once "DB.php";
 require_once "HTML/Table.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name'));
-$db->disconnect();
+$db->close();
 
 // Date when the licenses will expire
 $expire_date = mktime(0, 0, 0, date("m"), date("d") + $lead_time, date("Y"));

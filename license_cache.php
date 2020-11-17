@@ -1,10 +1,8 @@
 <?php
-require_once(__DIR__."/common.php");
-require_once("DB.php");
+require_once "common.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name'));
-$today = date("Y-m-d");
 
 foreach ($servers as $server) {
     $fp = popen($lmutil_binary . " lmstat -a -c " . $server['name'], "r");
@@ -20,23 +18,23 @@ foreach ($servers as $server) {
 
             $sql = <<<SQL
 INSERT IGNORE INTO `available` (`license_id`, `date`, `num_licenses`)
-    SELECT `licenses`.`id`, '{$today}', {$out[6]}
+    SELECT `licenses`.`id`, NOW(), {$out[6]}
     FROM `licenses`
     JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
     JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
     WHERE `servers`.`name`='{$server["name"]}' AND `features`.`name`='{$feature}';
 SQL;
 
-            $recordset = $db->query($sql);
-            print_sql ($sql);
-            if (DB::isError($recordset)) {
-                die ($recordset->getMessage());
+            $result = $db->query($sql);
+            if (!$result) {
+                die ($db->error);
             }
         }
     }
     pclose($fp);
 }
 
-$db->disconnect();
+$result->free();
+$db->close();
 
 ?>

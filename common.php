@@ -14,8 +14,8 @@ HTML;
 }
 
 // Load local config.
-if (is_readable(__DIR__ . '/config.php')) {
-	require_once(__DIR__ . '/config.php');
+if (is_readable("config.php")) {
+	require_once "config.php";
 } else {
     print_header();
     print <<< HTML
@@ -117,7 +117,7 @@ function db_get_servers(object &$db, array $cols=array(), array $ids=array()) {
         $ids_queried = "`id` IN (" . implode(", ", $ids) . ") AND";
     }
 
-    $result = $db->query("SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} `is_active`=1;");
+    $result = $db->query("SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} `is_active`=1;", MYSQLI_STORE_RESULT);
     if (!$result) {
         die ($db->error);
     }
