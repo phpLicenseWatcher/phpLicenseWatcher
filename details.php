@@ -19,7 +19,7 @@ if ( isset($_GET['multiple_servers']) ) {
 
 db_connect($db);
 $servers = db_get_servers($db, array('name', 'label'), $ids);
-$db->disconnect();
+$db->close();
 
 $html_body = ""; // To be filled by the process function called below.
 switch($_GET['listing']) {

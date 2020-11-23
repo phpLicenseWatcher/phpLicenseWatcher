@@ -46,7 +46,7 @@ if (!$result) {
     die ($db->error);
 }
 
-while ($row = $recordset->fetchRow()){
+while ($row = $result->fetch_row()){
     $date = $row[1];
 
     if ($days == 1) {
