@@ -2,9 +2,6 @@
 
 require_once "common.php";
 require_once "tools.php";
-require_once "config.php";
-require_once "DB.php";
-
 
 $feature = preg_replace("/[^a-zA-Z0-9_|]+/", "", htmlspecialchars($_GET['feature'])) ;
 $days = intval($_GET['days']);
@@ -44,9 +41,9 @@ GROUP BY `features`.`name`, `time`
 ORDER BY `time` ASC;
 SQL;
 
-$recordset = $db->query($sql);
-if (DB::isError($recordset)) {
-    die ($recordset->getMessage());
+$result = $db->query($sql, MYSQLI_STORE_RESULT);
+if (!$result) {
+    die ($db->error);
 }
 
 while ($row = $recordset->fetchRow()){
@@ -80,7 +77,7 @@ while ($row = $recordset->fetchRow()){
 }
 
 
-$recordset->free();
+$resultr->free();
 $db->disconnect();
 
 foreach (array_keys($products) as $product) {

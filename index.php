@@ -2,23 +2,20 @@
 
 require_once("common.php");
 require_once("tools.php");
-require_once("HTML/Table.php");
+require_once("html_table.php");
 
 // Retrieve server list.  All columns.  All IDs.
 db_connect($db);
 $servers = db_get_servers($db);
 $db->close();
 
-$table_style = "class='table' ";
+// Start a new html_table
+$table_style = array('class'=>"table");
+$table = new html_table($table_style);
 
-// Create a new table object
-$table = new HTML_Table($table_style);
-//$table->setColAttributes(1,"align=\"center\"");
-
-// Define a table header
-$header_style = "";
+// Define the table header
 $col_headers = array("ID", "License port@server", "Description", "Status", "Current Usage", "Available features/license", "lmgrd version","Last Update");
-$table->addRow($col_headers, $header_style, "TH");
+$table->set_header($col_headers);
 
 foreach ($servers as $server) {
     switch ($server['status']) {
@@ -40,7 +37,7 @@ foreach ($servers as $server) {
         break;
     }
 
-    $table->AddRow(array(
+    $table->add_row(array(
         $server['id'],
         $server['name'],
         $server['label'],
@@ -51,9 +48,8 @@ foreach ($servers as $server) {
         date_format(date_create($server['last_updated']), "M j Y h:i:s A")
     ));
 
-	// Set the background color of status cell
-	$table->updateCellAttributes(($table->getRowCount() - 1) , 3, "class='{$class}'");
-	//$table->updateCellAttributes( 1 , 0, "");
+	// Set the background color of status cell via class attribute
+	$table->set_row_cell(($table->get_rows_count() - 1), 3, array('class'=>"{$class}"));
 }
 
 // Output view.
@@ -63,8 +59,9 @@ print <<< HTML
 <hr />
 <h2>Flexlm Servers</h2>
 <p>To get current usage for an individual server please click on the "Details" link next to the server. If you would like to get current usage for multiple servers on the same page use checkbox on the right of the server then click on the "Get current usage for multiple servers on one page".</p>
+{$table->get_html()}
+
 HTML;
 
-$table->display();
 print_footer();
 ?>

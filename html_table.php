@@ -52,8 +52,7 @@ class html_table {
         }
     }
 
-    public function set_header_cell(integer $col_offset=null, array $new_attributes=null, string $new_content=null) {
-        $this->check_bounds($col_offset, $this->header->cells);
+    public function set_header_cell(int $col_offset, array $new_attributes=null, string $new_content=null) {
         $this->change_cell($this->header->cells[$col_offset], $new_attributes, $new_content);
     }
 
@@ -70,7 +69,7 @@ class html_table {
         }
     }
 
-    public function set_row_col(int $row_offset, int $col_offset, array $new_attributes, string $new_content) {
+    public function set_row_cell(int $row_offset, int $col_offset, array $new_attributes=null, string $new_content=null) {
         $this->change_cell($this->rows[$row_offset]->cells[$col_offset], $new_attributes, $new_content);
     }
 
@@ -96,10 +95,10 @@ class html_table {
     }
 
     private function change_cell(stdClass &$cell, array $new_attributes=null, string $new_content=null) {
-        // Do not change html when $content is null
+        // Do not change html when no new content is given.
         if (!is_null($new_content)) $cell->html = $new_content;
 
-        // Do not change attribute when not set
+        // Do not change attribute when not included in array.
         if (isset($new_attributes['style'])) $cell->attributes->style = $new_attributes['style'];
         if (isset($new_attributes['class'])) $cell->attributes->class = $new_attributes['class'];
         if (isset($new_attributes['id']))    $cell->attributes->id    = $new_attributes['id'];
