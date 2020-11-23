@@ -10,12 +10,11 @@ $servers = db_get_servers($db);
 $db->close();
 
 // Start a new html_table
-$table_style = array('class'=>"table");
-$table = new html_table($table_style);
+$table = new html_table(array('class'=>"table"));
 
 // Define the table header
 $col_headers = array("ID", "License port@server", "Description", "Status", "Current Usage", "Available features/license", "lmgrd version","Last Update");
-$table->set_header($col_headers);
+$table->add_row($col_headers, array(), "th");
 
 foreach ($servers as $server) {
     switch ($server['status']) {
@@ -49,7 +48,7 @@ foreach ($servers as $server) {
     ));
 
 	// Set the background color of status cell via class attribute
-	$table->set_row_cell(($table->get_rows_count() - 1), 3, array('class'=>"{$class}"));
+	$table->update_cell(($table->get_rows_count() - 1), 3, array('class'=>"{$class}"));
 }
 
 // Output view.
@@ -60,7 +59,6 @@ print <<< HTML
 <h2>Flexlm Servers</h2>
 <p>To get current usage for an individual server please click on the "Details" link next to the server. If you would like to get current usage for multiple servers on the same page use checkbox on the right of the server then click on the "Get current usage for multiple servers on one page".</p>
 {$table->get_html()}
-
 HTML;
 
 print_footer();

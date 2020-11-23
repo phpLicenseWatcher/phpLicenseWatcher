@@ -7,11 +7,8 @@ define("PASS_MARK", "<span class='green-text'>&#10004; GOOD</span>");  // green 
 define("FAIL_MARK", "<span class='red-text'>&#10006; FAIL</span>");    // red cross mark
 define("REQUIRED_PHP", "7.0.0");
 
-$table_attributes = array('id' => "install-check");
-$table_header = array("TEST", "VALUE", "RESULT");
-
-$table = new html_table($table_attributes);
-$table->set_header($table_header);
+$table = new html_table(array('id' => "install-check"));
+$table->add_row(array("TEST", "VALUE", "RESULT"), array(), "th");
 
 // Calculate minimum php version id for first test.
 $ver = explode(".", REQUIRED_PHP);
