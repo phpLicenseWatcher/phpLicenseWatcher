@@ -133,7 +133,7 @@ HTML;
     // We'll need timestamp class to get a human readable time difference
 
     // Get names of different colors
-    $colors = array("lavender", "white");
+    $colors = array("lavender", "transparent");
     $num_colors = count($colors);
 
     $licenses = array();

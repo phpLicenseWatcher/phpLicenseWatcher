@@ -1,17 +1,16 @@
 <?php
 require_once "common.php";
 require_once "tools.php";
-require_once "HTML/Table.php";
+require_once "html_table.php";
 
 // Create a new table object
-$tableStyle = "border='1' cellpadding='1' cellspacing='2' ";
-$table = new HTML_Table($tableStyle);
-$table->setColAttributes(1, "align='right'");
+$table_style = array('style'=>"border:1; padding:1; border-spacing:2;");
+$table = new html_table($tableStyle);
 
 // Define a table header
-$headerStyle = "style='background: yellow;'";
-$colHeaders = array("Date", "Feature", "Total number of denials");
-$table->addRow($colHeaders, $headerStyle, "TH");
+$header_style = array('style'=>"background: yellow;");
+$col_headers = array("Date", "Feature", "Total number of denials");
+$table->add_row($col_headers, $header_style, "th");
 
 db_connect($db);
 
@@ -31,9 +30,10 @@ if (!$result) {
 
 // Color code features so it is easier to group them.
 // Get a list of different colors.
-$color = explode(",", $colors);
+$colors = array("lavender", "transparent");
+$num_colors = count($colors);
 for ($i = 0; $row = $result->fetch_row(); $i++) {
-    $features_color[$row[0]] = $color[$i];
+    $features_color[$row[0]] = $colors[$i % $num_colors];
 }
 $result->free();
 
@@ -97,13 +97,15 @@ if (!$result) {
 }
 
 while ($row = $result->fetch_row()) {
-    $table->AddRow($row, "style='background: {$features_color[$row[1]]};'");
+    $table->add_row($row, array('style'=>"background: {$features_color[$row[1]]};"));
+    $table->update_cell(($table->get_rows_count()-1), 2, array('style'=>"text-align:right;"));
 }
 
 $result->free();
 $db->close();
 
 // Right align the 3 column
+$table->setColAttributes(1, "align='right'");
 $table->updateColAttributes(2, "align='right'");
 
 $select_box = build_select_box (array("Date", "Feature", "Number"), "sortby", $sort_by);

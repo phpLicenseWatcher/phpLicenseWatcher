@@ -10,7 +10,7 @@
 
 require_once "common.php";
 require_once "tools.php";
-require_once "HTML/Table.php";
+require_once "html_able.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name'));
@@ -24,33 +24,39 @@ foreach ($servers as $i => $server) {
     build_license_expiration_array($server['name'], $expiration_array[$i]);
 }
 
-$table = new HTML_Table("class='table' style='width:100%;' ");
+$table = new html_table(array('class'=>"table"));
 
 $colHeaders = array("Server", "Server description", "Feature expiring", "Expiration date",
                     "Days to expiration", "Number of license(s) expiring");
 
-$table->addRow($colHeaders, "", "TH");
+$table->add_row($colHeaders, array(), "th");
 
 // Get names of different colors. These will be used to group visually
 // licenses from the same license server
-$color = explode(",", $colors);
+$colors = array("lavender", "transparent");
+$num_colors = count($colors);
 
 // Now after the expiration has been built loop through all the fileservers
-for ($i = 0; $i < sizeof($expiration_array); $i++) {
+for ($i = 0; $i < count($expiration_array); $i++) {
     if (isset($expiration_array[$i])) {
         foreach ($expiration_array[$i] as $key => $myarray) {
             for ($j = 0; $j < sizeof($myarray); $j++) {
                 if ((strcmp($myarray[$j]["days_to_expiration"], "permanent") != 0) && ($myarray[$j]["days_to_expiration"] <= $lead_time)) {
                     if ($myarray[$j]["days_to_expiration"] < 0) {
-                        $myarray[$j]["days_to_expiration"] = "<span style='weight: bold;'>Already expired</span>";
-                        $table->addRow(array(
+                        $myarray[$j]["days_to_expiration"] = "<span style='font-weight:bold;'>Already expired</span>";
+                        $color = $colors[$i % $num_colors];
+                        $table->add_row(array(
                              $servers[$i]['name'],
                              $description[$i],
                              $key,
                              $myarray[$j]["expiration_date"],
                              $myarray[$j]["days_to_expiration"],
                              $myarray[$j]["num_licenses"]
-                        ), "bgcolor='{$color[$i]}'");
+                        ), array('style'=>"background-color={$color}"));
+                        $table->update_cell(($table->get_rows_count()-1), 1, array('style'=>"text-align:center;"));
+                        $table->update_cell(($table->get_rows_count()-1), 3, array('style'=>"text-align:center;"));
+                        $table->update_cell(($table->get_rows_count()-1), 4, array('style'=>"text-align:center;"));
+                        $table->update_cell(($table->get_rows_count()-1), 5, array('style'=>"text-align:center;"));
                     }
                 }
             }
@@ -58,14 +64,8 @@ for ($i = 0; $i < sizeof($expiration_array); $i++) {
     }
 }
 
-// Center columns 2,4,5and 6. Columns start with 0 index
-$table->updateColAttributes(1, "align=center");
-$table->updateColAttributes(4, "align=center");
-$table->updateColAttributes(5, "align=center");
-$table->updateColAttributes(3, "align=center");
-
 // Dump the table HTML into a variable
-$table_html = $table->toHTML();
+$table_html = $table->get_html();
 
 // Top of view.
 $message = <<<HTML
