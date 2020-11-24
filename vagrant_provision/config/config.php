@@ -16,7 +16,7 @@ $db_password="vagrant";
 $db_database="vagrant";
 //$dsn="{$db_type}://{$db_username}:{$db_password}@{$db_hostname}/{$db_database}";
 
-$colors="#ffffdd,#ff9966,#ffffaa,#ccccff,#cccccc,#ffcc66,#99ff99,#eeeeee,#66ffff,#ccffff,#ffff66,#ffccff,#ff66ff,yellow,lightgreen,lightblue";
+//$colors="#ffffdd,#ff9966,#ffffaa,#ccccff,#cccccc,#ffcc66,#99ff99,#eeeeee,#66ffff,#ccffff,#ffff66,#ffccff,#ff66ff,yellow,lightgreen,lightblue";
 $smallgraph="100,100";
 $largegraph="300,200";
 $legendpoints="";

@@ -1,22 +1,47 @@
 <?php
 
 /* ------------------------------------------------------------------------- **
-Quick docs
+QUICK DOCS
 
 $content = array of cell content left to right
 $attributes = array (html_attribute => value)
               html_attribute may be style, class, id, name
 $offset starts at 0.
-$offset set null refers to most recent row or column added.
 
 $my_table = new html_table($table_attributes);
-$my_table->set_header($content, $caption, $header_attributes);
-$my_table->set_header_cell($col_offset, $attributes, $content);
-
-$my_table->add_row($content, $row_attributes);
-$my_table->set_row_cell($row_offset, $col_offset, $attributes, $content)
-
+$my_table->add_row($content, $row_attributes, $tag);
+$my_table->update_cell($row_offset, $col_offset, $attributes, $content, $tag);
+$num_rows = $my_table->get_rows_count();
+$num_cols = $my_table->get_cols_count($row_offset);
 $html = $my_table->get_html();
+
+** ------------------------------------------------------------------------- **
+DATA STRUCTURES
+Data is stored in stdClass() objects.
+
+Only attributes that are used get set.
+e.g. <table name='my_table' style='width:100%;'>
+     Only $attributes->name and $attributes->style are set.
+$attributes->name
+           ->id
+           ->class
+           ->style
+           ->colspan
+           ->rowspan
+
+This is information to create the table's <caption> tag.
+$caption->attributes  (see above)
+        ->html        (browser content)
+
+One html table can have many rows and one row can have many cells.
+$rows and $rows->cells are both numerically indexed.
+$rows[index]->attributes  (Applied to <tr>.  See above.)
+            ->cells[index]->attributes  (Applied to <td> or <th>.  See above.)
+                          ->tag         ("td" or "th")
+                          ->html        (browser content)
+
+HTML code to be printed or concat'd to an output string is constructed from
+set data when html_table::get_html() is called.
 ** ------------------------------------------------------------------------- */
 
 class html_table {
@@ -87,7 +112,7 @@ class html_table {
             $html .= $this->build_row($row);
         }
 
-        return $html .= "</table>\n";
+        return "{$html}</table>\n";
     }
 
     private function check_tag($tag) {
@@ -108,12 +133,12 @@ class html_table {
     }
 
     private function build_attributes($attributes) {
-        $class   = isset($attributes->class)   ? " class='{$attributes->class}'"   : "";
-        $style   = isset($attributes->style)   ? " style='{$attributes->style}'"   : "";
-        $id      = isset($attributes->id)      ? " id='{$attributes->id}'"         : "";
-        $name    = isset($attributes->name)    ? " name='{$attributes->name}'"     : "";
-        $colspan = isset($attributes->colspan) ? " style='{$attributes->colspan}'" : "";
-        $rowspan = isset($attributes->rowspan) ? " style='{$attributes->rowspan}'" : "";
+        $class   = isset($attributes->class)   ? " class='{$attributes->class}'"     : "";
+        $style   = isset($attributes->style)   ? " style='{$attributes->style}'"     : "";
+        $id      = isset($attributes->id)      ? " id='{$attributes->id}'"           : "";
+        $name    = isset($attributes->name)    ? " name='{$attributes->name}'"       : "";
+        $colspan = isset($attributes->colspan) ? " colspan='{$attributes->colspan}'" : "";
+        $rowspan = isset($attributes->rowspan) ? " rowspan='{$attributes->rowspan}'" : "";
         return "{$name}{$id}{$class}{$style}{$colspan}{$rowspan}";
     }
 }

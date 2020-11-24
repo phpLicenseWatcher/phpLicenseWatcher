@@ -2,7 +2,7 @@
 
 require_once "common.php";
 require_once "tools.php";
-require_once "HTML/Table.php";
+require_once "html_table.php";
 
 if (isset($_GET['refresh']) && $_GET['refresh'] > 0 && ! $disable_autorefresh) {
     echo('<meta http-equiv="refresh" content="' . intval($_GET['refresh']) . '"/>');
@@ -42,7 +42,7 @@ exit;
 
 // List available features and their expiration dates
 function list_features_and_expirations($servers, &$html_body) {
-    global $colors, $lead_time; // from config.php
+    global $lead_time; // from config.php
 
     // Only one server is used, here.  Assume it's index [0].
     $server = $servers[0];
@@ -58,63 +58,51 @@ HTML;
     $today = mktime(0,0,0,date("m"),date("d"),date("Y"));
 
     // Create a new table object
-    $table = new HTML_Table("class='table' style='width:100%;' ");
+    $table = new html_table(array('class'=>"table"));
 
     // First row should be the name of the license server and it's description
     $colHeaders = array("Server: {$server['name']} ( {$server['label']} )");
-    $table->addRow($colHeaders, "colspan='4'", "th");
+    $table->add_row($colHeaders, array(), "th");
+    $table->update_cell(0, 0, array('colspan'=>"4"));
 
     build_license_expiration_array($server['name'], $expiration_array);
 
     // Define a table header
     $colHeaders = array("Feature", "Vendor Daemon", "Total licenses", "Number licenses, Days to expiration, Date of expiration");
-    $table->addRow($colHeaders, "", "th");
-
-    // Get names of different colors. These will be used to group visually
-    // licenses from the same license server
-    $color = explode(",", $colors);
+    $table->add_row($colHeaders, array(), "th");
 
     // We should have gotten an array with features
     // their expiration dates etc.
     foreach ($expiration_array as $key => $feature_array) {
         $total_licenses = 0;
-        $feature_string = "";
-        $feature_table = new HTML_Table("width=100%");
-
-        for ( $p = 0 ; $p < sizeof($feature_array) ; $p++ ) {
+        for ($p = 0; $p < count($feature_array); $p++) {
             // Keep track of total number of licenses for a particular feature
             // this is since you can have licenses with different expiration
-            $total_licenses += $feature_array[$p]["num_licenses"];
-            $feature_table->addRow(array(
-                "{$feature_array[$p]['num_licenses']} license(s) expire(s) in {$feature_array[$p]['days_to_expiration']} day(s) Date of expiration: {$feature_array[$p]['expiration_date']}" ),
-                "colspan=\"3\""
-            );
+            $total_licenses += intval($feature_array[$p]["num_licenses"]);
 
-            // Check whether license is close to expiration date
+            // Set row class if license is close to the expiration date.
+            $row_attributes = array();
             if ( $feature_array[$p]["days_to_expiration"] < 4000 ) {
                 if ( $feature_array[$p]["days_to_expiration"] <= $lead_time && $feature_array[$p]["days_to_expiration"] >= 0 ) {
-                    $feature_table->updateRowAttributes( ($feature_table->getRowCount() - 1) , "class=\"expires_soon\"");
+                    $row_attributes['class'] = "expires_soon";
                 }
 
                 if ( $feature_array[$p]["days_to_expiration"] < 0 ) {
-                    $feature_table->updateRowAttributes( ($feature_table->getRowCount() - 1) , "class=\"already_expired\"");
+                    $row_attributes['class'] = "already_expired";
                 }
             }
+
+            $license_msg  = "{$feature_array[$p]['num_licenses']} license(s) expire(s) in ";
+            $license_msg .= "{$feature_array[$p]['days_to_expiration']} day(s) Date of expiration: ";
+            $license_msg .= "{$feature_array[$p]['expiration_date']}";
         }
 
-        $table->addRow(array(
-            $key,
-            $feature_array[0]["vendor_daemon"],
-            $total_licenses,
-            $feature_table->toHtml(),
-        ));
-
-        unset($feature_table);
+        $table->add_row(array($key, $feature_array[0]["vendor_daemon"], $total_licenses, $license_msg), $row_attributes);
+        $table->update_cell(($table->get_rows_count()-1), 1, array('style'=>"text-align:center;"));
     }
 
     // Center columns 2. Columns start with 0 index
-    $table->updateColAttributes(1,"align=\"center\"");
-    $html_body .= $table->toHtml();
+    $html_body .= $table->get_html();
 } // END function list_features_and_expirations()
 
 /**
@@ -124,7 +112,7 @@ HTML;
  * @param &$html_body data view to build
  */
 function list_licenses_in_use($servers, &$html_body) {
-    global $lmutil_binary, $colors; // from config.php
+    global $lmutil_binary; // from config.php
 
     $html_body .= <<<HTML
 <p>Following is the list of licenses currently being used.
@@ -145,7 +133,8 @@ HTML;
     // We'll need timestamp class to get a human readable time difference
 
     // Get names of different colors
-    $color = explode(",", $colors);
+    $colors = array("lavender", "white");
+    $num_colors = count($colors);
 
     $licenses = array();
 
@@ -188,16 +177,15 @@ HTML;
         // Check whether anyone is using licenses from this particular license server
         if ( $i > -1 ) {
             // Create a new table
-            $tableStyle = "class='table' width='100%'";
-
-            $table = new HTML_Table($tableStyle);
+            $table = new html_table(array('class'=>"table"));
 
             // Show a banner with the name of the serve@port plus description
             $colHeaders = array("Server: {$server['name']} ({$server['label']})");
-            $table->addRow($colHeaders, "colspan='4'", "TH");
+            $table->add_row($colHeaders, array(), "th");
+            $table->update_cell(0, 0, array('colspan'=>"4"));
 
-            $colHeaders = array("Feature", "# cur. avail", "Details","Time checked out");
-            $table->addRow($colHeaders, "" , "TH");
+            $colHeaders = array("Feature", "# Cur. Avail", "Details", "Time Checked Out");
+            $table->add_row($colHeaders, array(), "th");
 
             // Get current UNIX time stamp
             $now = time();
@@ -210,10 +198,12 @@ HTML;
 
                     // How many licenses are currently used
                     $licenses_available = $licenses[$j]['num_licenses'] - $licenses[$j]['licenses_used'];
-                    $license_info = "Total of {$licenses[$j]['num_licenses']} licenses, " .
-                    $licenses[$j]['licenses_used'] . " currently in use, <span style='weight: bold'>{$licenses_available} available</span>";
+                    $license_info = "Total of {$licenses[$j]['num_licenses']} licenses, ";
+                    $license_info .= "{$licenses[$j]['licenses_used']} currently in use, ";
+                    $license_info .= "<span style='font-weight: bold'>{$licenses_available} available</span>";
                     $license_info .= "<br/><a href='{$graph_url}'>Historical Usage</a>";
-                    $table->addRow(array($licenses[$j]['feature'], $licenses_available, $license_info), "style='background: {$color[$j]};'");
+                    $color = $colors[$j%$num_colors];
+                    $table->add_row(array($licenses[$j]['feature'], $licenses_available, $license_info, ""), array('style'=>"background:{$color};"));
 
                     for ( $k = 0; $k < sizeof($users[$server['name']][$j]); $k++ ) {
                         /* ---------------------------------------------------------------------------
@@ -257,16 +247,16 @@ HTML;
                         // Output the user line
                         $user_line = $users[$server['name']][$j][$k];
                         $user_line_parts = explode( ' ', trim($user_line) );
-                        $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> " ;
-                        $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> " ;
-                        $table->addRow(array( "&nbsp;", "" ,$user_line_formated, $time_difference), "style='background: {$color[$j]};'");
+                        $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> ";
+                        $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> ";
+                        $table->add_row(array("", "", $user_line_formated, $time_difference), array('style'=>"background:{$color};"));
                     }
                 }
             }
 
             // Display the table
-            if ( $table->getRowCount() > 2 ) {
-                $html_body .= $table->toHtml();
+            if ($table->get_rows_count() > 2 ) {
+                $html_body .= $table->get_html();
             }
 
         } else {
