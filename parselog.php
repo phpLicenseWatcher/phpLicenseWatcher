@@ -73,7 +73,7 @@ SQL;
         }
     }
 
-    # Close the log file
+    // Close the log file
     fclose($file);
 }
 
