@@ -3,39 +3,7 @@ require_once "common.php";
 require_once "tools.php";
 require_once "html_table.php";
 
-// Create a new table object
-$table_style = array('style'=>"border:1; padding:1; border-spacing:2;");
-$table = new html_table($tableStyle);
-
-// Define a table header
-$header_style = array('style'=>"background: yellow;");
-$col_headers = array("Date", "Feature", "Total number of denials");
-$table->add_row($col_headers, $header_style, "th");
-
 db_connect($db);
-
-// Get a list of features that have been denied.
-$sql = <<<SQL
-SELECT DISTINCT `name`
-FROM `features`
-JOIN `licenses` ON `features`.`id`=`licenses`.`feature_id`
-JOIN `events` ON `licenses`.`id`=`events`.`license_id`
-WHERE `events`.`type`='DENIED';
-SQL;
-
-$result = $db->query($sql);
-if (!$result) {
-    die ($db->error);
-}
-
-// Color code features so it is easier to group them.
-// Get a list of different colors.
-$colors = array("lavender", "transparent");
-$num_colors = count($colors);
-for ($i = 0; $row = $result->fetch_row(); $i++) {
-    $features_color[$row[0]] = $colors[$i % $num_colors];
-}
-$result->free();
 
 // Check what we want to sort data on.
 /* Debugging Notes: original queries are as follows:
@@ -96,10 +64,26 @@ if (!$result) {
     die ($db->error);
 }
 
-while ($row = $result->fetch_row()) {
-    $table->add_row($row, array('style'=>"background: {$features_color[$row[1]]};"));
-    $table->update_cell(($table->get_rows_count()-1), 1, array('style'=>"text-align:right;"));
-    $table->update_cell(($table->get_rows_count()-1), 2, array('style'=>"text-align:right;"));
+// Background colors for table data.
+// Alternate background color per row for visibility.
+$colors = array("transparent", "lavender");
+$num_colors = count($colors);
+
+// Create a new table object
+$table_style = array('style'=>"border: 1px solid gray; padding: 1px; border-spacing: 2px;");
+$table = new html_table($table_style);
+
+// Define a table header
+$header_style = array('style'=>"background: yellow;");
+$col_headers = array("Date", "Feature", "Total number of denials");
+$table->add_row($col_headers, $header_style, "th");
+
+for ($i = 0, $data_row = $result->fetch_row(); $data_row; $i++, $data_row = $result->fetch_row()) {
+    $color = $colors[$i % $num_colors];
+    $table->add_row($data_row, array('style'=>"background: {$color};"));
+    $table_row = $table->get_rows_count() - 1;
+    $table->update_cell($table_row, 1, array('style'=>"text-align:right;"));
+    $table->update_cell($table_row, 2, array('style'=>"text-align:right;"));
 }
 
 $result->free();
@@ -109,19 +93,16 @@ $select_box = build_select_box (array("Date", "Feature", "Number"), "sortby", $s
 
 // Print View
 print_header();
-
 print <<<HTML
 <h1>License Denials</h1>
 <form>
 <p>Sort by
 {$select_box}
 </form>
-
 HTML;
 
-print_sql($sql);
-
-$table->display();
+print_sql($sql); // debug
+print $table->get_html();
 print_footer();
 
 ?>

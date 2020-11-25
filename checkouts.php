@@ -1,31 +1,9 @@
 <?php
 require_once "common.php";
 require_once "tools.php";
-require_once "HTML/Table.php";
+require_once "html_table.php";
 
 db_connect($db);
-
-// Get license usage for the product specified in $feature
-$sql = <<<SQL
-SELECT DISTINCT `name`
-FROM `features`
-JOIN `licenses` ON `features`.`id`=`licenses`.`feature_id`
-JOIN `events` ON `licenses`.`id`=`events`.`license_id`
-WHERE `events`.`type`='OUT';
-SQL;
-
-$result = $db->query($sql, MYSQLI_STORE_RESULT);
-if (!$result) {
-	die ($db->error);
-}
-
-// Color code the features so it is easier to group them
-// Get a list of different colors
-$color = explode(",", $colors);
-for ($i = 0; $row = $result->fetch_row(); $i++) {
-    $features_color[$row[0]] = $color[$i];
-}
-$result->free();
 
 // Check what we want to sort data on
 
@@ -70,25 +48,28 @@ if (!$result) {
     die ($db->error);
 }
 
-// Create a new table object
-$tableStyle = "border='1' cellpadding='1' cellspacing='2'";
-$table = new HTML_Table($tableStyle);
+// Background colors for table data.
+// Alternate background color per row for visibility.
+$colors = array("transparent", "lavender");
+$num_colors = count($colors);
 
-$table->setColAttributes(1, "align='right'");
+// Create new html_table object
+$table_style = array('style'=>"border: 1px solid gray; padding: 1px; border-spacing: 2px;");
+$table = new html_table($table_style);
 
-// Define a table header
-$headerStyle = "style='background: yellow;'";
-$colHeaders = array("Date", "User", "Feature", "Total number of checkouts");
-$table->addRow($colHeaders, $headerStyle, "TH");
-
-$table->updateColAttributes(3, "align='enter'");
-
-// Right align the 3 column
-$table->updateColAttributes(2, "align='right'");
+// Table header
+$header_style = array('style'=>"background: yellow;");
+$col_headers = array("Date", "User", "Feature", "Total number of checkouts");
+$table->add_row($col_headers, $header_style, "th");
 
 // Add data rows to table
-while ($row = $result->fetch_row()) {
-    $table->AddRow($row, "style='background: {$features_color[$row[2]]};'");
+for ($i = 0, $data_row = $result->fetch_row(); $data_row; $i++, $data_row = $result->fetch_row()) {
+    $color = $colors[$i % $num_colors];
+    $table->add_row($data_row, array('style'=>"background: {$color};"));
+    $table_row = $table->get_rows_count() - 1;
+    $table->update_cell($table_row, 1, array('style'=>"text-align: right;"));
+    $table->update_cell($table_row, 2, array('style'=>"text-align: right;"));
+    $table->update_cell($table_row, 3, array('style'=>"text-align: center;"));
 }
 
 $result->free();
@@ -109,6 +90,6 @@ print <<< HTML
 </form>
 HTML;
 print_sql($sql); // debug
-$table->display();
+print $table->get_html();
 print_footer();
 ?>
