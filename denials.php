@@ -98,15 +98,12 @@ if (!$result) {
 
 while ($row = $result->fetch_row()) {
     $table->add_row($row, array('style'=>"background: {$features_color[$row[1]]};"));
+    $table->update_cell(($table->get_rows_count()-1), 1, array('style'=>"text-align:right;"));
     $table->update_cell(($table->get_rows_count()-1), 2, array('style'=>"text-align:right;"));
 }
 
 $result->free();
 $db->close();
-
-// Right align the 3 column
-$table->setColAttributes(1, "align='right'");
-$table->updateColAttributes(2, "align='right'");
 
 $select_box = build_select_box (array("Date", "Feature", "Number"), "sortby", $sort_by);
 

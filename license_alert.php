@@ -10,7 +10,7 @@
 
 require_once "common.php";
 require_once "tools.php";
-require_once "html_able.php";
+require_once "html_table.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name'));
@@ -76,7 +76,7 @@ HTML;
 
 // If the table has more than one row (header row will be one) there are
 // expiring licenses.  We may also add a message to the view.
-if ($table->getRowCount() > 1) {
+if ($table->get_rows_count() > 1) {
     if ($notify_address && !isset($_GET['nomail'])) {
         $message .= "Emailing to {$notify_address}<p>\n";
         $headers[] = 'MIME-Version: 1.0';

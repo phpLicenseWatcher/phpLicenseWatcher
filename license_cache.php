@@ -34,7 +34,6 @@ SQL;
     pclose($fp);
 }
 
-$result->free();
 $db->close();
 
 ?>
