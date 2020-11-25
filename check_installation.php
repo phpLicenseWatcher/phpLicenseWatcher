@@ -33,12 +33,6 @@ $test_values  = $test ? "Installed and Enabled" : "Not Found";
 $test_results = $test ? PASS_MARK : FAIL_MARK;
 $table->add_row(array($test_names, $test_values, $test_results));
 
-$test         = extension_loaded("xml");
-$test_names   = "PHP Extension \"xml\" (required by pear DB class)";
-$test_values  = $test ? "Installed and Enabled" : "Not Found";
-$test_results = $test ? PASS_MARK : FAIL_MARK;
-$table->add_row(array($test_names, $test_values, $test_results));
-
 $test         = isset($lmutil_binary) && is_executable($lmutil_binary);
 $test_names   = "<code>lmutil</code>";
 $test_values  = $test ? "Is Executable" : "Not Executable<br>(maybe check permissions?)";

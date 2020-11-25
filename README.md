@@ -36,37 +36,32 @@
 ## Install process
 1. Retrieve required packages for your OS/distribution:
    * Apache2
-   * PHP 7.x, PHP XML Extension, PHP GD Extension
+   * PHP 7.x, PHP GD Extension
    * MySQL-server, MySQL-client, PHP MySQL Extension
    * You need the Linux Standard Base (LSB) to run Linux-precompiled FlexLM binaries.
-   * Composer to load additional dependencies.
 
    For example, using Ubuntu 20.04:
    ```
-   sudo apt install apache2 php php-xml php-gd mysql-server mysql-client php-mysql lsb composer
+   sudo apt install apache2 php php-gd mysql-server mysql-client php-mysql lsb
    ```
 2. Clone repostiory locally using git
    ```
    git clone https://github.com/mcglow2-RPI/phpLicenseWatcher.git /var/www/html/
    ```
-3. Run composer to install dependencies
-   ```
-   composer -d /var/www/html install
-   ```
-4. Create the database
+3. Create the database
    ```
    mysqladmin create licenses
    mysql -f licenses < phplicensewatcher.sql
    ```
-5. Update config file "./config.php" with proper values for your setup
-6. Setup cron to run scheduled tasks
+4. Update config file "./config.php" with proper values for your setup
+5. Setup cron to run scheduled tasks
    ```
    0 6 * * 1 php /var/www/html/license_alert.php >> /dev/null
    0,10,20,30,40,50 * * * * php /var/www/html/license_util.php >> /dev/null
    15 0 * * 1  php /var/www/html/license_cache.php >> /dev/null
    ```
-7. You should use your webservers built in capabilities to password protect your site.
-8. Navigate to page `check_installation.php` to check for possible installation issues.
+6. You should use your webservers built in capabilities to password protect your site.
+7. Navigate to page `check_installation.php` to check for possible installation issues.
 
 ### Crontab details
 
