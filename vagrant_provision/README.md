@@ -1,6 +1,6 @@
 # Vagrant
 ## Summary
-Vagrant is software used to more easily manage VirtualBox, while VirtualBox will run the actual virtual machine.  This repository provides a `vagrantfile` that defines a Vagrant box to help with code development.  The Vagrant box is a virtual machine that acts as a development and test server.  It provides a LAMP stack with Ubuntu 18.04, Apache2, MySQL, and PHP.
+Vagrant is software used to more easily manage VirtualBox, while VirtualBox will run the actual virtual machine.  This repository provides a `vagrantfile` that defines a Vagrant box to help with code development.  The Vagrant box is a virtual machine that acts as a development and test server.  It provides a LAMP stack with Ubuntu 20.04, Apache2, MySQL, and PHP.
 
 The Vagrant Box was originally developed and tested with Vagrant 2.2.3, VirtualBox 5.2.26, and macOS 10.12.6.  It should work with Vagrant 2.2.0 or later, VirtualBox 5.2.x or later, and any operating systems compatible with Vagrant and Virtualbox.
 
@@ -48,7 +48,7 @@ You may develop code for this repository on your host.  Make sure the VM is runn
 `scp -P 2222 my_file vagrant@localhost:`
     * Password is `vagrant`.
 * The VM can use the host's Internet connection.
-    * Virtualbox typically assigns the VM an IP of `10.0.2.15`.  This is not visible from the host due to Virtualbox's NAT firewall.  Instead, certain ports are forwarded to the host at `localhost`.
+    * Virtualbox typically (but not guaranteed) assigns the VM an IP of `10.0.2.15`.  This is not visible from the host due to Virtualbox's NAT firewall.  Instead, certain ports are forwarded to the host at `localhost`.  Forwarded ports are listed, below.
     * Virtualbox's NAT firewall is meant to block connections to the VM from the Internet.
     * Your host can be seen from within the VM at `10.0.2.2`.
 * Server statuses (shown on `index.php`) get cached for two hours.  Should this cache go stale before expiration, you can delete all of the cache files with `vagrant up --provision-with delete-cache`.
@@ -60,6 +60,9 @@ You may develop code for this repository on your host.  Make sure the VM is runn
     2. Update the locally cached Ubuntu image.  This may reduce time needed to provision a new VM. `vagrant box update`
     3. Build a new VM. `vagrant up`
 * The vagrant box gets occasional patches in this github repository, which can make your current VM obsolete.  Sometimes, a "full-update" will bring your VM current, but that is not a guarantee.  When a "full-update" doesn't work, please rebuild the VM as described above.
+* If you are getting a "connection was reset" error in your web browser, Apache may not be running.
+    1. Enter the Vagrant box via ssh. `vagrant ssh`
+    2. Start Apache. `sudo apachectl start` or `sudo apachectl restart`
 
 ### Common Commands
 Command | Purpose
