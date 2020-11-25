@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS `features` (
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_as_cs;
 
 
 -- -----------------------------------------------------
@@ -44,7 +43,6 @@ CREATE TABLE IF NOT EXISTS `servers` (
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_as_cs;
 
 
 -- -----------------------------------------------------
@@ -72,7 +70,6 @@ CREATE TABLE IF NOT EXISTS `licenses` (
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_as_cs;
 
 
 -- -----------------------------------------------------
@@ -94,7 +91,6 @@ CREATE TABLE IF NOT EXISTS `events` (
     ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_as_cs;
 
 
 -- -----------------------------------------------------
@@ -114,7 +110,6 @@ CREATE TABLE IF NOT EXISTS `usage` (
     ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_as_cs;
 
 
 -- -----------------------------------------------------
@@ -134,7 +129,6 @@ CREATE TABLE IF NOT EXISTS `available` (
     ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_as_cs;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
