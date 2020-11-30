@@ -1,18 +1,5 @@
 <?php
 
-// Load Composer libraries.
-if (is_readable(__DIR__ . '/vendor/autoload.php')) {
-    require_once(__DIR__ . '/vendor/autoload.php');
-} else {
-    print_header();
-    print <<< HTML
-<h1>Missing Components</h1>
-<p>Cannot find composer packages.  Please notify your system administrator.
-HTML;
-    print_footer();
-    exit;
-}
-
 // Load local config.
 if (is_readable("config.php")) {
 	require_once "config.php";
@@ -20,7 +7,7 @@ if (is_readable("config.php")) {
     print_header();
     print <<< HTML
 <h1>Missing Component</h1>
-<p>Configuration file <code>config.php</code> does not exist.  Please notify your system administrator.
+<p>Configuration file <code>config.php</code> could not be read.  Please notify your system administrator.
 HTML;
 	  print_footer();
 	  exit;
@@ -50,11 +37,9 @@ function print_footer() {
 }
 
 /**
- * Open persistent DB connection.
+ * Open persistent mysqli DB connection.
  *
- * By reference, $db should recieve a DB connection object from Pear/DB.
- *
- * @param &$db DB connection object
+ * @param &$db DB connection object.
  */
 function db_connect(&$db) {
     // From config.php
@@ -72,7 +57,7 @@ function db_connect(&$db) {
     // Using persistent connection as denoted by 'p:' in host string.
     $db = new mysqli("p:{$db_hostname}", $db_username, $db_password, $db_database);
     if (!is_null($db->connect_error)) {
-        die("Connect Error {$db->connect_errno}: {$db->connect_error}");
+        die("Database Connect Error {$db->connect_errno}: {$db->connect_error}");
     }
 }
 

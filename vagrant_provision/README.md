@@ -36,8 +36,6 @@ You may develop code for this repository on your host.  Make sure the VM is runn
 * You do _not_ need to install PHP on your host.
 * To test any code changes, the Vagrant VM needs to be updated with this command:<br />
 `vagrant up --provision-with update`
-    * Some composer libraries are dormant, and checking for composer library updates can take extra time when all you want is to update your working code.  Therefore, checking for composer library updates is separate:<br />
-    `vagrant up --provision-with composer-update`
 * You can view the VM server webpage at `http://localhost:50080`
 * A MySQL database viewer can connect to the VM server at `localhost`, port `53306`.
     * MySQL Workbench can connect to the VM server with user and password as `vagrant`.  Database Schema is also `vagrant`.
@@ -52,6 +50,7 @@ You may develop code for this repository on your host.  Make sure the VM is runn
     * Virtualbox's NAT firewall is meant to block connections to the VM from the Internet.
     * Your host can be seen from within the VM at `10.0.2.2`.
 * Server statuses (shown on `index.php`) get cached for two hours.  Should this cache go stale before expiration, you can delete all of the cache files with `vagrant up --provision-with delete-cache`.
+* __With the removal of PEAR libraries, Composer is no longer needed and has been disabled in Vagrant.__  Composer may return should the need arise in the future.
 
 ### Troubleshooting
 * Many problems can be solved by issuing a "full-update". `vagrant up --provision-with full-update`
@@ -73,7 +72,7 @@ Command | Purpose
 `vagrant box update` | Updates the locally cached Ubuntu image.  May reduce the time to provision a brand new VM should you destroy an existing VM.
 `vagrant up --provision-with update` | Update the VM with your latest code.  You'll also have to refresh your web browser.
 `vagrant up --provision-with full-update` | Remove all code and packages from guest.  Reinstall development code from working branch.  Reinstall composer packages.  Reinstall provision configuration file.  Do this only if you need a complete reset.
-`vagrant up --provision-with composer-update` | Checks composer for&mdash;and installs&mdash;all updates to packages.
+`vagrant up --provision-with composer-update` | Checks composer for&mdash;and installs&mdash;all updates to packages.  __This is currently disabled.__
 `vagrant up --provision-with delete-cache` | Removes all server status cache files.  Do this if the cache goes stale.
 `vagrant ssh` | Opens a secure shell connection to the VM.
 

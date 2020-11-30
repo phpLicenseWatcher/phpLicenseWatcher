@@ -25,7 +25,7 @@ my @APACHE_PATH = (rootdir(), "etc", "apache2");
 my @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 
 # Packages needed for phplw.
-my @REQUIRED_PACKAGES = ("apache2", "php", "php-xml", "php-gd", "php-mysql", "mysql-server", "mysql-client", "lsb", "composer", "zip", "unzip");
+my @REQUIRED_PACKAGES = ("apache2", "php", "php-gd", "php-mysql", "mysql-server", "mysql-client", "lsb", "zip", "unzip");
 
 # Non super user account.  Some package systems run better when not as root.
 my $NOT_SUPERUSER = "vagrant";
@@ -92,9 +92,9 @@ foreach (@REQUIRED_PACKAGES) {
     exec_cmd("apt-get -qy install $_");
 }
 
-# Run composer to retrieve PHP dependencies
-# Composer cannot be run as superuser.
-exec_cmd("su -c \"composer -d" . catfile(@REPO_PATH) . " install\" $NOT_SUPERUSER");
+# Run composer to retrieve PHP dependencies.  Composer cannot be run as superuser.
+# Composer is disabled.
+# exec_cmd("su -c \"composer -d" . catfile(@REPO_PATH) . " install\" $NOT_SUPERUSER");
 
 # Prepare cache directory
 $dest = catdir(@CACHE_PATH);
