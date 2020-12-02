@@ -1,8 +1,8 @@
 <?php
 
 // Load local config.
-if (is_readable("config.php")) {
-	require_once "config.php";
+if (is_readable(__DIR__ . "/config.php")) {
+	require_once __DIR__ . "/config.php";
 } else {
     print_header();
     print <<< HTML

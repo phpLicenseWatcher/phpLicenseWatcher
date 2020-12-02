@@ -236,13 +236,13 @@ function run_command($command) {
  * @return boolean true when $data is retrieved from cache, false otherwise.
  */
 function cache_check($command, &$data) {
-    global $cache_dir; // from config.php
+    global $cache_dir, $cache_lifetime; // from config.php
     $result = false;
     $hash = md5($command);
     $cacheFile = "{$cache_dir}{$hash}.cache";
 
     if (file_exists($cacheFile)) {
-        if (time() - filemtime($cacheFile) <= 2 * 3600) {
+        if (time() - filemtime($cacheFile) <= $cache_lifetime) {
             // Cache file younger than 2 hours.  Read data from cache.
             $data = file_get_contents($cacheFile);
             $result = true;

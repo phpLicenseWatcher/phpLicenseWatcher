@@ -43,7 +43,7 @@ my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
 my $FLEXLM_OWNER = "www-data";
 my $FLEXLM_OWNER_UID = getpwnam $FLEXLM_OWNER;
 my $FLEXLM_OWNER_GID = getgrnam $FLEXLM_OWNER;
-my $FLEXLM_PERMISSIONS = 0700;
+my $FLEXLM_PERMISSIONS = 0770;
 
 # DB config
 my @DB_HOSTS = ("localhost", "_gateway");
@@ -121,8 +121,8 @@ foreach (@FLEXLM_FILES) {
         exit 1;
     }
 
-    chown $FLEXLM_OWNER_UID, $FLEXLM_OWNER_GID, $dest;
-    print "$_ ownership granted to $FLEXLM_OWNER\n";
+    chown $FLEXLM_OWNER_UID, $NOT_SUPERUSER_GID, $dest;
+    print "$_ ownership granted to $FLEXLM_OWNER:$NOT_SUPERUSER\n";
 
     chmod $FLEXLM_PERMISSIONS, $dest;
     print "$_ permissions set to ", sprintf("0%o\n", $FLEXLM_PERMISSIONS);

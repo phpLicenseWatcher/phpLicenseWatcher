@@ -1,8 +1,8 @@
 <?php
 
-require_once "common.php";
-require_once "tools.php";
-require_once "html_table.php";
+require_once __DIR__ . "/common.php";
+require_once __DIR__ . "/tools.php";
+require_once __DIR__ . "/html_table.php";
 
 if (isset($_GET['refresh']) && $_GET['refresh'] > 0 && ! $disable_autorefresh) {
     echo('<meta http-equiv="refresh" content="' . intval($_GET['refresh']) . '"/>');

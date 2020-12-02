@@ -1,7 +1,7 @@
 <?php
 
-require_once "common.php";
-require_once "tools.php";
+require_once __DIR__ . "/common.php";
+require_once __DIR__ . "/tools.php";
 
 $feature = preg_replace("/[^a-zA-Z0-9_|]+/", "", htmlspecialchars($_GET['feature'])) ;
 $days = intval($_GET['days']);

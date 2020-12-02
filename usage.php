@@ -1,5 +1,5 @@
 <?php
-require_once "common.php";
+require_once __DIR__ . "/common.php";
 
 db_connect($db);
 

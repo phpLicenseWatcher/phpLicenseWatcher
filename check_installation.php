@@ -1,7 +1,7 @@
 <?php
 
-require_once "common.php";
-include_once "html_table.php";
+require_once __DIR__ . "/common.php";
+include_once __DIR__ . "/html_table.php";
 
 define("PASS_MARK", "<span class='green-text'>&#10004; GOOD</span>");  // green heavy checkmark
 define("FAIL_MARK", "<span class='red-text'>&#10006; FAIL</span>");    // red cross mark

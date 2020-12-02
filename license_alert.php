@@ -8,9 +8,9 @@
 #          expiration ie. 10 days before license expires.
 ############################################################################
 
-require_once "common.php";
-require_once "tools.php";
-require_once "html_table.php";
+require_once __DIR__ . "/common.php";
+require_once __DIR__ . "/tools.php";
+require_once __DIR__ . "/html_table.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name'));
