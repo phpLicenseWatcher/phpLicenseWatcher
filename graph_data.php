@@ -36,17 +36,17 @@ SELECT `features`.`name`, `time`, SUM(`num_users`)
 FROM `usage`
 JOIN `licenses` ON `usage`.`license_id`=`licenses`.`id`
 JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-WHERE $crit AND DATE_SUB(NOW(), INTERVAL $days DAY) <= DATE(`time`)
+WHERE {$crit} AND DATE_SUB(NOW(), INTERVAL $days DAY) <= DATE(`time`)
 GROUP BY `features`.`name`, `time`
 ORDER BY `time` ASC;
 SQL;
 
-$result = $db->query($sql, MYSQLI_STORE_RESULT);
-if (!$result) {
+$recordset = $db->query($sql, MYSQLI_STORE_RESULT);
+if (!$recordset) {
     die ($db->error);
 }
 
-while ($row = $result->fetch_row()){
+while ($row = $recordset->fetch_row()){
     $date = $row[1];
 
     if ($days == 1) {
@@ -77,9 +77,10 @@ while ($row = $result->fetch_row()){
 }
 
 
-$resultr->free();
-$db->disconnect();
+$recordset->free();
+$db->close();
 
+$result = array();
 foreach (array_keys($products) as $product) {
     $result["cols"][] = array("id" => "", "label" => $product, "pattern" => "", "type" => "number");
 }
