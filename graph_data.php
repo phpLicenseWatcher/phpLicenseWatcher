@@ -46,6 +46,9 @@ if (!$recordset) {
     die ($db->error);
 }
 
+// $row[0] = feature name (aka product).
+// $row[1] = date
+// $row[2] = SUM(num_users)
 while ($row = $recordset->fetch_row()){
     $date = $row[1];
 
@@ -65,7 +68,8 @@ while ($row = $recordset->fetch_row()){
         $table[$date] = array();
     }
 
-    //[date][product] = value
+    // SUM(num_users) has multiple data points throughout a single day.
+    // This ensures the largest SUM(num_users) is set each day within $table[date][product]
     if (isset($table[$date][$row[0]])) {
 		//make sure to select the largest value if we are reducing the data by changing the date key
         if ($row[2] > $table[$date][$row[0]]) {
@@ -76,11 +80,9 @@ while ($row = $recordset->fetch_row()){
     }
 }
 
-
 $recordset->free();
 $db->close();
 
-$result = array();
 foreach (array_keys($products) as $product) {
     $result["cols"][] = array("id" => "", "label" => $product, "pattern" => "", "type" => "number");
 }
