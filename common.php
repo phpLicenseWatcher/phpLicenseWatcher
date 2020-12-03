@@ -72,9 +72,10 @@ function db_connect(&$db) {
  * @param object &$db mysqli DB object with open connection.
  * @param array $cols optional list of columns to lookup per row.  Lookup all cols when omitted/empty.
  * @param array $ids optional list if server IDs to lookup.  Lookup all IDs when omitted/empty.
+ * @param string $order_by optional column to sort server list by.
  * @return array list of servers.
  */
-function db_get_servers(object &$db, array $cols=array(), array $ids=array()) {
+function db_get_servers(object &$db, array $cols=array(), array $ids=array(), string $order_by="") {
     if (get_class($db) !== "mysqli") {
         die ("DB not connected when calling db_get_servers().");
     }
@@ -102,7 +103,13 @@ function db_get_servers(object &$db, array $cols=array(), array $ids=array()) {
         $ids_queried = "`id` IN (" . implode(", ", $ids) . ") AND";
     }
 
-    $result = $db->query("SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} `is_active`=1;", MYSQLI_STORE_RESULT);
+    if (empty($order_by)) {
+        $order_by_queried = "";
+    } else {
+        $order_by_queried = "ORDER BY '{$order_by}' ASC";
+    }
+
+    $result = $db->query("SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} `is_active`=1 {$order_by_queried};", MYSQLI_STORE_RESULT);
     if (!$result) {
         die ($db->error);
     }

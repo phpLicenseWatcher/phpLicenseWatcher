@@ -6,14 +6,14 @@ require_once __DIR__ . "/html_table.php";
 
 // Retrieve server list.  All columns.  All IDs.
 db_connect($db);
-$servers = db_get_servers($db);
+$servers = db_get_servers($db, array(), array(), "label");
 $db->close();
 
 // Start a new html_table
 $table = new html_table(array('class'=>"table"));
 
 // Define the table header
-$col_headers = array("ID", "License port@server", "Description", "Status", "Current Usage", "Available features/license", "lmgrd version","Last Update");
+$col_headers = array("Description", "License port@server", "Status", "Current Usage", "Available features/license", "lmgrd version","Last Update");
 $table->add_row($col_headers, array(), "th");
 
 foreach ($servers as $server) {
@@ -37,9 +37,8 @@ foreach ($servers as $server) {
     }
 
     $table->add_row(array(
-        $server['id'],
-        $server['name'],
         $server['label'],
+        $server['name'],
         $server['status'],
         $detail_link,
         $listing_expiration_link,
