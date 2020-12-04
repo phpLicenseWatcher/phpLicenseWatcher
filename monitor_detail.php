@@ -59,60 +59,72 @@ print <<<HTML
         var jsonData = $.ajax({
             url: "graph_data.php?feature={$feature}&days=1",
             dataType: "json",
-            async: false
         }).responseText;
 
-        // Create our data table out of JSON data loaded from server.
-        var data = new google.visualization.DataTable(jsonData);
+        $.ajax("graph_data.php?feature={$feature}&days=1").done (
+            function(jsonData) {
+                // Create our data table out of JSON data loaded from server.
+                var data = new google.visualization.DataTable(jsonData);
 
-        // Instantiate and draw our chart, passing in some options.
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div_day'));
-        chart.draw(data, {width: 1000, height: 400});
+                // Instantiate and draw our chart, passing in some options.
+                var chart = new google.visualization.LineChart(document.getElementById('chart_div_day'));
+                chart.draw(data, {width: 1000, height: 400});
+            }
+        );
     }
 
     function drawChart_week() {
         var jsonData = $.ajax({
             url: "graph_data.php?feature={$feature}&days=7",
             dataType: "json",
-            async: false
         }).responseText;
 
-        // Create our data table out of JSON data loaded from server.
-        var data = new google.visualization.DataTable(jsonData);
+        $.ajax("graph_data.php?feature={$feature}&days=7").done (
+            function(jsonData) {
+                // Create our data table out of JSON data loaded from server.
+                var data = new google.visualization.DataTable(jsonData);
 
-        // Instantiate and draw our chart, passing in some options.
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div_week'));
-        chart.draw(data, {width: 1000, height: 400});
+                // Instantiate and draw our chart, passing in some options.
+                var chart = new google.visualization.LineChart(document.getElementById('chart_div_week'));
+                chart.draw(data, {width: 1000, height: 400});
+            }
+        );
     }
 
     function drawChart_month() {
         var jsonData = $.ajax({
             url: "graph_data.php?feature={$feature}&days=30",
             dataType: "json",
-            async: false
         }).responseText;
 
-        // Create our data table out of JSON data loaded from server.
-        var data = new google.visualization.DataTable(jsonData);
+        $.ajax("graph_data.php?feature={$feature}&days=30").done (
+            function(jsonData) {
+                // Create our data table out of JSON data loaded from server.
+                var data = new google.visualization.DataTable(jsonData);
 
-        // Instantiate and draw our chart, passing in some options.
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div_month'));
-        chart.draw(data, {width: 1000, height: 400});
+                // Instantiate and draw our chart, passing in some options.
+                var chart = new google.visualization.LineChart(document.getElementById('chart_div_month'));
+                chart.draw(data, {width: 1000, height: 400});
+            }
+        );
     }
 
     function drawChart_year() {
         var jsonData = $.ajax({
             url: "graph_data.php?feature={$feature}&days=365",
             dataType: "json",
-            async: false
         }).responseText;
 
-        // Create our data table out of JSON data loaded from server.
-        var data = new google.visualization.DataTable(jsonData);
+        $.ajax("graph_data.php?feature={$feature}&days=365").done (
+            function(jsonData) {
+                // Create our data table out of JSON data loaded from server.
+                var data = new google.visualization.DataTable(jsonData);
 
-        // Instantiate and draw our chart, passing in some options.
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div_year'));
-        chart.draw(data, {width: 1000, height: 400});
+                // Instantiate and draw our chart, passing in some options.
+                var chart = new google.visualization.LineChart(document.getElementById('chart_div_year'));
+                chart.draw(data, {width: 1000, height: 400});
+            }
+        );
     }
 </script>
 
