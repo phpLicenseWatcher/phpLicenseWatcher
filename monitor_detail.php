@@ -46,86 +46,117 @@ print <<<HTML
     google.charts.load('current', {'packages':['corechart']});
 
     // Set a callback to run when the Google Visualization API is loaded.
-    google.charts.setOnLoadCallback(drawChart);
+    google.charts.setOnLoadCallback(draw_charts);
 
-    function drawChart() {
-        drawChart_day();
-        drawChart_week();
-        drawChart_month();
-        drawChart_year();
+    function draw_charts() {
+        var charts = {
+            "1"  : "day",
+            "7"  : "week",
+            "30" : "month",
+            "365": "year"
+        };
+
+        $.each(charts, function(key, value) {
+            var data_url = "graph_data.php?feature={$feature}&days=" + key;
+            var data_div = "chart_div_" + value;
+            var json_data = $.ajax({
+                url: data_url,
+                dataType: "json",
+            }).responseText;
+
+            $.ajax(data_url).done (
+                function(json_data) {
+                    // Create our data table out of JSON data loaded from server.
+                    var data = new google.visualization.DataTable(json_data);
+
+                    // Instantiate and draw our chart, passing in some options.
+                    var chart = new google.visualization.LineChart(document.getElementById(data_div));
+                    chart.draw(data, {width: 1000, height: 400});
+                }
+            );
+        });
     }
 
-    function drawChart_day() {
-        var jsonData = $.ajax({
-            url: "graph_data.php?feature={$feature}&days=1",
-            dataType: "json",
-        }).responseText;
 
-        $.ajax("graph_data.php?feature={$feature}&days=1").done (
-            function(jsonData) {
-                // Create our data table out of JSON data loaded from server.
-                var data = new google.visualization.DataTable(jsonData);
 
-                // Instantiate and draw our chart, passing in some options.
-                var chart = new google.visualization.LineChart(document.getElementById('chart_div_day'));
-                chart.draw(data, {width: 1000, height: 400});
-            }
-        );
-    }
-
-    function drawChart_week() {
-        var jsonData = $.ajax({
-            url: "graph_data.php?feature={$feature}&days=7",
-            dataType: "json",
-        }).responseText;
-
-        $.ajax("graph_data.php?feature={$feature}&days=7").done (
-            function(jsonData) {
-                // Create our data table out of JSON data loaded from server.
-                var data = new google.visualization.DataTable(jsonData);
-
-                // Instantiate and draw our chart, passing in some options.
-                var chart = new google.visualization.LineChart(document.getElementById('chart_div_week'));
-                chart.draw(data, {width: 1000, height: 400});
-            }
-        );
-    }
-
-    function drawChart_month() {
-        var jsonData = $.ajax({
-            url: "graph_data.php?feature={$feature}&days=30",
-            dataType: "json",
-        }).responseText;
-
-        $.ajax("graph_data.php?feature={$feature}&days=30").done (
-            function(jsonData) {
-                // Create our data table out of JSON data loaded from server.
-                var data = new google.visualization.DataTable(jsonData);
-
-                // Instantiate and draw our chart, passing in some options.
-                var chart = new google.visualization.LineChart(document.getElementById('chart_div_month'));
-                chart.draw(data, {width: 1000, height: 400});
-            }
-        );
-    }
-
-    function drawChart_year() {
-        var jsonData = $.ajax({
-            url: "graph_data.php?feature={$feature}&days=365",
-            dataType: "json",
-        }).responseText;
-
-        $.ajax("graph_data.php?feature={$feature}&days=365").done (
-            function(jsonData) {
-                // Create our data table out of JSON data loaded from server.
-                var data = new google.visualization.DataTable(jsonData);
-
-                // Instantiate and draw our chart, passing in some options.
-                var chart = new google.visualization.LineChart(document.getElementById('chart_div_year'));
-                chart.draw(data, {width: 1000, height: 400});
-            }
-        );
-    }
+    // function drawChart() {
+    //     drawChart_day();
+    //     drawChart_week();
+    //     drawChart_month();
+    //     drawChart_year();
+    // }
+    //
+    // function drawChart_day() {
+    //     var jsonData = $.ajax({
+    //         url: "graph_data.php?feature={$feature}&days=1",
+    //         dataType: "json",
+    //     }).responseText;
+    //
+    //     $.ajax("graph_data.php?feature={$feature}&days=1").done (
+    //         function(jsonData) {
+    //             // Create our data table out of JSON data loaded from server.
+    //             var data = new google.visualization.DataTable(jsonData);
+    //
+    //             // Instantiate and draw our chart, passing in some options.
+    //             var chart = new google.visualization.LineChart(document.getElementById('chart_div_day'));
+    //             chart.draw(data, {width: 1000, height: 400});
+    //         }
+    //     );
+    // }
+    //
+    // function drawChart_week() {
+    //     var jsonData = $.ajax({
+    //         url: "graph_data.php?feature={$feature}&days=7",
+    //         dataType: "json",
+    //     }).responseText;
+    //
+    //     $.ajax("graph_data.php?feature={$feature}&days=7").done (
+    //         function(jsonData) {
+    //             // Create our data table out of JSON data loaded from server.
+    //             var data = new google.visualization.DataTable(jsonData);
+    //
+    //             // Instantiate and draw our chart, passing in some options.
+    //             var chart = new google.visualization.LineChart(document.getElementById('chart_div_week'));
+    //             chart.draw(data, {width: 1000, height: 400});
+    //         }
+    //     );
+    // }
+    //
+    // function drawChart_month() {
+    //     var jsonData = $.ajax({
+    //         url: "graph_data.php?feature={$feature}&days=30",
+    //         dataType: "json",
+    //     }).responseText;
+    //
+    //     $.ajax("graph_data.php?feature={$feature}&days=30").done (
+    //         function(jsonData) {
+    //             // Create our data table out of JSON data loaded from server.
+    //             var data = new google.visualization.DataTable(jsonData);
+    //
+    //             // Instantiate and draw our chart, passing in some options.
+    //             var chart = new google.visualization.LineChart(document.getElementById('chart_div_month'));
+    //             chart.draw(data, {width: 1000, height: 400});
+    //         }
+    //     );
+    // }
+    //
+    // function drawChart_year() {
+    //     var jsonData = $.ajax({
+    //         url: "graph_data.php?feature={$feature}&days=365",
+    //         dataType: "json",
+    //     }).responseText;
+    //
+    //     $.ajax("graph_data.php?feature={$feature}&days=365").done (
+    //         function(jsonData) {
+    //             // Create our data table out of JSON data loaded from server.
+    //             var data = new google.visualization.DataTable(jsonData);
+    //
+    //             // Instantiate and draw our chart, passing in some options.
+    //             var chart = new google.visualization.LineChart(document.getElementById('chart_div_year'));
+    //             chart.draw(data, {width: 1000, height: 400});
+    //         }
+    //     );
+    // }
 </script>
 
 <h2>Today</h2>
