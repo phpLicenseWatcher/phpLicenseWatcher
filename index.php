@@ -19,18 +19,18 @@ $table->add_row($col_headers, array(), "th");
 foreach ($servers as $server) {
     switch ($server['status']) {
     case SERVER_UP:
-        $class = "up";
+        $class = "server-up";
         $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
         $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
         break;
     case SERVER_VENDOR_DOWN:
-        $class = "warning";
+        $class = "server-vendor-down";
 	    $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
 	    $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
         break;
     case SERVER_DOWN:
     default:
-        $class = "down";
+        $class = "server-down";
         $detail_link="No Details";
         $listing_expiration_link="";
         break;

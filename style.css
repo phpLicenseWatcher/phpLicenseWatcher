@@ -26,13 +26,13 @@ table#install-check {
 }
 
 /* Placeholder since class exists in code */
-td.up {
+td.server-up {
 }
 
-td.down {
+td.server-down {
     background-color: red;
 }
 
-td.warning {
+td.server-vendor-down {
     background-color: orange;
 }
