@@ -47,7 +47,7 @@ foreach ($servers as $server) {
     ));
 
 	// Set the background color of status cell via class attribute
-	$table->update_cell(($table->get_rows_count() - 1), 3, array('class'=>"{$class}"));
+	$table->update_cell(($table->get_rows_count() - 1), 2, array('class'=>"{$class}"));
 }
 
 // Output view.
