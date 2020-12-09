@@ -130,12 +130,6 @@ HTML;
         $html_body .= ("</span></p>");
     }
 
-    // We'll need timestamp class to get a human readable time difference
-
-    // Get names of different colors
-    $colors = array("lavender", "transparent");
-    $num_colors = count($colors);
-
     $licenses = array();
 
     // Loop through the available servers
@@ -202,8 +196,8 @@ HTML;
                     $license_info .= "{$licenses[$j]['licenses_used']} currently in use, ";
                     $license_info .= "<span style='font-weight: bold'>{$licenses_available} available</span>";
                     $license_info .= "<br/><a href='{$graph_url}'>Historical Usage</a>";
-                    $color = $colors[$j%$num_colors];
-                    $table->add_row(array($licenses[$j]['feature'], $licenses_available, $license_info, ""), array('style'=>"background:{$color};"));
+                    $class = $j%2===0 ? array('class'=>"alt-bgcolor") : array();
+                    $table->add_row(array($licenses[$j]['feature'], $licenses_available, $license_info, ""), $class);
 
                     for ( $k = 0; $k < sizeof($users[$server['name']][$j]); $k++ ) {
                         /* ---------------------------------------------------------------------------
@@ -249,7 +243,7 @@ HTML;
                         $user_line_parts = explode( ' ', trim($user_line) );
                         $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> ";
                         $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> ";
-                        $table->add_row(array("", "", $user_line_formated, $time_difference), array('style'=>"background:{$color};"));
+                        $table->add_row(array("", "", $user_line_formated, $time_difference), $class);
                     }
                 }
             }

@@ -64,14 +64,9 @@ if (!$result) {
     die ($db->error);
 }
 
-// Background colors for table data.
-// Alternate background color per row for visibility.
-$colors = array("transparent", "lavender");
-$num_colors = count($colors);
-
 // Create a new table object
-$table_style = array('style'=>"border: 1px solid gray; padding: 1px; border-spacing: 2px;");
-$table = new html_table($table_style);
+$table_properties = array('class'=>"alt-rows-bgcolor events-table");
+$table = new html_table($table_properties);
 
 // Define a table header
 $header_style = array('style'=>"background: yellow;");
@@ -79,8 +74,7 @@ $col_headers = array("Date", "Feature", "Total number of denials");
 $table->add_row($col_headers, $header_style, "th");
 
 for ($i = 0, $data_row = $result->fetch_row(); $data_row; $i++, $data_row = $result->fetch_row()) {
-    $color = $colors[$i % $num_colors];
-    $table->add_row($data_row, array('style'=>"background: {$color};"));
+    $table->add_row($data_row);
     $table_row = $table->get_rows_count() - 1;
     $table->update_cell($table_row, 1, array('style'=>"text-align:right;"));
     $table->update_cell($table_row, 2, array('style'=>"text-align:right;"));

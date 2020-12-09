@@ -19,6 +19,16 @@ body {
     color: green;
 }
 
+table.alt-rows-bgcolor tr:nth-child(even), tr.alt-bgcolor {
+    background-color: #efefef;
+}
+
+table.events-table {
+    border: 1px solid gray;
+    padding: 1px;
+    border-spacing: 2px;
+}
+
 table#install-check {
     width: 60%;
     margin-left: 20%;

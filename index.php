@@ -10,7 +10,7 @@ $servers = db_get_servers($db, array(), array(), "label");
 $db->close();
 
 // Start a new html_table
-$table = new html_table(array('class'=>"table"));
+$table = new html_table(array('class'=>"table alt-rows-bgcolor"));
 
 // Define the table header
 $col_headers = array("Description", "License port@server", "Status", "Current Usage", "Available features/license", "lmgrd version","Last Update");

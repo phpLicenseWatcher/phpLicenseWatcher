@@ -5,7 +5,7 @@ include_once __DIR__ . "/html_table.php";
 
 define("PASS_MARK", "<span class='green-text'>&#10004; GOOD</span>");  // green heavy checkmark
 define("FAIL_MARK", "<span class='red-text'>&#10006; FAIL</span>");    // red cross mark
-define("REQUIRED_PHP", "7.0.0");
+define("REQUIRED_PHP", "7.3.0");
 
 $table = new html_table(array('id'=>"install-check"));
 $table->add_row(array("TEST", "VALUE", "RESULT"), array(), "th");

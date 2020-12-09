@@ -24,17 +24,12 @@ foreach ($servers as $i => $server) {
     build_license_expiration_array($server['name'], $expiration_array[$i]);
 }
 
-$table = new html_table(array('class'=>"table"));
+$table = new html_table(array('class'=>"table alt-rows-bgcolor"));
 
 $colHeaders = array("Server", "Server description", "Feature expiring", "Expiration date",
                     "Days to expiration", "Number of license(s) expiring");
 
 $table->add_row($colHeaders, array(), "th");
-
-// Get names of different colors. These will be used to group visually
-// licenses from the same license server
-$colors = array("lavender", "transparent");
-$num_colors = count($colors);
 
 // Now after the expiration has been built loop through all the fileservers
 for ($i = 0; $i < count($expiration_array); $i++) {
@@ -44,7 +39,6 @@ for ($i = 0; $i < count($expiration_array); $i++) {
                 if ((strcmp($myarray[$j]["days_to_expiration"], "permanent") != 0) && ($myarray[$j]["days_to_expiration"] <= $lead_time)) {
                     if ($myarray[$j]["days_to_expiration"] < 0) {
                         $myarray[$j]["days_to_expiration"] = "<span style='font-weight:bold;'>Already expired</span>";
-                        $color = $colors[$i % $num_colors];
                         $table->add_row(array(
                              $servers[$i]['name'],
                              $description[$i],
@@ -52,7 +46,7 @@ for ($i = 0; $i < count($expiration_array); $i++) {
                              $myarray[$j]["expiration_date"],
                              $myarray[$j]["days_to_expiration"],
                              $myarray[$j]["num_licenses"]
-                        ), array('style'=>"background-color={$color}"));
+                        ));
                         $table->update_cell(($table->get_rows_count()-1), 1, array('style'=>"text-align:center;"));
                         $table->update_cell(($table->get_rows_count()-1), 3, array('style'=>"text-align:center;"));
                         $table->update_cell(($table->get_rows_count()-1), 4, array('style'=>"text-align:center;"));
