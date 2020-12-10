@@ -30,31 +30,38 @@
 ## Requirements
 
 * PHP enabled web server
-* FlexLM lmstat/lmutil/lmdiag binaries for the OS you are running the web server on. 
-
+* MySQL
+* FlexLM lmstat/lmutil/lmdiag binaries for the OS you are running the web server on.
 
 ## Install process
+1. Retrieve required packages for your OS/distribution:
+   * Apache2
+   * PHP 7.x, PHP GD Extension
+   * MySQL-server, MySQL-client, PHP MySQL Extension
+   * You need the Linux Standard Base (LSB) to run Linux-precompiled FlexLM binaries.
 
-1. Clone repostiory locally using git
+   For example, using Ubuntu 20.04:
+   ```
+   sudo apt install apache2 php php-gd mysql-server mysql-client php-mysql lsb
+   ```
+2. Clone repostiory locally using git
    ```
    git clone https://github.com/mcglow2-RPI/phpLicenseWatcher.git /var/www/html/
    ```
-2. Create the database
-```
-mysqladmin create licenses
-mysql -f licenses < phplicensewatcher.sql 
-```
-
-3. Update config file "./config.php" with proper values for your setup
-
-4. Setup cron to run scheduled tasks
-```0 6 * * 1 php /var/www/html/license_alert.php >> /dev/null
-0,10,20,30,40,50 * * * * php /var/www/html/license_util.php >> /dev/null
-15 0 * * 1  php /var/www/html/license_cache.php >> /dev/null
-```
-5. You should use your webservers built in capabilities to password protect your site.  We use 
-
-
+3. Create the database
+   ```
+   mysqladmin create licenses
+   mysql -f licenses < phplicensewatcher.sql
+   ```
+4. Update config file "./config.php" with proper values for your setup
+5. Setup cron to run scheduled tasks
+   ```
+   0 6 * * 1 php /var/www/html/license_alert.php >> /dev/null
+   0,10,20,30,40,50 * * * * php /var/www/html/license_util.php >> /dev/null
+   15 0 * * 1  php /var/www/html/license_cache.php >> /dev/null
+   ```
+6. You should use your webservers built in capabilities to password protect your site.
+7. Navigate to page `check_installation.php` to check for possible installation issues.
 
 ### Crontab details
 

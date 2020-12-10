@@ -1,120 +1,89 @@
 <?php
+require_once __DIR__ . "/common.php";
+require_once __DIR__ . "/tools.php";
+require_once __DIR__ . "/html_table.php";
 
-require_once(__DIR__."/common.php");
-print_header("License Checkouts");
+db_connect($db);
 
-?>
+// Check what we want to sort data on
 
+/* Original queries would error out with MySQL when sql_mode=only_full_group_by
+ * Additional debugging may be necessary.  Original queries are as follows:
+ * Sort by date:
+ * SELECT `flmevent_date`,`flmevent_user`,MAX(`flmevent_feature`),count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_date`,`flmevent_user` ORDER BY `flmevent_date`,`flmevent_user`,`flmevent_feature` DESC;
+ * Sort by user:
+ * SELECT `flmevent_date`,`flmevent_user`,MAX(`flmevent_feature`),count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_user`,`flmevent_date` ORDER BY `flmevent_user`,`flmevent_date`,`flmevent_feature` DESC;
+ * Sort by feature:
+ * SELECT `flmevent_date`,MAX(flmevent_user),`flmevent_feature`,count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_feature`,`flmevent_date` ORDER BY `flmevent_feature`,`flmevent_date`,`flmevent_user` DESC;
+ */
+$sql = <<<SQL
+SELECT `events`.`time`, `events`.`user`, MAX(`features`.`name`), count(*)
+FROM `events`
+JOIN `licenses` ON `events`.`license_id`=`licenses`.`id`
+JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+WHERE `events`.`type`='OUT'
+GROUP BY `events`.`time`, `events`.`user`
+SQL;
 
+if (isset($_GET['sortby'])) {
+    $sort_by = $_GET['sortby'];
+} else {
+    // default sort by date.
+    $sort_by = "date";
+}
+
+switch($sort_by) {
+case "date":
+    $sql .= "ORDER BY `events`.`time`, `events`.`user`, MAX(`features`.`name`) DESC;";
+    break;
+case "user":
+    $sql .= "ORDER BY `events`.`user`, `events`.`time`, MAX(`features`.`name`) DESC;";
+    break;
+default:
+    $sql .= "ORDER BY MAX(`features`.`name`), `events`.`time`, `events`.`user` DESC;";
+}
+
+$result = $db->query($sql, MYSQLI_STORE_RESULT);
+if (!$result) {
+    die ($db->error);
+}
+
+// Create new html_table object
+$table_style = array('class'=>"alt-rows-bgcolor events-table");
+$table = new html_table($table_style);
+
+// Table header
+$header_style = array('style'=>"background: yellow;");
+$col_headers = array("Date", "User", "Feature", "Total number of checkouts");
+$table->add_row($col_headers, $header_style, "th");
+
+// Add data rows to table
+for ($i = 0, $data_row = $result->fetch_row(); $data_row; $i++, $data_row = $result->fetch_row()) {
+    $table->add_row($data_row);
+    $table_row = $table->get_rows_count() - 1;
+    $table->update_cell($table_row, 1, array('style'=>"text-align: right;"));
+    $table->update_cell($table_row, 2, array('style'=>"text-align: right;"));
+    $table->update_cell($table_row, 3, array('style'=>"text-align: center;"));
+}
+
+$result->free();
+$db->close();
+
+// function build_select_box (&$html, $options, $name, $checked_val=null) {
+$select_box = build_select_box(array("Date", "User", "Feature"), "sortby", $sort_by);
+
+// Print View
+print_header();
+
+print <<< HTML
 <h1>License Checkouts</h1>
-
-
 <form>
 <p>Sort by
-<select onChange='this.form.submit();' name="sortby">
-	<option value="date">Date</option>
-	<option value="user">User</option>
-	<option value="feature">Feature</option>
-</select>
+{$select_box}
 </p>
 </form>
-
-<?php
-
-##############################################################
-# We are using PHP Pear stuff ie. pear.php.net
-##############################################################
-require_once ("HTML/Table.php");
-require_once 'DB.php';
-
-$tableStyle = "border=\"1\" cellpadding=\"1\" cellspacing=\"2\"";
-
-# Create a new table object
-$table = new HTML_Table($tableStyle);
-
-$table->setColAttributes(1,"align=\"right\"");
-
-#  Define a table header
-$headerStyle = "style=\"background: yellow;\"";
-$colHeaders = array("Date", "User", "Feature", "Total number of checkouts");
-$table->addRow($colHeaders, $headerStyle, "TH");
-
-
-################################################################
-# First let's get license usage for the product specified in $feature
-##############################################################
-
-
-################################################################
-#  Connect to the database
-#   Use persistent connections
-################################################################
-$db = DB::connect($dsn, true);
-
-if (DB::isError($db)) {
-	die ($db->getMessage());
-}
-
-$sql = "SELECT DISTINCT `flmevent_feature` FROM `flexlm_events` WHERE `flmevent_type`='OUT'";
-
-$recordset = $db->query($sql);
-
-if (DB::isError($recordset)) {
-	die ($recordset->getMessage());
-}
-
-
-################################################################
-# I would like to color code my features so it is easier for me to group them :$
-# Get a list of different colors
-################################################################
-$color = explode(",", $colors);
-
-$i = 0;
-
-while ($row = $recordset->fetchRow()) {
-	 $features_color["$row[0]"] = $color[$i];
-	$i++;
-}
-
-################################################################
-# Check what we want to sort data on
-################################################################
-if ( $_GET['sortby'] == "date"){
-	$sql = "SELECT `flmevent_date`,`flmevent_user`,MAX(`flmevent_feature`),count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_date`,`flmevent_user` ORDER BY `flmevent_date`,`flmevent_user`,`flmevent_feature` DESC;";
-}else if ( $_GET['sortby'] == "user" ){
-	$sql = "SELECT `flmevent_date`,`flmevent_user`,MAX(`flmevent_feature`),count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_user`,`flmevent_date` ORDER BY `flmevent_user`,`flmevent_date`,`flmevent_feature` DESC;";
-}else{
-	$sql = "SELECT `flmevent_date`,MAX(flmevent_user),`flmevent_feature`,count(*) FROM `flexlm_events` WHERE `flmevent_type`='OUT' GROUP BY `flmevent_feature`,`flmevent_date` ORDER BY `flmevent_feature`,`flmevent_date`,`flmevent_user` DESC;";
-}
-
-if ( isset($debug) && $debug == 1 )
-              	print_sql ($sql);
-
-$recordset = $db->query($sql);
-
-if (DB::isError($recordset)) {
-    die ($recordset->getMessage());
-}
-
-while ($row = $recordset->fetchRow()) {
-    $table->AddRow($row, "style=\"background: " . $features_color[$row[2]]. ";\"");
-}
-
-
-$table->updateColAttributes(3,"align=\"center\"");
-
-$recordset->free();
-
-$db->disconnect();
-
-################################################################
-# Right align the 3 column
-################################################################
-$table->updateColAttributes(2,"align=\"right\"");
-
-$table->display();
-
-
+HTML;
+print_sql($sql); // debug
+print $table->get_html();
+print_footer();
 ?>
-<?php print_footer(); ?>

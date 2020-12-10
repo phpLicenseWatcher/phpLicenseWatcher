@@ -25,7 +25,7 @@ my @APACHE_PATH = (rootdir(), "etc", "apache2");
 my @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 
 # Packages needed for phplw.
-my @REQUIRED_PACKAGES = ("apache2", "php", "php-xml", "php-gd", "php-mysql", "mysql-server", "mysql-client", "lsb", "composer", "zip", "unzip");
+my @REQUIRED_PACKAGES = ("apache2", "php", "php-gd", "php-mysql", "mysql-server", "mysql-client", "lsb", "zip", "unzip");
 
 # Non super user account.  Some package systems run better when not as root.
 my $NOT_SUPERUSER = "vagrant";
@@ -43,7 +43,7 @@ my @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
 my $FLEXLM_OWNER = "www-data";
 my $FLEXLM_OWNER_UID = getpwnam $FLEXLM_OWNER;
 my $FLEXLM_OWNER_GID = getgrnam $FLEXLM_OWNER;
-my $FLEXLM_PERMISSIONS = 0700;
+my $FLEXLM_PERMISSIONS = 0770;
 
 # DB config
 my @DB_HOSTS = ("localhost", "_gateway");
@@ -92,9 +92,9 @@ foreach (@REQUIRED_PACKAGES) {
     exec_cmd("apt-get -qy install $_");
 }
 
-# Run composer to retrieve PHP dependencies
-# Composer cannot be run as superuser.
-exec_cmd("su -c \"composer -d" . catfile(@REPO_PATH) . " install\" $NOT_SUPERUSER");
+# Run composer to retrieve PHP dependencies.  Composer cannot be run as superuser.
+# Composer is disabled.
+# exec_cmd("su -c \"composer -d" . catfile(@REPO_PATH) . " install\" $NOT_SUPERUSER");
 
 # Prepare cache directory
 $dest = catdir(@CACHE_PATH);
@@ -121,8 +121,8 @@ foreach (@FLEXLM_FILES) {
         exit 1;
     }
 
-    chown $FLEXLM_OWNER_UID, $FLEXLM_OWNER_GID, $dest;
-    print "$_ ownership granted to $FLEXLM_OWNER\n";
+    chown $FLEXLM_OWNER_UID, $NOT_SUPERUSER_GID, $dest;
+    print "$_ ownership granted to $FLEXLM_OWNER:$NOT_SUPERUSER\n";
 
     chmod $FLEXLM_PERMISSIONS, $dest;
     print "$_ permissions set to ", sprintf("0%o\n", $FLEXLM_PERMISSIONS);
@@ -172,7 +172,7 @@ foreach (@DB_HOSTS) {
 exec_cmd("mysql -e \"FLUSH PRIVILEGES;\"");
 
 # (4) Setup database schema
-$file = catfile(@REPO_PATH, $SQL_FILE);
+$file = catfile(@REPO_PATH, "database", $SQL_FILE);
 exec_cmd("mysql --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < $file");
 
 # Setup logrotate for Apache error logs on the host.

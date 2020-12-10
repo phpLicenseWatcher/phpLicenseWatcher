@@ -1,6 +1,9 @@
 # Vagrant temp files
 /.vagrant/
 
+#NetBeans IDE
+/nbproject/
+
 # Flex LM binaries (should never be committed to repo!)
 /vagrant_setup/flex_lm/**
 !/vagrant_setup/flex_lm/readme.md

@@ -37,17 +37,18 @@ sub exec_rsync {
 }
 
 # Run composer to either install or update packages.
-sub composer {
-    my $cmd = shift;
-    my $dest = catdir(@REPO_PATH);
-
-    if ((system "su -c \"composer -d$dest $cmd\" $VAGRANT_USERNAME") != 0) {
-        print STDERR "composer exited ", $? >> 8, "\n";
-        exit 1;
-    }
-
-    print "Composer: $cmd done.\n";
-}
+# Composer is disabled.
+# sub composer {
+#     my $cmd = shift;
+#     my $dest = catdir(@REPO_PATH);
+#
+#     if ((system "su -c \"composer -d$dest $cmd\" $VAGRANT_USERNAME") != 0) {
+#         print STDERR "composer exited ", $? >> 8, "\n";
+#         exit 1;
+#     }
+#
+#     print "Composer: $cmd done.\n";
+# }
 
 # Remove everything from HTML directory
 sub clear_html_folder {
@@ -65,7 +66,9 @@ sub rsync_code {
     # also requires config file and composer packages.
     my $option = shift if (@_);
     if (defined $option && $option eq "full") {
-        push(@file_list, catfile(@CONFIG_PATH, $CONFIG_FILE), $COMPOSER_PACKAGES);
+        # Composer is disabled.
+        # push(@file_list, catfile(@CONFIG_PATH, $CONFIG_FILE), $COMPOSER_PACKAGES);
+        push(@file_list, catfile(@CONFIG_PATH, $CONFIG_FILE));
     }
 
     foreach (@file_list) {
@@ -83,11 +86,13 @@ sub rsync_code {
 # No CLI arg:  (default) rsync latest development code to HTML directory
 if (defined $ARGV[0]) {
     if ($ARGV[0] eq "full") {
-        composer("install");
+        # Composer is disabled.
+        # composer("install");
         clear_html_folder();
         rsync_code("full");
     } elsif ($ARGV[0] eq "update-composer") {
-        composer("update");
+        # Composer is disabled.
+        # composer("update");
     }
 } else {
     rsync_code();

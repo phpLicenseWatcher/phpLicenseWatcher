@@ -1,225 +1,273 @@
 <?php
 
-################################################################################################
-# This build
-################################################################################################
-function build_license_expiration_array($lmutil_loc, $server, &$expiration_array) {
+/**
+ * @param string $server Server name being queried.  "{port}@{domain}.{tld}".
+ * @param array &$expiration_array
+ */
+function build_license_expiration_array($server, &$expiration_array) {
+    global $lmutil_binary; // from config.php
 
-  $total_licenses = 0;
+    $total_licenses = 0;
+    $file = popen("{$lmutil_binary} lmcksum -c {$server}", "r");
+    $today = time();
 
-  $file = popen($lmutil_loc . " lmcksum -c " . $server,"r");
+    // Let's read in the file line by line
+    while (!feof ($file)) {
+        $line = fgets ($file, 1024);
+        if ( preg_match("/INCREMENT .*/i", $line, $out ) || preg_match("/FEATURE .*/i", $line, $out ) ) {
+            $license = explode(" ", $out[0]);
 
-  $today = time();
+        	if ( $license[4] )  {
+            	// UNIX time stamps go only till year 2038 (or so) so convert
+            	// any license dates 9999 or 0000 (which means infinity) to
+            	// an acceptable year. 2036 seems like a good number
+                $license[4] = strtolower($license[4]);
+                $license[4] = str_replace("-9999", "-2036", $license[4]);
+                $license[4] = str_replace("-0000", "-2036", $license[4]);
+                $license[4] = str_replace("-2099", "-2036", $license[4]);
+                $license[4] = str_replace("-2242", "-2036", $license[4]);
+                $license[4] = str_replace("-jan-00", "-jan-2036", $license[4]);
+                $license[4] = str_replace("-jan-0", "-jan-2036", $license[4]);
+                $license[4] = str_replace("-0", "-2036", $license[4]);
+                $license[4] = str_replace("permanent", "05-jul-2036", $license[4]);
+                $unixdate2 = strtotime($license[4]);
 
-  # Let's read in the file line by line
-  while (!feof ($file)) {
+                // Convert the date you got into UNIX time
+                $unixdate2 = strtotime($license[4]);
+        	}
 
-    $line = fgets ($file, 1024);
+            $days_to_expiration = ceil ((1 + strtotime($license[4]) - $today) / 86400);
 
-    if ( preg_match("/INCREMENT .*/i", $line, $out ) || preg_match("/FEATURE .*/i", $line, $out ) ) {
-        $license = explode(" ", $out[0]);
+            // If there is more than 4000 days (10 years+) until expiration, I
+            // will consider the license to be permanent
+            if ( $days_to_expiration > 4000 ) {
+                $license[4] = "permanent";
+                // $days_to_expiration = "permanent";
+            }
 
-	if ( $license[4] )  {
-	# UNIX time stamps go only till year 2038 (or so) so convert
-	# any license dates 9999 or 0000 (which means infinity) to
-	# an acceptable year. 2036 seems like a good number
-        $license[4] = strtolower($license[4]);
-	$license[4] = str_replace("-9999", "-2036", $license[4]);
-        $license[4] = str_replace("-0000", "-2036", $license[4]);
-        $license[4] = str_replace("-2099", "-2036", $license[4]);
-        $license[4] = str_replace("-2242", "-2036", $license[4]);
-        $license[4] = str_replace("-jan-00", "-jan-2036", $license[4]);
-        $license[4] = str_replace("-jan-0", "-jan-2036", $license[4]);
-        $license[4] = str_replace("-0", "-2036", $license[4]);
-	$license[4] = str_replace("permanent", "05-jul-2036", $license[4]);
-        $unixdate2 = strtotime($license[4]);
-
-        # Convert the date you got into UNIX time
-        $unixdate2 = strtotime($license[4]);
-	}
-
-
-    $days_to_expiration = ceil ((1 + strtotime($license[4]) - $today) / 86400);
-
-    ##############################################################################
-    # If there is more than 4000 days = 10 years+ until expiration I will
-    # consider the license to be permanent
-    ##############################################################################
-    if ( $days_to_expiration > 4000 ) {
-        $license[4] = "permanent";
-#        $days_to_expiration = "permanent";
-    }
-
-    ##############################################################################
-    # Add to the expiration array
-    $expiration_array[$license[1]][] = array(
-	"vendor_daemon" => $license[2],
-        "expiration_date" => $license[4],
-        "num_licenses" => $license[5],
-        "days_to_expiration" => (int) $days_to_expiration );
-    }
-
-
-  }
-
-  #echo("<pre>");
-  #print_r($expiration_array);
-
-
-  pclose($file);
-
-  return 1;
-}
-
-#################################################################
-# Compare two dates
-# $Date$
-# Returns: 1 if date1 greater than date2
-#	   0 if date1 equal to date2
-#	   -1 if date less than date2
-#################################################################
-
-function compare_dates ($date1, $date2) {
-
-  # Convert any "english" looking date into UNIX time stamp
-  $unixdate1 = strtotime($date1);
-  $unixdate2 = strtotime($date2);
-
-  if ($unixdate1 > $unixdate2) {
-    return 1;
-  }
-  elseif ($unixdate1 < $unxidate2) {
-    return -1;
-  }
-  elseif ($unixdate1 == $unxidate2) {
-    return 0;
-  }
-
-}
-
-#---------------------------------------------------------------------
-#This function will convert a MySQL date ie. 2001-05-20 to the
-#US date format ie. 05/20/2001
-#---------------------------------------------------------------------
-function convert_from_mysql_date($date) {
-
-  $stringArray = explode("-", $string);
-
-  $date = mktime(0,0,0,$stringArray[1],$stringArray[2],$stringArray[0]);
-
-  return date("m/d/Y", $date);
-
-}
-
-function convert_to_mysql_date($date) {
-
-  $stringArray = explode("/", $date);
-
-  $date = mktime(0,0,0,$stringArray[0],$stringArray[1],$stringArray[2]);
-
-  return date("Y-m-d", $date);
-
-}
-
-
-function build_select_box ($array, $name, $checked_val="xzxz") {
-    /*
-        Takes a result set, with the first column being the "id" or value
-        and the second column being the text you want displayed
-
-        The second parameter is the name you want assigned to this form element
-
-        The third parameter is optional. Pass the value of the item that should
-be checked
-    */
-
-    echo '<select name="'.$name.'">';
-
-    for ($i=0; $i<sizeof($array); $i++) {
-        echo '
-            <option value="'.$array[$i].'"';
-        if ($array[$i] == $checked_val) {
-            echo ' selected';
+            // Add to the expiration array
+            $expiration_array[$license[1]][] = array (
+        	    "vendor_daemon"      => $license[2],
+                "expiration_date"    => $license[4],
+                "num_licenses"       => $license[5],
+                "days_to_expiration" => (int) $days_to_expiration
+            );
         }
-        echo '>'.$array[$i].'</option>';
     }
-    echo '
-        </select>';
+
+    pclose($file);
+} // END function build_license_expiration_array()
+
+/**
+ * Compare two dates
+ *
+ * @param $date1
+ * @param $date2
+ * @return integer 1 when $date1 > $date2, -1 when $date < $date2, 0 when equal.
+ */
+function compare_dates ($date1, $date2) {
+    // Convert any "english" looking date into UNIX time stamp
+    $unixdate1 = strtotime($date1);
+    $unixdate2 = strtotime($date2);
+
+    // q.v. https://wiki.php.net/rfc/combined-comparison-operator for '<=>' (spaceship) operater.
+    return ($unixdate1 <=> $unixdate2);
 }
 
-
-##################################################################
-# This function will get the number of available licenses for a particular feature
-# Arguments: Feature as a String
-##################################################################
-function num_licenses_available($myfeature) {
-
-    global $servers, $lmutil_loc;
-
-    $LICENSE_FILE="";
-
-    # Build LM_LICENSE_FILE
-   for ( $i = 0 ; $i < sizeof($servers); $i++ )
-        $LICENSE_FILE .= $servers[$i] . ":";
-
-   $fp = popen($lmutil_loc . " lmstat -f " . $myfeature  . " -c " . $LICENSE_FILE, "r");
-
-   while ( !feof ($fp) ) {
-
-	$line = fgets ($fp, 1024);
-
-        # Look for features in the output. You will see stuff like
-	# Users of Allegro_Viewer: (Total of 5 licenses available
-	if ( preg_match("/^Users of/i", $line ) )  {
-		$out = explode(" ", $line);
-                pclose($fp);
-                # Return the number
-		return $out[6];
-	}
-
-   }
-
+/**
+ * Convert a MySQL date ie. 2001-05-20 to the US date format ie. 05/20/2001
+ *
+ * @param $date MySQL date
+ * @return string US date
+ */
+function convert_from_mysql_date($date) {
+    $stringArray = explode("-", $date);
+    $date = mktime(0, 0, 0, $stringArray[1], $stringArray[2], $stringArray[0]);
+    return date("m/d/Y", $date);
 }
 
-##################################################################
-# This function will get the number of used licenses for a particular feature
-# Arguments: Feature as a String
-##################################################################
-function num_licenses_used($myfeature) {
+/**
+ * Convert a US date ie. 05/20/2001 to the MySQL date format ie. 2001-05-20
+ *
+ * @param $date US Date
+ * @return string MySQl date
+ */
+function convert_to_mysql_date($date) {
+    $stringArray = explode("/", $date);
+    $date = mktime(0, 0, 0, $stringArray[0], $stringArray[1], $stringArray[2]);
+    return date("Y-m-d", $date);
+}
 
-    global $servers, $lmstat_loc;
+/**
+ * Takes a result set, with the first column being the "id" or value and the
+ * second column being the text you want displayed
+ *
+ * ** Is this function used?  Remove from codebase if it is not used. **
+ *
+ * @param $options Options for selectbox.
+ * @param $name Name you want assigned to this form element
+ * @param $checked_value Value of the item that should be checked (optional)
+ * @return string HTML code for selectbox.
+ */
+function build_select_box ($options, $name, $checked_value="") {
+    $name = strtolower($name);
+    $checked_value = strtolower($checked_value);
 
-    $LICENSE_FILE="";
+    $html = "<select onChange='this.form.submit();' name='{$name}'>\n";
+    foreach ($options as $option) {
+        $option_value = strtolower($option);
+        $option_selectable = ucwords($option);
 
-    # Build LM_LICENSE_FILE
-   for ( $i = 0 ; $i < sizeof($servers); $i++ )
-        $LICENSE_FILE .= $servers[$i] . ":";
+        $html .= "<option value='{$option_value}'";
+        if ($option_value === $checked_value) {
+            $html .= " selected";
+        }
 
-   $fp = popen($lmstat_loc . " -f " . $myfeature  . " -c " . $LICENSE_FILE, "r");
+        $html .= ">{$option}</option>\n";
+    }
+    $html .= "</select>\n";
+    return $html;
+}
 
+/**
+ * Get the number of available licenses for a particular feature.
+ *
+ * @param string $myFeature
+ * @return string number of licenses available as string
+ */
+function num_licenses_available($feature) {
+    global $lmutil_binary; // from config.php
+
+    db_connect($db);
+    $servers = db_get_servers($db, array('name'));
+    $db->disconnect();
+
+    $license_file = "";
+
+    // Build LM_LICENSE_FILE
+    foreach ($servers as $server) {
+        $license_file .= "{$server['name']}:";
+    }
+
+    $fp = popen("{$lmutil_binary} lmstat -f {$feature} -c {$license_file}", "r");
+    while ( !feof ($fp) ) {
+    	$line = fgets ($fp, 1024);
+
+        // Look for features in the output. You will see stuff like
+    	// Users of Allegro_Viewer: (Total of 5 licenses available
+    	if ( preg_match("/^Users of/i", $line ) )  {
+    		$out = explode(" ", $line);
+            pclose($fp);
+            // Return the number
+    		return $out[6];
+    	}
+    }
+}
+
+/**
+ * Get the number of used licenses for a particular feature.
+ *
+ * ** Is this function used?  Remove from codebase if it is not used. **
+ *
+ * @param string $myfeature
+ * @return integer number of licenses
+ */
+function num_licenses_used($feature) {
+    global $lmutil_binary;  // from config.php
+
+    db_connect($db);
+    $servers = db_get_servers($db, array('name'));
+    $db->disconnect();
+
+    $license_file = "";
+
+    // Build LM_LICENSE_FILE
+    foreach ($servers as $server) {
+        $license_file .= "{$server['name']}:";
+    }
+
+    $fp = popen("{$lmutil_binary} lmstat -f {$feature} -c {$license_file}", "r");
     $num_licenses = 0;
 
-   while ( !feof ($fp) ) {
+    while ( !feof ($fp) ) {
+        $line = fgets ($fp, 1024);
 
-	$line = fgets ($fp, 1024);
-
-        # Look for features in the output. You will see stuff like
-	# Users of Allegro_Viewer: (Total of 5 licenses available
-	if ( preg_match("/, start/i", $line ) )
+        // Look for features in the output. You will see stuff like
+	    // Users of Allegro_Viewer: (Total of 5 licenses available
+	    if ( preg_match("/, start/i", $line ) )
             $num_licenses++;
-
-   }
+    }
 
     pclose($fp);
-
     return $num_licenses;
-
 }
 
+/**
+ * Run cli command.  Use disk cache.
+ *
+ * @param string $command  path and exectuable of cli command to run.
+ * @return string Output from $command, possibly from disk cache.
+ */
+function run_command($command) {
+    global $lmutil_binary;
+    $data = "";
+
+    if (!cache_check($command, $data)) {
+        $fp = popen($command, "r");
+        $data = "";
+        while (!feof($fp)) {
+            $data .= fgets($fp, 1024);
+        }
+
+        pclose($fp);
+        cache_store($command, $data);
+    }
+
+    return $data;
+}
+
+/**
+ * Check if $data from $command is cached.
+ *
+ * Return result from disk cache if cache is less than two hours old.
+ *
+ * @param string $command Command run to check cache against.
+ * @param string &$data Data retrieved from disk cache.
+ * @return boolean true when $data is retrieved from cache, false otherwise.
+ */
+function cache_check($command, &$data) {
+    global $cache_dir, $cache_lifetime; // from config.php
+    $result = false;
+    $hash = md5($command);
+    $cacheFile = "{$cache_dir}{$hash}.cache";
+
+    if (file_exists($cacheFile)) {
+        if (time() - filemtime($cacheFile) <= $cache_lifetime) {
+            // Cache file younger than 2 hours.  Read data from cache.
+            $data = file_get_contents($cacheFile);
+            $result = true;
+        }
+    }
+
+    return $result;
+}
+
+/**
+ * Write data to disk cache.
+ *
+ * @param $command Command run (used to hash cache file)
+ * @param $data Data written to disk cache.
+ */
+function cache_store($command, $data) {
+    global $cache_dir; // from config.php
+    $hash = md5($command);
+    $cacheFile = "{$cache_dir}{$hash}.cache";
+    file_put_contents($cacheFile, $data);
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                             #
-# B00zy's timespan script v1.2                                               #
+# B00zy's timespan script v1.2                                                #
 #                                                                             #
 # timespan -- get the exact time span between any two moments in time.        #
 #                                                                             #
@@ -248,46 +296,23 @@ function num_licenses_used($myfeature) {
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+// Code updates from PHP4 by Peter Bailie (RPI DotCIO Research Computing).
 define('day', 60*60*24 );
 define('hour', 60*60 );
 define('minute', 60 );
 
 class timespan
-    {
-    var $years;
-    var $months;
-    var $weeks;
-    var $days;
-    var $hours;
-    var $minutes;
-    var $seconds;
+{
+    public $years;
+    public $months;
+    public $weeks;
+    public $days;
+    public $hours;
+    public $minutes;
+    public $seconds;
 
-    function leap($time)
-        {
-        if (date('L',$time) and (date('z',$time) > 58))
-            return (double)(60*60*24*366);
-        else
-            {
-            $de = getdate($time);
-            $mkt = mktime(0,0,0,$de['mon'],$de['mday'],($de['year'] - 1));
-            if ((date('z',$time) <= 58) and date('L',$mkt))
-                return (double)(60*60*24*366);
-            else
-                return (double)(60*60*24*365);
-            }
-        }
-    function readable()
-        {
-        $values = array('years','months','weeks','days','hours','minutes','seconds');
-        foreach ($values as $k => $v)
-            if ($this->{$v}) $fmt .= ( $fmt? ', ': '') . $this->{$v} . " $v";
-        return $fmt . ( $fmt? '.': '') ;
-        }
-
-    function timespan($after,$before)
-        {
-        # Set variables to zero, instead of null.
-
+    public function __construct ($after, $before) {
+        // Set variables to zero, instead of null.
         $this->years = 0;
         $this->months = 0;
         $this->weeks = 0;
@@ -298,48 +323,43 @@ class timespan
 
         $duration = $after - $before;
 
-        # 1. Number of years
+        // 1. Number of years
         $dec = $after;
-
         $year = $this->leap($dec);
 
-        while (floor($duration / $year) >= 1)
-            {
-	    # We don't need this VV
-            #print date("F j, Y\n",$dec);
+        while (floor($duration / $year) >= 1) {
+	       // We don't need this VV
+           //print date("F j, Y\n",$dec);
+           $this->years += 1;
+           $duration -= (int)$year;
+           $dec -= (int)$year;
+           $year = $this->leap($dec);
+        }
 
-            $this->years += 1;
-            $duration -= (int)$year;
-            $dec -= (int)$year;
-
-            $year = $this->leap($dec);
-            }
-
-        # 2. Number of months
+        // 2. Number of months
         $dec = $after;
         $m = date('n',$after);
         $d = date('j',$after);
 
-        while (($duration - day) >= 0)
-            {
+        while (($duration - day) >= 0) {
             $duration -= day;
             $dec -= day;
             $this->days += 1;
 
-            if ( (date('n',$dec) != $m) and (date('j',$dec) <= $d) )
-                {
+            if ( (date('n',$dec) != $m) and (date('j',$dec) <= $d) ) {
                 $m = date('n',$dec);
                 $d = date('j',$dec);
 
                 $this->months += 1;
                 $this->days = 0;
-                }
             }
-        # 3. Number of weeks.
+        }
+
+        // 3. Number of weeks.
         $this->weeks = floor($this->days / 7);
         $this->days %= 7;
 
-        # 4. Number of hours, minutes, and seconds.
+        // 4. Number of hours, minutes, and seconds.
         $this->hours = floor($duration / (60*60));
         $duration %= (60*60);
 
@@ -347,60 +367,28 @@ class timespan
         $duration %= 60;
 
         $this->seconds = $duration;
+    }
+
+    private function leap($time) {
+        if (date('L',$time) and (date('z',$time) > 58))
+            return (double)(60*60*24*366);
+        else {
+            $de = getdate($time);
+            $mkt = mktime(0,0,0,$de['mon'],$de['mday'],($de['year'] - 1));
+            if ((date('z',$time) <= 58) and date('L',$mkt))
+                return (double)(60*60*24*366);
+            else
+                return (double)(60*60*24*365);
         }
     }
 
-
-
-
-
-
-function run_command( $command ){
-    global $lmutil_loc;
-
-    $data = "";
-
-    if( !cache_check($command, $data) ){
-
-        $fp = popen( $command , "r");
-
-        $data = "";
-        while ( !feof ($fp) ) {
-            $data .= fgets ($fp, 1024);
-        }
-        pclose($fp);
-
-        cache_store( $command , $data );
-
+    public function readable() {
+        $values = array('years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds');
+        foreach ($values as $k => $v)
+            if ($this->{$v})
+                $fmt .= ($fmt ? ', ' : '') . $this->{$v} . " $v";
+        return $fmt . ($fmt ? '.' : '') ;
     }
-
-    return $data;
-}
-
-function cache_check($command , &$data) {
-    global $cache_dir;
-    $result = false;
-    $hash = md5($command);
-    $cacheFile = $cache_dir . $hash;
-
-    if (file_exists($cacheFile)){
-        if (time()-filemtime($cacheFile) > 2 * 3600) {
-            // file older than 2 hours
-        } else {
-            // file younger than 2 hours
-            $data = file_get_contents($cacheFile);
-            $result = true;
-        }
-    }
-
-    return $result;
-}
-
-function cache_store( $command , $data ){
-    global $cache_dir;
-    $hash = md5( $command );
-    $cacheFile = $cache_dir . $hash ;
-    file_put_contents($cacheFile, $data );
 }
 
 ?>

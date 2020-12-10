@@ -1,82 +1,65 @@
 <?php
 
-require_once("common.php");
-include_once('DB.php');
-include_once('HTML/Table.php');
+require_once __DIR__ . "/common.php";
+include_once __DIR__ . "/html_table.php";
 
 define("PASS_MARK", "<span class='green-text'>&#10004; GOOD</span>");  // green heavy checkmark
 define("FAIL_MARK", "<span class='red-text'>&#10006; FAIL</span>");    // red cross mark
-define("REQUIRED_PHP", "5.3.0");
+define("REQUIRED_PHP", "7.3.0");
 
-// Parallel arrays
-$test_names   = array();
-$test_values  = array();
-$test_results = array();
+$table = new html_table(array('id'=>"install-check"));
+$table->add_row(array("TEST", "VALUE", "RESULT"), array(), "th");
 
 // Calculate minimum php version id for first test.
 $ver = explode(".", REQUIRED_PHP);
 $minimum_php_version_id = $ver[0] * 10000 + $ver[1] * 100 + $ver[2];
 
-$test           = PHP_VERSION_ID >= $minimum_php_version_id;
-$test_names[]   = "PHP Version At Least " . REQUIRED_PHP;
-$test_values[]  = phpversion();
-$test_results[] = $test ? PASS_MARK : FAIL_MARK;
+$test         = PHP_VERSION_ID >= $minimum_php_version_id;
+$test_names   = "PHP Version At Least " . REQUIRED_PHP;
+$test_values  = phpversion();
+$test_results = $test ? PASS_MARK : FAIL_MARK;
+$table->add_row(array($test_names, $test_values, $test_results));
 
 // TO DO: Expand this test to validate config.php values.
-$test           = is_readable("config.php");
-$test_names[]   = "<code>config.php</code>";
-$test_values[]  = $test ? "Readable" : "Not Readable";
-$test_results[] = $test ? PASS_MARK : FAIL_MARK;
+$test         = is_readable("config.php");
+$test_names   = "<code>config.php</code>";
+$test_values  = $test ? "Readable" : "Not Readable";
+$test_results = $test ? PASS_MARK : FAIL_MARK;
+$table->add_row(array($test_names, $test_values, $test_results));
 
-$test           = extension_loaded("gd");
-$test_names[]   = "PHP Extension \"gd\" (required for graphs)";
-$test_values[]  = $test ? "Installed and Enabled" : "Not Found";
-$test_results[] = $test ? PASS_MARK : FAIL_MARK;
+$test         = extension_loaded("gd");
+$test_names   = "PHP Extension \"gd\" (required for graphs)";
+$test_values  = $test ? "Installed and Enabled" : "Not Found";
+$test_results = $test ? PASS_MARK : FAIL_MARK;
+$table->add_row(array($test_names, $test_values, $test_results));
 
-$test           = extension_loaded("xml");
-$test_names[]   = "PHP Extension \"xml\" (required by pear DB class)";
-$test_values[]  = $test ? "Installed and Enabled" : "Not Found";
-$test_results[] = $test ? PASS_MARK : FAIL_MARK;
-
-$test           = class_exists("HTML_Table");
-$test_names[]   = "Pear HTML Table Class";
-$test_values[]  = $test ? "Installed" : "Not Found";
-$test_results[] = $test ? PASS_MARK : FAIL_MARK;
-
-$test           = class_exists("DB");
-$test_names[]   = "Pear DB Class";
-$test_values[]  = $test ? "Installed" : "Not Found";
-$test_results[] = $test ? PASS_MARK : FAIL_MARK;
-
-$test           = isset($lmutil_loc) && is_executable($lmutil_loc);
-$test_names[]   = "<code>lmutil</code>";
-$test_values[]  = $test ? "Is Executable" : "Not Executable (maybe check permissions?)";
-$test_results[] = $test ? PASS_MARK : FAIL_MARK;
+$test         = isset($lmutil_binary) && is_executable($lmutil_binary);
+$test_names   = "<code>lmutil</code>";
+$test_values  = $test ? "Is Executable" : "Not Executable<br>(maybe check permissions?)";
+$test_results = $test ? PASS_MARK : FAIL_MARK;
+$table->add_row(array($test_names, $test_values, $test_results));
 
 $test = (bool) function() {
-    if (isset($db_hostname) && isset($db_username) && isset($db_password)) {
-    	$db = DB::connect($dsn, true);
-        return !DB::isError($db);
+    switch (false) {
+    case isset($db_username):
+    case isset($db_password):
+    case isset($db_hostname):
+    case isset($db_database):
+        return false;
     }
 
-    return false;
+    $db = new mysqli($db_host, $db_user, $db_password, $db_database);
+    if (!is_null($db->connect_error)) {
+        return false;
+    }
+
+    $db->close();
+    return true;
 };
-$test_names[]   = "Database Connectivity";
-$test_values[]  = $test ? "Connection OK" : "Connection Failed.";
-$test_results[] = $test ? PASS_MARK : FAIL_MARK;
-
-// Build rows for test results table.
-$test_table_rows = "";
-foreach ($test_names as $i => $test_name) {
-    $test_table_rows .= <<< HTML
-    <tr>
-        <td>{$test_name}</td>
-        <td>{$test_values[$i]}</td>
-        <td>{$test_results[$i]}</td>
-    </tr>
-
-HTML;
-}
+$test_names   = "Database Connectivity";
+$test_values  = $test ? "Connection OK" : "Connection Failed.";
+$test_results = $test ? PASS_MARK : FAIL_MARK;
+$table->add_row(array($test_names, $test_values, $test_results));
 
 // Display view.
 print_header();
@@ -87,14 +70,7 @@ print <<< HTML
 
 <p>This will check whether PHPlicensewatcher has been properly installed.
 This is not an exhaustive check but checks for common installation and configuration issues.</p>
-<table id='install-check'>
-    <tr>
-        <th>TEST</th>
-        <th>VALUE</th>
-        <th>RESULT</th>
-    </tr>
-{$test_table_rows}
-</table>
+{$table->get_html()}
 
 HTML;
 
