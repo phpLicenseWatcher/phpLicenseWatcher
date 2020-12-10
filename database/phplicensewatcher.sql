@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS `features` (
   `name` VARCHAR(100) NOT NULL,
   `label` VARCHAR(100) NULL DEFAULT NULL,
   `show_in_lists` TINYINT NOT NULL DEFAULT 0,
+  `is_tracked` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
 ENGINE = InnoDB
@@ -51,7 +52,7 @@ DEFAULT CHARACTER SET = utf8mb4;
 DROP TABLE IF EXISTS `licenses` ;
 
 CREATE TABLE IF NOT EXISTS `licenses` (
-  `id` INT NOT NULL AUTO_INCREMENT,
+  `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `server_id` INT NOT NULL,
   `feature_id` INT NOT NULL,
   PRIMARY KEY (`id`),
@@ -73,35 +74,14 @@ DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
--- Table `events`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `events` ;
-
-CREATE TABLE IF NOT EXISTS `events` (
-  `license_id` INT NOT NULL,
-  `time` DATETIME NOT NULL,
-  `user` VARCHAR(80) NOT NULL,
-  `type` VARCHAR(255) NOT NULL,
-  `reason` VARCHAR(255) NOT NULL,
-  PRIMARY KEY (`license_id`, `time`, `user`),
-  CONSTRAINT `fk_events_licenses1`
-    FOREIGN KEY (`license_id`)
-    REFERENCES `licenses` (`id`)
-    ON DELETE RESTRICT
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4;
-
-
--- -----------------------------------------------------
 -- Table `usage`
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `usage` ;
 
 CREATE TABLE IF NOT EXISTS `usage` (
-  `license_id` INT NOT NULL,
+  `license_id` SMALLINT UNSIGNED NOT NULL,
   `time` DATETIME NOT NULL,
-  `num_users` INT NOT NULL,
+  `num_users` SMALLINT UNSIGNED NOT NULL,
   PRIMARY KEY (`license_id`, `time`),
   CONSTRAINT `fk_usage_licenses1`
     FOREIGN KEY (`license_id`)
@@ -118,7 +98,7 @@ DEFAULT CHARACTER SET = utf8mb4;
 DROP TABLE IF EXISTS `available` ;
 
 CREATE TABLE IF NOT EXISTS `available` (
-  `license_id` INT NOT NULL,
+  `license_id` SMALLINT UNSIGNED NOT NULL,
   `date` DATE NOT NULL,
   `num_licenses` INT NOT NULL,
   PRIMARY KEY (`license_id`, `date`),
