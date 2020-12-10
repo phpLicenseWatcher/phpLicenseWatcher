@@ -49,7 +49,7 @@ if (!$result) {
 }
 
 // Create new html_table object
-$table_style = array('class'=>"alt-row-bgcolor", 'style'=>"border: 1px solid gray; padding: 1px; border-spacing: 2px;");
+$table_style = array('class'=>"alt-rows-bgcolor events-table");
 $table = new html_table($table_style);
 
 // Table header

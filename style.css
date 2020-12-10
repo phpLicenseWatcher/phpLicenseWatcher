@@ -34,15 +34,3 @@ table#install-check {
     margin-left: 20%;
     margin-right: 20%;
 }
-
-/* Placeholder since class exists in code */
-td.up {
-}
-
-td.down {
-    background-color: red;
-}
-
-td.warning {
-    background-color: orange;
-}
