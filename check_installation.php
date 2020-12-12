@@ -36,17 +36,6 @@ $table->add_row(array($test_names, $test_values, $test_results));
 $test = call_user_func(function() {
     global $db_hostname, $db_username, $db_password, $db_database; // from config.php
 
-    // switch (false) {
-    // case isset($db_username):
-    //     return array(false, '$db_username not set in config.php');
-    // case isset($db_password):
-    //     return array(false, '$db_password not set in config.php');
-    // case isset($db_hostname):
-    //     return array(false, '$db_hostname not set in config.php');
-    // case isset($db_database):
-    //     return array(false, '$db_database not set in config.php');
-    // }
-
     $err = array();
     if (!isset($db_hostname)) $err[] = '$db_hostname';
     if (!isset($db_username)) $err[] = '$db_username';
