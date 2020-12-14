@@ -25,7 +25,7 @@ my @APACHE_PATH = (rootdir(), "etc", "apache2");
 my @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 
 # Packages needed for phplw.
-my @REQUIRED_PACKAGES = ("apache2", "php", "php-gd", "php-mysql", "mysql-server", "mysql-client", "lsb", "zip", "unzip");
+my @REQUIRED_PACKAGES = ("apache2", "php", "php-mysql", "mysql-server", "mysql-client", "lsb", "zip", "unzip");
 
 # Non super user account.  Some package systems run better when not as root.
 my $NOT_SUPERUSER = "vagrant";
