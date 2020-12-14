@@ -16,10 +16,7 @@ function main_form() {
     $server_list = db_get_servers($db, array(), array(), "id");
     $db->close();
 
-    $colors = array("lavender", "transparent");
-    $num_colors = count($colors);
-
-    $table = new html_table(array('class' => "table"));
+    $table = new html_table(array('class' => "table alt-rows-bgcolor"));
     $headers = array("ID", "Name", "Label", "Is Active", "Status", "LMGRD Version", "Last Updated", "Edit");
     $table->add_row($headers, array(), "th");
 
@@ -34,21 +31,17 @@ function main_form() {
             $server['last_updated'],
             "<button type='submit' form='server_list' name='id' value='{$server['id']}'>Edit</button>"
         );
-        $color = $colors[$i % $num_colors];
-        $table->add_row($row, array('style'=>"background-color: {$color};"));
 
         switch($server['status']) {
-        case SERVER_UP:
-            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"server-up"));
+        case null:
+            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"info"));
             break;
         case SERVER_VENDOR_DOWN:
-            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"server-vendor-down"));
+            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"warning"));
             break;
         case SERVER_DOWN:
-            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"server-down"));
-            break;
         default:
-            $table->update_cell($table->get_rows_count()-1, 3, array(), "not polled");
+            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"danger"));
             break;
         }
     }
@@ -90,16 +83,17 @@ function edit_form() {
     print_header();
 
     print <<<HTML
+    <h1>Server Details</h1>
     <form action='servers_admin.php' method='get'>
-        <div style='display: inline-block;'>
+        <div style='display: block; padding-top: 10px; width: 90%;'>
             <label for='name'>Port (<code>port@domain.tld</code>)</label><br>
-            <input type='textbox' id='name'>
-        </div><div style=' display: inline-block;'>
+            <input type='textbox' id='name' style='width: 90%'>
+        </div><div style=' display: block; padding-top: 10px; width: 90%;'>
             <label for='label'>Label</label><br>
-            <input type='textbox' id='label'>
-        </div><div style='display: inline-block;'>
-            <label for='is_active'>Is Active?</label><br>
-            <input type='checkbox' id='is_active'>
+            <input type='textbox' id='label' style='width: 90%'>
+        </div><div style='display: block; padding-top: 10px;'>
+            <label for='is_active'>Is Active?</label>
+            <input type='checkbox' id='is_active' style='padding-left: 16px;'>
         </div>
         <button type='submit'>Submit</button>
     </form>
