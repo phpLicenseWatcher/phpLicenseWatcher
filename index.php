@@ -10,27 +10,34 @@ $servers = db_get_servers($db, array(), array(), "label");
 $db->close();
 
 // Start a new html_table
-$table = new html_table(array('class'=>"table"));
+$table = new html_table(array('class'=>"table alt-rows-bgcolor"));
 
 // Define the table header
 $col_headers = array("Description", "License port@server", "Status", "Current Usage", "Available features/license", "lmgrd version","Last Update");
 $table->add_row($col_headers, array(), "th");
 
+// $class refers to bootstrap, not local CSS.
 foreach ($servers as $server) {
     switch ($server['status']) {
+    case null:
+        $server['status']="Not Polled";
+        $class = array('class' => "info"); // blue
+        $detail_link="No Details";
+        $listing_expiration_link="";
+        break;
     case SERVER_UP:
-        $class = "server-up";
+        $class = array(); // no color
         $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
         $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
         break;
     case SERVER_VENDOR_DOWN:
-        $class = "server-vendor-down";
+        $class = array('class' => "warning"); // yellow
 	    $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
 	    $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
         break;
     case SERVER_DOWN:
     default:
-        $class = "server-down";
+        $class = array('class' => "danger"); // red
         $detail_link="No Details";
         $listing_expiration_link="";
         break;
@@ -47,7 +54,7 @@ foreach ($servers as $server) {
     ));
 
 	// Set the background color of status cell via class attribute
-	$table->update_cell(($table->get_rows_count() - 1), 2, array('class'=>"{$class}"));
+	$table->update_cell(($table->get_rows_count() - 1), 2, $class);
 }
 
 // Output view.

@@ -19,20 +19,18 @@ body {
     color: green;
 }
 
+table.alt-rows-bgcolor tr:nth-child(even), tr.alt-bgcolor {
+    background-color: #efefef;
+}
+
+table.events-table {
+    border: 1px solid gray;
+    padding: 1px;
+    border-spacing: 2px;
+}
+
 table#install-check {
     width: 60%;
     margin-left: 20%;
     margin-right: 20%;
-}
-
-/* Placeholder since class exists in code */
-td.server-up {
-}
-
-td.server-down {
-    background-color: red;
-}
-
-td.server-vendor-down {
-    background-color: orange;
 }
