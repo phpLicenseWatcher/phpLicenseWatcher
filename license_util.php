@@ -107,8 +107,8 @@ function update_licenses(&$db, $servers) {
             $data[0] = array($license['feature']);
             $type[0] = "s"; // needed for mysqli_stmt::bind_param()
             $sql[0] = <<<SQL
-INSERT IGNORE INTO `features` (`name`, `show_in_lists`)
-    VALUES (?, 1);
+INSERT IGNORE INTO `features` (`name`, `show_in_lists`, `is_tracked`)
+    VALUES (?, 1, 1);
 SQL;
 
             // Populate server/feature to licenses, if needed.
@@ -132,7 +132,7 @@ INSERT IGNORE INTO `usage` (`license_id`, `time`, `num_users`)
     FROM `licenses`
     JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
     JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-    WHERE `servers`.`name`=? AND `features`.`name`=?;
+    WHERE `servers`.`name`=? AND `features`.`name`=? AND `features`.`is_tracked`=1;
 SQL;
 
             // Prepare each query and bind parameter data
