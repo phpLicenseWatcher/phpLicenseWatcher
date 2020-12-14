@@ -36,13 +36,13 @@
 ## Install process
 1. Retrieve required packages for your OS/distribution:
    * Apache2
-   * PHP 7.x, PHP GD Extension
+   * PHP 7.3 or higher
    * MySQL-server, MySQL-client, PHP MySQL Extension
    * You need the Linux Standard Base (LSB) to run Linux-precompiled FlexLM binaries.
 
    For example, using Ubuntu 20.04:
    ```
-   sudo apt install apache2 php php-gd mysql-server mysql-client php-mysql lsb
+   sudo apt install apache2 php mysql-server mysql-client php-mysql lsb
    ```
 2. Clone repostiory locally using git
    ```
