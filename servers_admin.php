@@ -1,7 +1,26 @@
 <?php
-
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/html_table.php";
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $id = $_POST['id'];
+    $name = $_POST['name'];
+    $label = $_POST['label'];
+    $is_active = $_POST['is_active'] === "on" ? 1 : 0;
+    if ($id === "new") {
+        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`) VALUES (?, ?, ?)";
+        $params = array("ssi", $name, $label, $is_active);
+    } else {
+        $sql = "UPDATE `servers` SET `name`=?, `label`=?, `is_active`=? WHERE `ID`=?";
+        $params = array("ssii", $name, $label, $is_active, $id);
+    }
+    db_connect($db);
+    $query = $db->prepare($sql);
+    $query->bind_param(...$params);
+    $query->execute();
+    $query->close();
+    $db->close();
+}
 
 if (isset($_GET['id'])) {
     edit_form();
@@ -13,7 +32,7 @@ exit;
 
 function main_form() {
     db_connect($db);
-    $server_list = db_get_servers($db, array(), array(), "id");
+    $server_list = db_get_servers($db, array(), array(), "id", false);
     $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
@@ -32,16 +51,20 @@ function main_form() {
             "<button type='submit' form='server_list' name='id' value='{$server['id']}'>Edit</button>"
         );
 
+        $table->add_row($row);
         switch($server['status']) {
         case null:
-            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"info"));
+            $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"info"), "Not Polled");
+            break;
+        case SERVER_UP:
+            // Do nothing.
             break;
         case SERVER_VENDOR_DOWN:
-            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"warning"));
+            $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"warning"));
             break;
         case SERVER_DOWN:
         default:
-            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"danger"));
+            $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"danger"));
             break;
         }
     }
@@ -72,7 +95,7 @@ function edit_form() {
         }
         break;
     case $_GET['id'] === "new":
-        $server_details = array('name'=>"", 'label'=>"", 'is_active'=>true);
+        $server_details = array('name'=>"", 'label'=>"", 'is_active'=>'1');
         break;
     default:
         main_form();
@@ -80,22 +103,24 @@ function edit_form() {
     }
 
     // print view
+    $is_checked = $server_details['is_active'] === '1' ? " CHECKED" : "";
     print_header();
 
     print <<<HTML
     <h1>Server Details</h1>
-    <form action='servers_admin.php' method='get'>
-        <div style='display: block; padding-top: 10px; width: 90%;'>
-            <label for='name'>Port (<code>port@domain.tld</code>)</label><br>
-            <input type='textbox' id='name' style='width: 90%'>
-        </div><div style=' display: block; padding-top: 10px; width: 90%;'>
+    <form action='servers_admin.php' method='post' class='edit-form'>
+        <div class='edit-form'>
+            <label for='name'>Name (format: <code>port@domain.tld</code>)</label><br>
+            <input type='text' name='name' id='name' class='edit-form' value='{$server_details['name']}'>
+        </div><div class='edit-form'>
             <label for='label'>Label</label><br>
-            <input type='textbox' id='label' style='width: 90%'>
-        </div><div style='display: block; padding-top: 10px;'>
+            <input type='text' name='label' id='label' class='edit-form' value='{$server_details['label']}'>
+        </div><div class='edit-form'>
             <label for='is_active'>Is Active?</label>
-            <input type='checkbox' id='is_active' style='padding-left: 16px;'>
+            <input type='checkbox' name='is_active' id='is_active' class='edit-form'{$is_checked}>
+            <input type='hidden' name='id' value='{$_GET['id']}'>
+            <button type='submit' class='edit-form'>Submit</button>
         </div>
-        <button type='submit'>Submit</button>
     </form>
     HTML;
 
@@ -104,16 +129,8 @@ function edit_form() {
 
 function server_details_by_getid() {
     db_connect($db);
-    $server_details = db_get_servers($db, array("name", "label", "is_active"), array($_GET['id']));
+    $server_details = db_get_servers($db, array("name", "label", "is_active"), array($_GET['id']), "", false);
     $db->close();
-    if (empty($server_details)) {
-        return false;
-    }
-
-    return array(
-        'name'      => $server_details[0]['name'],
-        'label'     => $server_details[0]['label'],
-        'is_active' => $server_details[0]['is_active'] ? true : false
-    );
+    return !empty($server_details) ? $server_details[0] : false;
 } // END function server_details_by_getid()
 ?>
