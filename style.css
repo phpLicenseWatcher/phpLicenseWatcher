@@ -47,6 +47,21 @@ button.edit-form {
     float: right;
 }
 
+button.edit-submit {
+    background: none;
+    border: none;
+    color: #337ab7;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+button.edit-submit:hover,
+button.edit-submit:focus {
+    outline: none;
+    color: #23527c;
+    text-decoration: underline;
+}
+
 table.events-table {
     border: 1px solid gray;
     padding: 1px;
