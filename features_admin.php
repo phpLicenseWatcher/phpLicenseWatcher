@@ -73,7 +73,7 @@ function edit_form() {
         }
         break;
     case $id === "new":
-        $server_details = array('name'=>"", 'label'=>"", 'show_in_lists'=>'1', 'is_tracked'=>'1');
+        $feature_details = array('name'=>"", 'label'=>"", 'show_in_lists'=>'1', 'is_tracked'=>'1');
         break;
     default:
         main_form();
@@ -86,19 +86,19 @@ function edit_form() {
     print_header();
 
     print <<<HTML
-    <h1>Server Details</h1>
+    <h1>Feature Details</h1>
     <form action='features_admin.php' method='post' class='edit-form'>
         <div class='edit-form'>
             <label for='name'>Name</label><br>
-            <input type='text' name='name' id='name' class='edit-form' value='{$server_details['name']}'>
+            <input type='text' name='name' id='name' class='edit-form' value='{$feature_details['name']}'>
         </div><div class='edit-form'>
             <label for='label'>Label</label><br>
-            <input type='text' name='label' id='label' class='edit-form' value='{$server_details['label']}'>
+            <input type='text' name='label' id='label' class='edit-form' value='{$feature_details['label']}'>
         </div><div class='edit-form'>
             <label for='show_in_lists'>Show In Lists?</label>
-            <input type='checkbox' name='show_in_lists' id='show_in_lists' class='edit-form'{$is_checked}>
+            <input type='checkbox' name='show_in_lists' id='show_in_lists' class='edit-form'{$is_checked['show_in_lists']}>
             <label for='is_tracked'>Is Tracked?</label>
-            <input type='checkbox' name='is_tracked' id='is_tracked' class='edit-form'{$is_checked}>
+            <input type='checkbox' name='is_tracked' id='is_tracked' class='edit-form'{$is_checked['is_tracked']}>
             <input type='hidden' name='id' value='{$id}'>
             <button type='submit' class='edit-form btn'>Submit</button>
         </div>
@@ -108,36 +108,39 @@ function edit_form() {
     print_footer();
 } // END function edit_form()
 
-/** DB operation to either add or edit a form, based on $_POST['id'] */
+/**
+ * DB operation to either add or edit a feature, based on $_POST['id']
+ *
+ * @return string response message from operation (either success or error message).
+ */
 function db_process() {
     $id = $_POST['id'];
     $name = $_POST['name'];
-    $label = $_POST['label'];
-    $is_active = $_POST['is_active'] === "on" ? 1 : 0;
+    $label = empty($_POST['label']) ? null : $_POST['label'];
+    $show_in_lists = $_POST['show_in_lists'] === "on" ? 1 : 0;
+    $is_tracked = $_POST['is_tracked'] === "on" ? 1 : 0;
 
     // Error check.  On error, stop and return error message.
     switch(false) {
     // $id must be all numbers or the word "new"
     case preg_match("/^\d+$|^new$/", $id):
-        return "<p class='red-text'>&#10006; Invalid server ID \"{$id}\"";
-    // $name must match port@domain.tld
-    case preg_match("/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $name,):
-        return "<p class='red-text'>&#10006; Server name MUST be in form <code>port@domain.tld</code>";
-    // $label cannot be blank
-    case !empty($label):
-        return "<p class='red-text'>&#10006; Server's label cannot be blank";
+        return "<p class='red-text'>&#10006; Invalid feature ID \"{$id}\"";
+    // $name cannot be blank
+    case !empty($name):
+        return "<p class='red-text'>&#10006; Feature name cannot be blank";
     }
+    // $label can be blank.
     // END error check
 
     if ($id === "new") {
         // Adding a new server
-        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`) VALUES (?, ?, ?)";
-        $params = array("ssi", $name, $label, $is_active);
+        $sql = "INSERT INTO `features` (`name`, `label`, `show_in_lists`, `is_tracked`) VALUES (?, ?, ?, ?)";
+        $params = array("ssi", $name, $label, $show_in_lists, $is_tracked);
         $op = "added";
     } else {
         // Editing an existing server
-        $sql = "UPDATE `servers` SET `name`=?, `label`=?, `is_active`=? WHERE `ID`=?";
-        $params = array("ssii", $name, $label, $is_active, $id);
+        $sql = "UPDATE `features` SET `name`=?, `label`=?, `show_in_lists`=?, `is_tracked`=? WHERE `ID`=?";
+        $params = array("ssiii", $name, $label, $show_in_lists, $is_tracked, $id);
         $op = "updated";
     }
 
@@ -147,7 +150,8 @@ function db_process() {
     $query->execute();
 
     if (empty($db->error_list)) {
-        $response_msg = "<p class='green-text'>&#10004; {$name} ({$label}) successfully {$op}.";
+        if (!empty($label)) $label = " ({$label})";
+        $response_msg = "<p class='green-text'>&#10004; {$name}{$label} successfully {$op}.";
     } else {
         $response_msg = "<p class='red-text'>&#10006; (${name}) DB Error: {$db->error}.";
     }
@@ -173,7 +177,7 @@ function feature_details_by_getid($id) {
     db_connect($db);
     $sql = "SELECT `name`, `label`, `show_in_lists`, `is_tracked` FROM `features` WHERE `id`={$id}";
     $result = $db->query($sql);
-    $features_list = $result->fetch_all();
+    $features_list = $result->fetch_all(MYSQLI_ASSOC);
     $result->free();
     $db->close();
 
