@@ -27,19 +27,58 @@ function main_form($response="") {
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
     $headers = array("ID", "Name", "Label", "Show In Lists", "Is Tracked", "");
     $table->add_row($headers, array(), "th");
+    $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center"));
+    $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-center"));
+    $table->update_cell($table->get_rows_count()-1, 5, array('class'=>"text-right"));
 
-    foreach($feature_list as $i => $feature) {
+    // Add an "uncheck/check all" button for checkbox columns
+    foreach (array('show_in_lists', 'is_tracked') as $col) {
+        $res = in_array('1', array_column($arr, $col), true);
+        if ($res) {
+            $master_chk[$col] = "<button type='button' class='edit-submit'>CHECK ALL</button>";
+        } else {
+            $master_chk[$col] = "<button type='button' class='edit-submit'>UNCHECK ALL</button>";
+        }
+    }
+    $table->add_row(array("", "", "", $master_chk['show_in_lists'], $master_chk['is_tracked'], ""), array(), "th");
+    $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center"));
+    $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-center"));
+    $table->update_cell($table->get_rows_count()-1, 5, array('class'=>"text-right"));
+
+    foreach($feature_list as $feature) {
+        $show_in_lists_checked = $feature['show_in_lists'] ? " CHECKED>" : ">";
+        $is_tracked_checked = $feature['is_tracked'] ? " CHECKED>" : ">";
         $row = array(
             $feature['id'],
             $feature['name'],
             $feature['label'],
-            $feature['show_in_lists'] ? "True" : "False",
-            $feature['is_tracked'] ? "True" : "False",
+            "<input class='show_in_lists' type='checkbox'{$show_in_lists_checked}",
+            "<input class='is_tracked' type='checkbox'{$is_tracked_checked}",
             "<button type='submit' form='server_list' name='id' class='edit-submit' value='{$feature['id']}'>EDIT</button>"
         );
 
+        // prepending class name with '_' is to avoid collisions with bootstrap.
         $table->add_row($row);
+        $table->update_cell($table->get_rows_count()-1, 0, array('class'=>"_id"));         // class referred by jquery
+        $table->update_cell($table->get_rows_count()-1, 1, array('class'=>"_name"));       // class referred by jquery
+        $table->update_cell($table->get_rows_count()-1, 2, array('class'=>"_label"));      // class referred by jquery
+        $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center")); // class referred by bootstrap
+        $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-center")); // class referred by bootstrap
+        $table->update_cell($table->get_rows_count()-1, 5, array('class'=>"text-right"));  // class referred by bootstrap
     }
+
+    $script = <<<JAVASCRIPT
+    $(":button").click(function() {
+        console.log("click");
+    });
+    $(":checkbox").change(function() {
+        console.log($(this).closest("tr").find("td._id").text());
+        console.log($(this).closest("tr").find("td._name").text());
+        console.log($(this).closest("tr").find("td._label").text());
+        console.log($(this).closest("tr").find(":checkbox").val());
+        console.log($(this).closest("tr").find(":checkbox").val());
+    });
+    JAVASCRIPT;
 
     // Print view.
     print_header();
@@ -50,9 +89,13 @@ function main_form($response="") {
     Server names must be unique and in the form of "<code>port@domain.tld</code>".
     {$response}
     <form id='server_list' action='features_admin.php' method='get'>
+    <p><button type='submit' form='server_list' name='id' class='btn' value='new'>New Server</button>
     {$table->get_html()}
     <p><button type='submit' form='server_list' name='id' class='btn' value='new'>New Server</button>
     </form>
+    <script>
+    {$script}
+    </script>
     HTML;
 
     print_footer();

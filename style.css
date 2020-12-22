@@ -52,6 +52,7 @@ button.edit-submit {
     background: none;
     border: none;
     color: #337ab7;
+    font-weight: normal;
     text-decoration: none;
     cursor: pointer;
 }
