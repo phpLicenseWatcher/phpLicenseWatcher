@@ -50,7 +50,7 @@ foreach ($servers as $server) {
         $detail_link,
         $listing_expiration_link,
         $server['lmgrd_version'],
-        date_format(date_create($server['last_updated']), "M j Y h:i:s A")
+        date_format(date_create($server['last_updated']), "m/d/Y h:ia")
     ));
 
 	// Set the background color of status cell via class attribute
