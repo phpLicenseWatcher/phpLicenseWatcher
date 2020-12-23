@@ -3,15 +3,24 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/html_table.php";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $msg = db_process();
-    main_form($msg);
-} else if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
-    edit_form();
+    switch (true) {
+    case isset($_POST['edit_id']):
+        edit_form();
+        break;
+    case isset($_POST['checkall']):
+        $msg = db_checkall();
+        main_form($msg);
+        break;
+    default:
+        $msg = db_process();
+        main_form($msg);
+    }
 } else {
     main_form();
 }
 
 exit;
+
 
 /**
  * Display server list and controls to add or edit a server.
@@ -22,6 +31,7 @@ function main_form($response="") {
     db_connect($db);
     $result = $db->query("SELECT * FROM `features`");
     $feature_list = $result->fetch_all(MYSQLI_ASSOC);
+    $end_page_count = count($feature_list);
     $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
@@ -33,11 +43,11 @@ function main_form($response="") {
 
     // Add an "uncheck/check all" button for checkbox columns
     foreach (array('show_in_lists', 'is_tracked') as $col) {
-        $res = in_array('1', array_column($arr, $col), true);
+        $res = in_array('1', array_column($feature_list, $col), true);
         if ($res) {
-            $master_chk[$col] = "<button type='button' class='edit-submit'>CHECK ALL</button>";
+            $master_chk[$col] = "<button type='submit' form='feature_list' name='checkall' value='{$col}.0.1.{$end_page_count}' class='edit-submit'>UNCHECK ALL</button>";
         } else {
-            $master_chk[$col] = "<button type='button' class='edit-submit'>UNCHECK ALL</button>";
+            $master_chk[$col] = "<button type='submit' form='feature_list' name='checkall' value='{$col}.1.1.{$end_page_count}' class='edit-submit'>CHECK ALL</button>";
         }
     }
     $table->add_row(array("", "", "", $master_chk['show_in_lists'], $master_chk['is_tracked'], ""), array(), "th");
@@ -54,31 +64,14 @@ function main_form($response="") {
             $feature['label'],
             "<input class='show_in_lists' type='checkbox'{$show_in_lists_checked}",
             "<input class='is_tracked' type='checkbox'{$is_tracked_checked}",
-            "<button type='submit' form='server_list' name='id' class='edit-submit' value='{$feature['id']}'>EDIT</button>"
+            "<button type='submit' form='feature_list' name='edit_id' class='edit-submit' value='{$feature['id']}'>EDIT</button>"
         );
 
-        // prepending class name with '_' is to avoid collisions with bootstrap.
         $table->add_row($row);
-        $table->update_cell($table->get_rows_count()-1, 0, array('class'=>"_id"));         // class referred by jquery
-        $table->update_cell($table->get_rows_count()-1, 1, array('class'=>"_name"));       // class referred by jquery
-        $table->update_cell($table->get_rows_count()-1, 2, array('class'=>"_label"));      // class referred by jquery
         $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center")); // class referred by bootstrap
         $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-center")); // class referred by bootstrap
         $table->update_cell($table->get_rows_count()-1, 5, array('class'=>"text-right"));  // class referred by bootstrap
     }
-
-    $script = <<<JAVASCRIPT
-    $(":button").click(function() {
-        console.log("click");
-    });
-    $(":checkbox").change(function() {
-        console.log($(this).closest("tr").find("td._id").text());
-        console.log($(this).closest("tr").find("td._name").text());
-        console.log($(this).closest("tr").find("td._label").text());
-        console.log($(this).closest("tr").find(":checkbox").val());
-        console.log($(this).closest("tr").find(":checkbox").val());
-    });
-    JAVASCRIPT;
 
     // Print view.
     print_header();
@@ -88,10 +81,10 @@ function main_form($response="") {
     <p>You may edit an existing server's name, label, active status, or add a new server to the database.<br>
     Server names must be unique and in the form of "<code>port@domain.tld</code>".
     {$response}
-    <form id='server_list' action='features_admin.php' method='get'>
-    <p><button type='submit' form='server_list' name='id' class='btn' value='new'>New Server</button>
+    <form id='feature_list' action='features_admin.php' method='POST'>
+    <p><button type='submit' form='feature_list' name='edit_id' class='btn' value='new'>New Server</button>
     {$table->get_html()}
-    <p><button type='submit' form='server_list' name='id' class='btn' value='new'>New Server</button>
+    <p><button type='submit' form='feature_list' name='edit_id' class='btn' value='new'>New Server</button>
     </form>
     <script>
     {$script}
@@ -103,7 +96,7 @@ function main_form($response="") {
 
 /** Add/Edit server form.  No DB operations. */
 function edit_form() {
-    $id = $_GET['id'];
+    $id = $_POST['edit_id'];
 
     // Determine if adding a new server or editing an existing server.
     // Skip back to the main_form() if something is wrong.
@@ -152,6 +145,50 @@ function edit_form() {
 } // END function edit_form()
 
 /**
+ * Change the status of either 'show_in_lists' or is_tracked' for all features.
+ *
+ * @return string response message to display on main form.  Or empty string for no message.
+ */
+function db_checkall() {
+    $vals = array_combine(array('column', 'checked', 'start', 'end'), explode(".", $_POST['checkall']));
+    if (!$vals) {
+        // silently return to main form, no DB process.
+        return "";
+    }
+
+    // validate
+    switch (false) {
+    case preg_match("/^show_in_lists$|^is_tracked$/", $vals['column']):
+    case preg_match("/^0$|^1$/", $vals['checked']):
+    case ctype_digit($vals['start']):
+    case ctype_digit($vals['end']):
+    case intval($vals['start']) <= intval($vals['end']):
+        // silently return to main form, no DB process.
+        return "";
+    }
+
+    //To Do: Page processing with $vals['start'] and $vals['end']
+    $sql = "UPDATE `features` SET `{$vals['column']}`=?";
+    $params = array("i", intval($vals['checked']));
+
+    db_connect($db);
+    $query = $db->prepare($sql);
+    $query->bind_param(...$params);
+    $query->execute();
+
+    if (!empty($db->error_list)) {
+        $response_msg = "<p class='red-text'>&#10006; DB Error: {$db->error}.";
+    } else {
+        $response_msg = "";
+    }
+
+    $query->close();
+    $db->close();
+    return $response_msg;
+}
+
+
+/**
  * DB operation to either add or edit a feature, based on $_POST['id']
  *
  * @return string response message from operation (either success or error message).
@@ -160,8 +197,8 @@ function db_process() {
     $id = $_POST['id'];
     $name = $_POST['name'];
     $label = empty($_POST['label']) ? null : $_POST['label'];
-    $show_in_lists = $_POST['show_in_lists'] === "on" ? 1 : 0;
-    $is_tracked = $_POST['is_tracked'] === "on" ? 1 : 0;
+    $show_in_lists = $_POST['show_in_lists'] === "on" || $_POST['show_in_lists'] === true ? 1 : 0;
+    $is_tracked = $_POST['is_tracked'] === "on" || $_POST['is_tracked'] === true ? 1 : 0;
 
     // Error check.  On error, stop and return error message.
     switch(false) {
