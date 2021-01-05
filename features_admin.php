@@ -2,13 +2,24 @@
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/html_table.php";
 
+define("EMPTY_CHECKBOX", "&#9744;");
+define("CHECKED_CHECKBOX", "&#9745;");
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     switch (true) {
     case isset($_POST['edit_id']):
         edit_form();
         break;
     case isset($_POST['checkall']):
-        $msg = db_checkall();
+        $msg = db_change_column();
+        main_form($msg);
+        break;
+    case isset($_POST['show_in_lists']):
+        $msg = db_change_single('show_in_lists');
+        main_form($msg);
+        break;
+    case isset($_POST['is_tracked']):
+        $msg = db_change_single('is_tracked');
         main_form($msg);
         break;
     default:
@@ -56,14 +67,16 @@ function main_form($response="") {
     $table->update_cell($table->get_rows_count()-1, 5, array('class'=>"text-right"));
 
     foreach($feature_list as $feature) {
-        $show_in_lists_checked = $feature['show_in_lists'] ? " CHECKED>" : ">";
-        $is_tracked_checked = $feature['is_tracked'] ? " CHECKED>" : ">";
+        $show_in_lists['checked'] = $feature['show_in_lists'] ? CHECKED_CHECKBOX : EMPTY_CHECKBOX;
+        $show_in_lists['val'] = $feature['show_in_lists'] ? 0 : 1;
+        $is_tracked['checked'] = $feature['is_tracked'] ? CHECKED_CHECKBOX : EMPTY_CHECKBOX;
+        $is_tracked['val'] = $feature['is_tracked'] ? 0 : 1;
         $row = array(
             $feature['id'],
             $feature['name'],
             $feature['label'],
-            "<input class='show_in_lists' type='checkbox'{$show_in_lists_checked}",
-            "<input class='is_tracked' type='checkbox'{$is_tracked_checked}",
+            "<button type='submit' form='feature_list' name='show_in_lists' class='edit-submit chkbox' value='{$feature['id']}.{$show_in_lists['val']}'>{$show_in_lists['checked']}</button>",
+            "<button type='submit' form='feature_list' name='is_tracked' class='edit-submit chkbox' value='{$feature['id']}.{$is_tracked['val']}'>{$is_tracked['checked']}</button>",
             "<button type='submit' form='feature_list' name='edit_id' class='edit-submit' value='{$feature['id']}'>EDIT</button>"
         );
 
@@ -149,7 +162,7 @@ function edit_form() {
  *
  * @return string response message to display on main form.  Or empty string for no message.
  */
-function db_checkall() {
+function db_change_column() {
     $vals = array_combine(array('column', 'checked', 'start', 'end'), explode(".", $_POST['checkall']));
     if (!$vals) {
         // silently return to main form, no DB process.
@@ -159,7 +172,7 @@ function db_checkall() {
     // validate
     switch (false) {
     case preg_match("/^show_in_lists$|^is_tracked$/", $vals['column']):
-    case preg_match("/^0$|^1$/", $vals['checked']):
+    case preg_match("/^[01]$/", $vals['checked']):
     case ctype_digit($vals['start']):
     case ctype_digit($vals['end']):
     case intval($vals['start']) <= intval($vals['end']):
@@ -170,6 +183,47 @@ function db_checkall() {
     //To Do: Page processing with $vals['start'] and $vals['end']
     $sql = "UPDATE `features` SET `{$vals['column']}`=?";
     $params = array("i", intval($vals['checked']));
+
+    db_connect($db);
+    $query = $db->prepare($sql);
+    $query->bind_param(...$params);
+    $query->execute();
+
+    if (!empty($db->error_list)) {
+        $response_msg = "<p class='red-text'>&#10006; DB Error: {$db->error}.";
+    } else {
+        $response_msg = "";
+    }
+
+    $query->close();
+    $db->close();
+    return $response_msg;
+}
+
+function db_change_single(string $col) {
+    // validate $col
+    switch ($col) {
+    case 'show_in_lists':
+    case 'is_tracked':
+        //Validation good.  Continue on...
+        break;
+    default:
+        //validation bad.  Silently return so to not process DB.
+        return "";
+    }
+
+    $vals = array_combine(array('id', 'checked'), explode(".", $_POST[$col]));
+
+    //validate $vals
+    switch(false) {
+    case ctype_digit($vals['id']):
+    case preg_match("/^[01]$/", $vals['checked']):
+        // silently return to main form, no DB process.
+        return "";
+    }
+
+    $sql = "UPDATE `features` SET `{$col}`=? WHERE `id`=?";
+    $params = array("ii", intval($vals['checked']), intval($vals['id']));
 
     db_connect($db);
     $query = $db->prepare($sql);
@@ -215,7 +269,7 @@ function db_process() {
     if ($id === "new") {
         // Adding a new server
         $sql = "INSERT INTO `features` (`name`, `label`, `show_in_lists`, `is_tracked`) VALUES (?, ?, ?, ?)";
-        $params = array("ssi", $name, $label, $show_in_lists, $is_tracked);
+        $params = array("ssii", $name, $label, $show_in_lists, $is_tracked);
         $op = "added";
     } else {
         // Editing an existing server

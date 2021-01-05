@@ -62,6 +62,17 @@ button.edit-submit:focus {
     outline: none;
     color: #23527c;
     text-decoration: underline;
+    cursor: pointer;
+}
+
+button.chkbox {
+    font-size: 1.25em;
+    padding: 0px;
+}
+
+button.chkbox:hover,
+button.chkbox:focus {
+    text-decoration: none;
 }
 
 table.events-table {
