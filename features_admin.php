@@ -4,6 +4,7 @@ require_once __DIR__ . "/html_table.php";
 
 define("EMPTY_CHECKBOX", "&#9744;");
 define("CHECKED_CHECKBOX", "&#9745;");
+define("ROWS_PER_PAGE", 50);
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     switch (true) {
@@ -27,7 +28,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         main_form($msg);
     }
 } else {
-    main_form();
+    $page = ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['page'])) ? $_GET['page'] : 1;
+    main_form("", $page);
 }
 
 exit;
@@ -37,12 +39,45 @@ exit;
  * Display server list and controls to add or edit a server.
  *
  * @param string $response Print any error/success messages from a add or edit.
+ * @param integer $page View pages consists of 'ROWS_PER_PAGE' number of rows, each.
  */
-function main_form($response="") {
+function main_form($response="", $page=1) {
     db_connect($db);
-    $result = $db->query("SELECT * FROM `features`");
-    $feature_list = $result->fetch_all(MYSQLI_ASSOC);
-    $end_page_count = count($feature_list);
+
+    // How many features exist?
+    $result = $db->query("SELECT count(*) FROM `features`");
+    $rows_total = $result->fetch_row()[0];
+
+    // Determine which rows are displayed in this page.
+    $page_start = ($page - 1) * ROWS_PER_PAGE;
+    $page_end = min($page_start + ROWS_PER_PAGE - 1, $rows_total - 1);
+
+    // Check that page is within bounds.
+    if ($page_start > $page_end) {
+        // Recalculate start and end with start = 0 (page 1).
+        $page_start = 0;
+        $page_end = min($page_start + ROWS_PER_PAGE - 1, $rows_total - 1);
+    }
+
+    // Get rows for current $page.
+    $sql = "SELECT * FROM `features` WHERE `id` BETWEEN ? AND ? ORDER BY `id` ASC";
+    $params = array("ii", $page_start, $page_end);
+
+    $query = $db->prepare($sql);
+    $query->bind_param(...$params);
+    $query->bind_result($_id, $_name, $_label, $_show_in_lists, $_is_tracked);
+    $query->execute();
+    $query->store_result();
+    while ($query->fetch()) {
+        $feature_list[] = array(
+            'id'            => $_id,
+            'name'          => $_name,
+            'label'         => $_label,
+            'show_in_lists' => $_show_in_lists,
+            'is_tracked'    => $_is_tracked
+        );
+    }
+    $query->close();
     $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
@@ -56,9 +91,9 @@ function main_form($response="") {
     foreach (array('show_in_lists', 'is_tracked') as $col) {
         $res = in_array('1', array_column($feature_list, $col), true);
         if ($res) {
-            $master_chk[$col] = "<button type='submit' form='feature_list' name='checkall' value='{$col}.0.1.{$end_page_count}' class='edit-submit'>UNCHECK ALL</button>";
+            $master_chk[$col] = "<button type='submit' form='feature_list' name='checkall' value='{$col}.0.{$page_start}.{$page_end}' class='edit-submit'>UNCHECK ALL</button>";
         } else {
-            $master_chk[$col] = "<button type='submit' form='feature_list' name='checkall' value='{$col}.1.1.{$end_page_count}' class='edit-submit'>CHECK ALL</button>";
+            $master_chk[$col] = "<button type='submit' form='feature_list' name='checkall' value='{$col}.1.{$page_start}.{$page_end}' class='edit-submit'>CHECK ALL</button>";
         }
     }
     $table->add_row(array("", "", "", $master_chk['show_in_lists'], $master_chk['is_tracked'], ""), array(), "th");
