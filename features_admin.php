@@ -4,6 +4,8 @@ require_once __DIR__ . "/html_table.php";
 
 define("EMPTY_CHECKBOX", "&#9744;");
 define("CHECKED_CHECKBOX", "&#9745;");
+define("PREVIOUS_PAGE", "&#9204;");
+define("NEXT_PAGE", "&#9205;");
 define("ROWS_PER_PAGE", 50);
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -27,6 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 } else {
     $page = ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['page'])) ? $_GET['page'] : 1;
+    $page = ctype_digit($page) ? intval($page) : 1; // $page must be an integer.
     main_form("", $page);
 }
 
@@ -46,33 +49,89 @@ function main_form($response="", $page=1) {
     $result = $db->query("SELECT count(*) FROM `features`");
     $rows_total = $result->fetch_row()[0];
 
-    // Determine which rows (by index) are displayed in this page.
-    $page_start = ($page - 1) * ROWS_PER_PAGE + 1;
-    $page_end = min($page_start + ROWS_PER_PAGE - 1, $rows_total);
+    // What is the last page?
+    $page_last = intval(ceil($rows_total / ROWS_PER_PAGE));
 
-    // Check that page is within bounds.
-    if ($page_start > $page_end) {
-        // Recalculate start and end with start = 0 (page 1).
-        $page_start = 1;
-        $page_end = min($page_start + ROWS_PER_PAGE, $rows_total);
+    // requested $page validation.
+    // correct $page when validation case proves FALSE.
+    switch(false) {
+    case $page >= 1:
+        $page = 1;
+        break;
+    case $page <= $page_last:
+        $page = $page_last;
+        break;
     }
+
+    // Determine which rows (by index) are displayed in this page.
+    $row_first = ($page - 1) * ROWS_PER_PAGE + 1;
+    $row_last = min($row_first + ROWS_PER_PAGE - 1, $rows_total);
+
+    // formulae for $page_1q and $page_3q preserve equidistance from $page_mid in consideration to intdiv rounding.
+    $page_mid = intdiv($page_last, 2);
+    $page_1q = $page_mid - intdiv($page_mid, 2);
+    $page_3q = $page_mid + intdiv($page_mid, 2);
+
+    //build page controls
+    $next_page_sym = NEXT_PAGE;     // added inline to string.
+    $next_page     = $page + 1;
+    $prev_page_sym = PREVIOUS_PAGE; // added inline to string.
+    $prev_page     = $page - 1;
+
+    $disabled_prev_button = $page == 1          ? "DISABLED" : "";
+    $disabled_next_button = $page >= $page_last ? "DISABLED" : "";
+
+    foreach (array("top", "bottom") as $loc) {
+        $mid_controls_html = "";
+        if ($page_last > 3) {
+            $mid_controls_html = <<<HTML
+            <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_mid}' class='btn'>{$page_mid}</button>
+            HTML;
+        }
+
+        if ($page_last > 7) {
+            $mid_controls_html = <<<HTML
+            <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_1q}' class='btn'>{$page_1q}</button>
+            {$mid_controls_html}
+            <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_3q}' class='btn'>{$page_3q}</button>
+            HTML;
+        }
+
+        $page_controls[$loc] = <<<HTML
+        <div style='display: inline-block; width: 25%;'>
+        <form id='new_feature_{$loc}' action='features_admin.php' method='POST'>
+            <p><button type='submit' form='new_feature_top' name='edit_id' class='btn' value='new'>New Feature</button>
+        </form>
+        </div>
+        <div style='display: inline-block; width: 50%;'>
+        <form id='page_controls_{$loc}' action='features_admin.php' method='GET' class='text-center'>
+            <button type='submit' form='page_controls_{$loc}' name='page' value='1' class='btn'>1</button>
+            <button type='submit' form='page_controls_{$loc}' name='page' value='{$prev_page}' class='btn'{$disabled_prev_button}>{$prev_page_sym}</button>
+            {$mid_controls_html}
+            <button type='submit' form='page_controls_{$loc}' name='page' value='{$next_page}' class='btn'{$disabled_next_button}>{$next_page_sym}</button>
+            <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_last}' class='btn'>{$page_last}</button>
+        </form>
+        </div>
+        <div style='display: inline-block; width: 24%' class='text-right'>Page {$page}</div>
+        HTML;
+    } // END build page controls
 
     // Get rows for current $page.
     $sql = "SELECT * FROM `features` WHERE `id` BETWEEN ? AND ? ORDER BY `id` ASC";
-    $params = array("ii", $page_start, $page_end);
+    $params = array("ii", $row_first, $row_last);
 
     $query = $db->prepare($sql);
     $query->bind_param(...$params);
-    $query->bind_result($_id, $_name, $_label, $_show_in_lists, $_is_tracked);
+    $query->bind_result($p_id, $p_name, $p_label, $p_show_in_lists, $p_is_tracked);
     $query->store_result();
     $query->execute();
     while ($query->fetch()) {
         $feature_list[] = array(
-            'id'            => $_id,
-            'name'          => $_name,
-            'label'         => $_label,
-            'show_in_lists' => $_show_in_lists,
-            'is_tracked'    => $_is_tracked
+            'id'            => $p_id,
+            'name'          => $p_name,
+            'label'         => $p_label,
+            'show_in_lists' => $p_show_in_lists,
+            'is_tracked'    => $p_is_tracked
         );
     }
     $query->close();
@@ -93,8 +152,8 @@ function main_form($response="", $page=1) {
         $chk_html[$col] = <<<HTML
         <form id='checkall_{$col}' action='features_admin.php' method='POST'>
             <input type='hidden' name='col' value='{$col}'>
-            <input type='hidden' name='page_start' value='{$page_start}'>
-            <input type='hidden' name='page_end' value='{$page_end}'>
+            <input type='hidden' name='row_first' value='{$row_first}'>
+            <input type='hidden' name='row_last' value='{$row_last}'>
             <button type='submit' form='checkall_{$col}' name='checkall' value='{$val}' class='edit-submit'>{$chk}</button>
         </form>
         HTML;
@@ -125,7 +184,7 @@ function main_form($response="", $page=1) {
 
         $edit_form_button_html = <<<HTML
         <form id='edit_form_{$feature['id']}' action='features_admin.php' method='POST'>
-        <button type='submit' form='edit_form_{$feature['id']}' name='edit_id' class='edit-submit' value='{$feature['id']}'>EDIT</button>
+            <button type='submit' form='edit_form_{$feature['id']}' name='edit_id' class='edit-submit' value='{$feature['id']}'>EDIT</button>
         </form>
         HTML;
 
@@ -151,16 +210,9 @@ function main_form($response="", $page=1) {
     <h1>Features Administration</h1>
     <p>You may edit an existing feature's name, label, boolean statuses, or add a new feature to the database.
     {$response}
-    <form id='new_feature_1' action='features_admin.php' method='POST'>
-    <p><button type='submit' form='new_feature_1' name='edit_id' class='btn' value='new'>New Feature</button>
-    </form>
+    {$page_controls['top']}
     {$table->get_html()}
-    <form id='new_feature_2' action='features_admin.php' method='POST'>
-    <p><button type='submit' form='new_feature_2' name='edit_id' class='btn' value='new'>New Feature</button>
-    </form>
-    <script>
-    {$script}
-    </script>
+    {$page_controls['bottom']}
     HTML;
 
     print_footer();
@@ -223,25 +275,25 @@ function edit_form() {
  */
 function db_change_column() {
     // extract values from POST
-    if (isset($_POST['checkall']))   $checked    = $_POST['checkall'];
-    if (isset($_POST['col']))        $col        = $_POST['col'];
-    if (isset($_POST['page_start'])) $page_start = $_POST['page_start'];
-    if (isset($_POST['page_end']))   $page_end   = $_POST['page_end'];
+    if (isset($_POST['checkall']))  $checked   = $_POST['checkall'];
+    if (isset($_POST['col']))       $col       = $_POST['col'];
+    if (isset($_POST['row_first'])) $row_first = $_POST['row_first'];
+    if (isset($_POST['row_last']))  $row_last  = $_POST['row_last'];
 
     // validate
     switch (false) {
-    case isset($checked)     && preg_match("/^[01]$/", $checked):
-    case isset($col)         && preg_match("/^show_in_lists$|^is_tracked$/", $col):
-    case isset($page_start)  && ctype_digit($page_start):
-    case isset($page_end)    && ctype_digit($page_end):
-    case intval($page_start) <= intval($page_end):
+    case isset($checked)    && preg_match("/^[01]$/", $checked):
+    case isset($col)        && preg_match("/^show_in_lists$|^is_tracked$/", $col):
+    case isset($row_first)  && ctype_digit($row_first):
+    case isset($row_last)   && ctype_digit($row_last):
+    case intval($row_first) <= intval($row_last):
         // Return to main form.  No DB process.
-        return "Validation failed for 'db_change_column()'";
+        return "<p class='red-text'>&#10006; Validation failed for 'db_change_column()'";
     }
 
     //To Do: Page processing with $vals['start'] and $vals['end']
     $sql = "UPDATE `features` SET `{$col}`=? WHERE `id` BETWEEN ? AND ?";
-    $params = array("iii", intval($checked), intval($page_start), intval($page_end));
+    $params = array("iii", intval($checked), intval($row_first), intval($row_last));
 
     db_connect($db);
     $query = $db->prepare($sql);
@@ -275,7 +327,7 @@ function db_change_single() {
     case isset($col) && preg_match("/^show_in_lists$|^is_tracked$/", $col):
     case isset($val) && preg_match("/^[01]$/", $val):
         // Return to main form.  No DB process.
-        return "Validation failed for 'db_change_single()'";
+        return "<p class='red-text'>&#10006; Validation failed for 'db_change_single()'";
     }
 
     $sql = "UPDATE `features` SET `{$col}`=? WHERE `id`=?";
