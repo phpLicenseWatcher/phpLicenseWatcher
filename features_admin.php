@@ -14,18 +14,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     case isset($_POST['edit_id']):
         edit_form();
         break;
-    case isset($_POST['checkall']):
-        $msg = db_change_column();
-        main_form($msg);
+    case isset($_POST['change_col']):
+        $res = db_change_column();
+        $page = strval(ceil(floatval($res['id'])/ROWS_PER_PAGE));
+        main_form($res['msg'], $page);
         break;
-    case isset($_POST['show_in_lists']):
-    case isset($_POST['is_tracked']):
-        $msg = db_change_single();
+    case isset($_POST['change_show_in_lists']):
+    case isset($_POST['change_is_tracked']):
+        $res = db_change_single();
+        $page = strval(ceil(floatval($res['id'])/ROWS_PER_PAGE));
+        main_form($res['msg'], $page);
+        break;
+    case isset($_POST['db_process']):
+        $msg = db_process();
         main_form($msg);
         break;
     default:
-        $msg = db_process();
-        main_form($msg);
+        main_form();
     }
 } else {
     $page = ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['page'])) ? $_GET['page'] : 1;
@@ -78,7 +83,7 @@ function main_form($response="", $page=1) {
     $prev_page_sym = PREVIOUS_PAGE; // added inline to string.
     $prev_page     = $page - 1;
 
-    $disabled_prev_button = $page == 1          ? "DISABLED" : "";
+    $disabled_prev_button = $page <= 1          ? "DISABLED" : "";
     $disabled_next_button = $page >= $page_last ? "DISABLED" : "";
 
     foreach (array("top", "bottom") as $loc) {
@@ -150,11 +155,11 @@ function main_form($response="", $page=1) {
         $val = $res ? 0 : 1;
         $chk = $res ? "UNCHECK ALL" : "CHECK ALL";
         $chk_html[$col] = <<<HTML
-        <form id='checkall_{$col}' action='features_admin.php' method='POST'>
+        <form id='change_col_{$col}' action='features_admin.php' method='POST'>
             <input type='hidden' name='col' value='{$col}'>
             <input type='hidden' name='row_first' value='{$row_first}'>
             <input type='hidden' name='row_last' value='{$row_last}'>
-            <button type='submit' form='checkall_{$col}' name='checkall' value='{$val}' class='edit-submit'>{$chk}</button>
+            <button type='submit' form='change_col_{$col}' name='change_col' value='{$val}' class='edit-submit'>{$chk}</button>
         </form>
         HTML;
     }
@@ -163,13 +168,14 @@ function main_form($response="", $page=1) {
     $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-center"));
     $table->update_cell($table->get_rows_count()-1, 5, array('class'=>"text-right"));
 
+    // Build each feature row: `id`, `name`, `label`, `show_in_lists`, `is_tracked`, and EDIT control.
     foreach($feature_list as $feature) {
         $show_in_lists['checked'] = $feature['show_in_lists'] ? CHECKED_CHECKBOX : EMPTY_CHECKBOX;
         $show_in_lists['val'] = $feature['show_in_lists'] ? 0 : 1;
         $show_in_lists['html'] = <<<HTML
         <form id='sil_{$feature['id']}' action='features_admin.php' method='POST'>
             <input type='hidden' name='id' value='{$feature['id']}'>
-            <button type='submit' form='sil_{$feature['id']}' name='show_in_lists' class='edit-submit chkbox' value='{$show_in_lists['val']}'>{$show_in_lists['checked']}</button>
+            <button type='submit' form='sil_{$feature['id']}' name='change_show_in_lists' class='edit-submit chkbox' value='{$show_in_lists['val']}'>{$show_in_lists['checked']}</button>
         </form>
         HTML;
 
@@ -178,7 +184,7 @@ function main_form($response="", $page=1) {
         $is_tracked['html'] = <<<HTML
         <form id='it_{$feature['id']}' action='features_admin.php' method='POST'>
             <input type='hidden' name='id' value='{$feature['id']}'>
-            <button type='submit' form='it_{$feature['id']}' name='is_tracked' class='edit-submit chkbox' value='{$is_tracked['val']}'>{$is_tracked['checked']}</button>
+            <button type='submit' form='it_{$feature['id']}' name='change_is_tracked' class='edit-submit chkbox' value='{$is_tracked['val']}'>{$is_tracked['checked']}</button>
         </form>
         HTML;
 
@@ -275,10 +281,10 @@ function edit_form() {
  */
 function db_change_column() {
     // extract values from POST
-    if (isset($_POST['checkall']))  $checked   = $_POST['checkall'];
-    if (isset($_POST['col']))       $col       = $_POST['col'];
-    if (isset($_POST['row_first'])) $row_first = $_POST['row_first'];
-    if (isset($_POST['row_last']))  $row_last  = $_POST['row_last'];
+    if (isset($_POST['change_col'])) $checked   = $_POST['change_col'];
+    if (isset($_POST['col']))        $col       = $_POST['col'];
+    if (isset($_POST['row_first']))  $row_first = $_POST['row_first'];
+    if (isset($_POST['row_last']))   $row_last  = $_POST['row_last'];
 
     // validate
     switch (false) {
@@ -288,7 +294,7 @@ function db_change_column() {
     case isset($row_last)   && ctype_digit($row_last):
     case intval($row_first) <= intval($row_last):
         // Return to main form.  No DB process.
-        return "<p class='red-text'>&#10006; Validation failed for 'db_change_column()'";
+        return array('msg'=>"<p class='red-text'>&#10006; Validation failed for 'db_change_column()'", 'id'=>"1");
     }
 
     //To Do: Page processing with $vals['start'] and $vals['end']
@@ -301,9 +307,9 @@ function db_change_column() {
     $query->execute();
 
     if (!empty($db->error_list)) {
-        $response_msg = "<p class='red-text'>&#10006; DB Error: {$db->error}.";
+        $response_msg = array('msg'=>"<p class='red-text'>&#10006; DB Error: {$db->error}.", 'id'=>$row_first);
     } else {
-        $response_msg = "";
+        $response_msg = array('msg'=>"", 'id'=>$row_first);
     }
 
     $query->close();
@@ -313,12 +319,12 @@ function db_change_column() {
 
 function db_change_single() {
     if (isset($_POST['id'])) $id = $_POST['id'];
-    if (isset($_POST['show_in_lists'])) {
+    if (isset($_POST['change_show_in_lists'])) {
         $col = 'show_in_lists';
-        $val = $_POST['show_in_lists'];
-    } else if (isset($_POST['is_tracked'])) {
+        $val = $_POST['change_show_in_lists'];
+    } else if (isset($_POST['change_is_tracked'])) {
         $col = 'is_tracked';
-        $val = $_POST['is_tracked'];
+        $val = $_POST['change_is_tracked'];
     }
 
     //validate
@@ -327,7 +333,7 @@ function db_change_single() {
     case isset($col) && preg_match("/^show_in_lists$|^is_tracked$/", $col):
     case isset($val) && preg_match("/^[01]$/", $val):
         // Return to main form.  No DB process.
-        return "<p class='red-text'>&#10006; Validation failed for 'db_change_single()'";
+        return array('msg'=>"<p class='red-text'>&#10006; Validation failed for 'db_change_single()'", 'id'=>"1");
     }
 
     $sql = "UPDATE `features` SET `{$col}`=? WHERE `id`=?";
@@ -339,9 +345,9 @@ function db_change_single() {
     $query->execute();
 
     if (!empty($db->error_list)) {
-        $response_msg = "<p class='red-text'>&#10006; DB Error: {$db->error}.";
+        $response_msg = array('msg'=>"<p class='red-text'>&#10006; DB Error: {$db->error}.", 'id'=>$id);
     } else {
-        $response_msg = "";
+        $response_msg = array('msg'=>"", 'id'=>$id);
     }
 
     $query->close();
