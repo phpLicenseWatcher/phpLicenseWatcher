@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `features` (
   `show_in_lists` TINYINT NOT NULL DEFAULT 1,
   `is_tracked` TINYINT NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC))
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4;
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `lmgrd_version` VARCHAR(15) NULL,
   `last_updated` DATETIME NULL DEFAULT now(),
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE,
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC),
   CONSTRAINT `port@domain.tld`
     CHECK (REGEXP_LIKE(`name`, '^[0-9]{1,5}@([a-z0-9\-]+\.)+[a-z\-]{2,}$', 'i')))
 ENGINE = InnoDB
@@ -56,8 +56,8 @@ CREATE TABLE IF NOT EXISTS `licenses` (
   `server_id` INT UNSIGNED NOT NULL,
   `feature_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `serverid_featureid_UNIQUE` (`server_id` ASC, `feature_id` ASC) VISIBLE,
-  INDEX `fk_licenses_features1_idx` (`feature_id` ASC) VISIBLE,
+  UNIQUE INDEX `serverid_featureid_UNIQUE` (`server_id` ASC, `feature_id` ASC),
+  INDEX `fk_licenses_features1_idx` (`feature_id` ASC),
   CONSTRAINT `fk_licenses_servers1`
     FOREIGN KEY (`server_id`)
     REFERENCES `servers` (`id`)
