@@ -16,13 +16,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         break;
     case isset($_POST['change_col']):
         $res = db_change_column();
-        $page = strval(ceil(floatval($res['id'])/ROWS_PER_PAGE));
+        $page = strval(ceil($res['id']/ROWS_PER_PAGE));
         main_form($res['msg'], $page);
         break;
     case isset($_POST['change_show_in_lists']):
     case isset($_POST['change_is_tracked']):
         $res = db_change_single();
-        $page = intval(ceil(floatval($res['id'])/ROWS_PER_PAGE));
+        $page = intval(ceil($res['id']/ROWS_PER_PAGE));
         main_form($res['msg'], $page);
         break;
     case isset($_POST['post_form']):
