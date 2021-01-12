@@ -22,12 +22,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     case isset($_POST['change_show_in_lists']):
     case isset($_POST['change_is_tracked']):
         $res = db_change_single();
-        $page = strval(ceil(floatval($res['id'])/ROWS_PER_PAGE));
+        $page = intval(ceil(floatval($res['id'])/ROWS_PER_PAGE));
         main_form($res['msg'], $page);
         break;
-    case isset($_POST['db_process']):
-        $msg = db_process();
-        main_form($msg);
+    case isset($_POST['post_form']):
+        $res = db_process();
+        main_form($res['msg'], $res['page']);
         break;
     default:
         main_form();
@@ -105,6 +105,7 @@ function main_form($response="", $page=1) {
         $page_controls[$loc] = <<<HTML
         <div style='display: inline-block; width: 25%;'>
         <form id='new_feature_{$loc}' action='features_admin.php' method='POST'>
+            <input type='hidden' name='page' value='{$page}'>
             <p><button type='submit' form='new_feature_top' name='edit_id' class='btn' value='new'>New Feature</button>
         </form>
         </div>
@@ -190,6 +191,7 @@ function main_form($response="", $page=1) {
 
         $edit_form_button_html = <<<HTML
         <form id='edit_form_{$feature['id']}' action='features_admin.php' method='POST'>
+            <input type='hidden' name='page' value='{$page}'>
             <button type='submit' form='edit_form_{$feature['id']}' name='edit_id' class='edit-submit' value='{$feature['id']}'>EDIT</button>
         </form>
         HTML;
@@ -227,9 +229,10 @@ function main_form($response="", $page=1) {
 /** Add/Edit server form.  No DB operations. */
 function edit_form() {
     $id = $_POST['edit_id'];
+    $page = ctype_digit($_POST['page']) ? $_POST['page'] : "1";
 
     // Determine if adding a new server or editing an existing server.
-    // Skip back to the main_form() if something is wrong.
+    // Cancel (return null) if something is wrong.
     switch(true) {
     case ctype_digit($id):
         $feature_details = feature_details_by_getid($id);
@@ -247,8 +250,8 @@ function edit_form() {
     }
 
     // print view
-    $is_checked['show_in_lists'] = $feature_details['show_in_lists'] === '1' ? " CHECKED" : "";
-    $is_checked['is_tracked'] = $feature_details['is_tracked'] === '1' ? " CHECKED" : "";
+    $is_checked['show_in_lists'] = $feature_details['show_in_lists'] === "1" ? " CHECKED" : "";
+    $is_checked['is_tracked'] = $feature_details['is_tracked'] === "1" ? " CHECKED" : "";
     print_header();
 
     print <<<HTML
@@ -266,7 +269,8 @@ function edit_form() {
             <label for='is_tracked'>Is Tracked?</label>
             <input type='checkbox' name='is_tracked' id='is_tracked' class='edit-form'{$is_checked['is_tracked']}>
             <input type='hidden' name='id' value='{$id}'>
-            <button type='submit' class='edit-form btn'>Submit</button>
+            <input type='hidden' name='page' value='{$page}'>
+            <button type='submit' class='edit-form btn' name='post_form' value='1'>Submit</button>
         </div>
     </form>
     HTML;
@@ -307,9 +311,9 @@ function db_change_column() {
     $query->execute();
 
     if (!empty($db->error_list)) {
-        $response_msg = array('msg'=>"<p class='red-text'>&#10006; DB Error: {$db->error}.", 'id'=>$row_first);
+        $response_msg = array('msg'=>"<p class='red-text'>&#10006; DB Error: {$db->error}.", 'id'=>intval($row_first));
     } else {
-        $response_msg = array('msg'=>"", 'id'=>$row_first);
+        $response_msg = array('msg'=>"", 'id'=>intval($row_first));
     }
 
     $query->close();
@@ -345,9 +349,9 @@ function db_change_single() {
     $query->execute();
 
     if (!empty($db->error_list)) {
-        $response_msg = array('msg'=>"<p class='red-text'>&#10006; DB Error: {$db->error}.", 'id'=>$id);
+        $response_msg = array('msg'=>"<p class='red-text'>&#10006; DB Error: {$db->error}.", 'id'=>intval($id));
     } else {
-        $response_msg = array('msg'=>"", 'id'=>$id);
+        $response_msg = array('msg'=>"", 'id'=>intval($id));
     }
 
     $query->close();
@@ -367,6 +371,7 @@ function db_process() {
     $label = empty($_POST['label']) ? null : $_POST['label'];
     $show_in_lists = $_POST['show_in_lists'] === "on" || $_POST['show_in_lists'] === true ? 1 : 0;
     $is_tracked = $_POST['is_tracked'] === "on" || $_POST['is_tracked'] === true ? 1 : 0;
+    $page = ctype_digit($_POST['page']) ? intval($_POST['page']) : 1;
 
     // Error check.  On error, stop and return error message.
     switch(false) {
@@ -387,6 +392,7 @@ function db_process() {
         $op = "added";
     } else {
         // Editing an existing server
+        $id = intval($id);
         $sql = "UPDATE `features` SET `name`=?, `label`=?, `show_in_lists`=?, `is_tracked`=? WHERE `ID`=?";
         $params = array("ssiii", $name, $label, $show_in_lists, $is_tracked, $id);
         $op = "updated";
@@ -406,7 +412,8 @@ function db_process() {
 
     $query->close();
     $db->close();
-    return $response_msg;
+
+    return array('msg'=>$response_msg, 'page'=>$page);
 } // END function db_process()
 
 /**
