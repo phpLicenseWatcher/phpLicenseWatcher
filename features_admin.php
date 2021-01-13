@@ -29,6 +29,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $res = db_process();
         main_form($res['msg'], $res['page']);
         break;
+    case isset($_POST['delete_feature']);
+        $res = delete_feature();
+        main_form($res['msg'], $res['page']);
+        break;
     default:
         main_form();
     }
@@ -51,7 +55,7 @@ function main_form($response="", $page=1) {
     db_connect($db);
 
     // How many features exist?
-    $result = $db->query("SELECT count(*) FROM `features`");
+    $result = $db->query("SELECT max(`id`) FROM `features`");
     $rows_total = $result->fetch_row()[0];
 
     // What is the last page?
@@ -438,4 +442,42 @@ function feature_details_by_getid($id) {
 
     return !empty($features_list) ? $features_list[0] : false;
 } // END function server_details_by_getid()
+
+/**
+ * Delete feature from DB by `id`
+ *
+ * @return array success/error message and page to return to.
+ */
+function delete_feature() {
+
+    // validate
+    switch (false) {
+    case ctype_digit($_POST['id']):
+    case ctype_digit($_POST['page']):
+        // Do not process
+        return array('msg'=>"Request to delete a feature has failed validation.", 'page'=>1);
+    }
+
+    $id = $_POST['id'];
+    $name = $_POST['name'];
+    $page = $_POST['page'];
+
+    db_connect($db);
+    $sql = "DELETE FROM `features` WHERE `id`=?";
+    $params = array("i", intval($id));
+    $query = $db->prepare($sql);
+    $query->bind_param(...$params);
+    $query->execute;
+
+    if (empty($db->error_list)) {
+        $response = "<span class='green-text'>&#10004; Successfully deleted ID {$id}: {$name}</span>";
+    } else {
+        $response = "<p class='red-text'>&#10006; ID ${id}: ${name}, DB Error: {$db->error}.";
+    }
+
+    $query->close();
+    $db->close();
+
+    return array('msg'=>$response, 'page'=>intval($page));
+} //END function delete_feature()
 ?>
