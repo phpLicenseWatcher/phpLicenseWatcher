@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+    php-httpd:
+        build:
+            context: ./httpd
+        ports:
+            - 8080:80
+        networks:
+            - licensewatch
+    mariadb:
+        image: mariadb:10.5.2
+        volumes:
+            - mariadb-volume:/var/lib/mysql
+        environment:
+            TZ: "Europe/Rome"
+            MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+            MYSQL_ROOT_PASSWORD: ""
+            MYSQL_USER: 'lmutilmon'
+            MYSQL_PASSWORD: ''
+            MYSQL_DATABASE: 'licenses'
+        networks:
+            - licensewatch
+
+volumes:
+    mariadb-volume:
+
+
+networks:
+    licensewatch:
+        ipam:
+            config:
+                - subnet: 172.28.0.0/16
