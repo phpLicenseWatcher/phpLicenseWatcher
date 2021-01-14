@@ -19,6 +19,18 @@ body {
     color: green;
 }
 
+.float-right {
+    float: right;
+}
+
+.inline-block {
+    display: inline-block;
+}
+
+.block {
+    display: block;
+}
+
 table.alt-rows-bgcolor tr:nth-child(even), tr.alt-bgcolor {
     background-color: #efefef;
 }
@@ -30,9 +42,7 @@ form.edit-form {
 }
 
 div.edit-form {
-    display: block;
     margin-top: 1rem;
-    width: 100%;
 }
 
 input[type="text"].edit-form {
@@ -45,7 +55,7 @@ input[type="checkbox"].edit-form {
 }
 
 button.edit-form {
-    float: right;
+    margin-left: 1rem;
 }
 
 button.edit-submit {

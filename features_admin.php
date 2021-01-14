@@ -29,17 +29,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $res = db_process();
         main_form($res['msg'], $res['page']);
         break;
-    case isset($_POST['delete_feature']);
+    case isset($_POST['delete_feature']):
         $res = delete_feature();
         main_form($res['msg'], $res['page']);
+        break;
+    case isset($_POST['cancel_form']):
+    case isset($_POST['page']):
+        $page = ctype_digit($_POST['page']) ? intval($_POST['page']) : 1;
+        main_form("", $page);
         break;
     default:
         main_form();
     }
 } else {
-    $page = ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['page'])) ? $_GET['page'] : 1;
-    $page = ctype_digit($page) ? intval($page) : 1; // $page must be an integer.
-    main_form("", $page);
+    main_form();
 }
 
 exit;
@@ -114,7 +117,7 @@ function main_form($response="", $page=1) {
         </form>
         </div>
         <div style='display: inline-block; width: 50%;'>
-        <form id='page_controls_{$loc}' action='features_admin.php' method='GET' class='text-center'>
+        <form id='page_controls_{$loc}' action='features_admin.php' method='POST' class='text-center'>
             <button type='submit' form='page_controls_{$loc}' name='page' value='1' class='btn'>1</button>
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$prev_page}' class='btn'{$disabled_prev_button}>{$prev_page_sym}</button>
             {$mid_controls_html}
@@ -256,26 +259,37 @@ function edit_form() {
     // print view
     $is_checked['show_in_lists'] = $feature_details['show_in_lists'] === "1" ? " CHECKED" : "";
     $is_checked['is_tracked'] = $feature_details['is_tracked'] === "1" ? " CHECKED" : "";
+    $delete_button = $id === 'new' ? "" : "<button type='button' class='btn edit-form' name='delete_feature' value='1' onclick='confirm_delete();'>Remove</button>";
     print_header();
 
     print <<<HTML
     <h1>Feature Details</h1>
-    <form action='features_admin.php' method='post' class='edit-form'>
-        <div class='edit-form'>
+    <form action='features_admin.php' method='post' class='edit-form' name='form'>
+        <div class='edit-form block'>
             <label for='name'>Name</label><br>
             <input type='text' name='name' id='name' class='edit-form' value='{$feature_details['name']}'>
-        </div><div class='edit-form'>
+        </div><div class='edit-form block'>
             <label for='label'>Label</label><br>
             <input type='text' name='label' id='label' class='edit-form' value='{$feature_details['label']}'>
-        </div><div class='edit-form'>
+        </div><div class='edit-form inline-block'>
             <label for='show_in_lists'>Show In Lists?</label>
             <input type='checkbox' name='show_in_lists' id='show_in_lists' class='edit-form'{$is_checked['show_in_lists']}>
             <label for='is_tracked'>Is Tracked?</label>
             <input type='checkbox' name='is_tracked' id='is_tracked' class='edit-form'{$is_checked['is_tracked']}>
             <input type='hidden' name='id' value='{$id}'>
             <input type='hidden' name='page' value='{$page}'>
-            <button type='submit' class='edit-form btn' name='post_form' value='1'>Submit</button>
+        </div><div class='edit-form inline-block float-right'>
+            <button type='submit' class='btn btn-cancel' name='cancel_form' value='1'>Cancel</button>
+            <button type='submit' class='btn btn-primary edit-form' name='post_form' value='1'>Submit</button>
+            {$delete_button}
         </div>
+        <script>
+        function confirm_delete() {
+            if (confirm("Confirm feature removal.\\nTHIS CANNOT BE UNDONE!")) {
+                document.form.submit();
+            }
+        }
+        </script>
     </form>
     HTML;
 
@@ -444,7 +458,7 @@ function feature_details_by_getid($id) {
 } // END function server_details_by_getid()
 
 /**
- * Delete feature from DB by `id`
+ * Delete feature from DB by feature's ID.
  *
  * @return array success/error message and page to return to.
  */
@@ -455,7 +469,7 @@ function delete_feature() {
     case ctype_digit($_POST['id']):
     case ctype_digit($_POST['page']):
         // Do not process
-        return array('msg'=>"Request to delete a feature has failed validation.", 'page'=>1);
+        return array('msg'=>"<p class='red-text'>&#10006; Request to delete a feature has failed validation.", 'page'=>1);
     }
 
     $id = $_POST['id'];
@@ -467,10 +481,10 @@ function delete_feature() {
     $params = array("i", intval($id));
     $query = $db->prepare($sql);
     $query->bind_param(...$params);
-    $query->execute;
+    $query->execute();
 
     if (empty($db->error_list)) {
-        $response = "<span class='green-text'>&#10004; Successfully deleted ID {$id}: {$name}</span>";
+        $response = "<p class='green-text'>&#10004; Successfully deleted ID {$id}: {$name}";
     } else {
         $response = "<p class='red-text'>&#10006; ID ${id}: ${name}, DB Error: {$db->error}.";
     }
