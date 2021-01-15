@@ -8,7 +8,10 @@ define("PREVIOUS_PAGE", "&#9204;");
 define("NEXT_PAGE", "&#9205;");
 define("ROWS_PER_PAGE", 50);
 
+file_put_contents("/var/cache/phplw/var_export.log", var_export($_POST, true));
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    file_put_contents("/var/cache/phplw/var_export", date("m.d.y: ") . var_export($_POST, true));
     //print_var($_POST); die;
     switch (true) {
     case isset($_POST['edit_id']):
@@ -259,12 +262,12 @@ function edit_form() {
     // print view
     $is_checked['show_in_lists'] = $feature_details['show_in_lists'] === "1" ? " CHECKED" : "";
     $is_checked['is_tracked'] = $feature_details['is_tracked'] === "1" ? " CHECKED" : "";
-    $delete_button = $id === 'new' ? "" : "<button type='button' class='btn edit-form' name='delete_feature' value='1' onclick='confirm_delete();'>Remove</button>";
+    $delete_button = $id === 'new' ? "" : "<button type='button' class='btn edit-form' id='delete-button'>Remove</button>";
     print_header();
 
     print <<<HTML
     <h1>Feature Details</h1>
-    <form action='features_admin.php' method='post' class='edit-form' name='form'>
+    <form action='features_admin.php' method='post' class='edit-form'>
         <div class='edit-form block'>
             <label for='name'>Name</label><br>
             <input type='text' name='name' id='name' class='edit-form' value='{$feature_details['name']}'>
@@ -278,17 +281,22 @@ function edit_form() {
             <input type='checkbox' name='is_tracked' id='is_tracked' class='edit-form'{$is_checked['is_tracked']}>
             <input type='hidden' name='id' value='{$id}'>
             <input type='hidden' name='page' value='{$page}'>
+            <input type='hidden' id='delete-feature'>
         </div><div class='edit-form inline-block float-right'>
             <button type='submit' class='btn btn-cancel' name='cancel_form' value='1'>Cancel</button>
             <button type='submit' class='btn btn-primary edit-form' name='post_form' value='1'>Submit</button>
             {$delete_button}
         </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script>
-        function confirm_delete() {
-            if (confirm("Confirm feature removal.\\nTHIS CANNOT BE UNDONE!")) {
-                document.form.submit();
+        $('#delete-button').click(function() {
+            var name = $('#name').val();
+            if (confirm("Confirm removal for \\"" + name + "\\"\\n*** THIS WILL REMOVE ALL USAGE HISTORY\\n*** THIS CANNOT BE UNDONE")) {
+                $('#delete-feature').attr('name', "delete_feature");
+                $('#delete-feature').attr('value', "1");
+                $('form').submit();
             }
-        }
+        });
         </script>
     </form>
     HTML;
