@@ -61,12 +61,12 @@ CREATE TABLE IF NOT EXISTS `licenses` (
   CONSTRAINT `fk_licenses_servers1`
     FOREIGN KEY (`server_id`)
     REFERENCES `servers` (`id`)
-    ON DELETE RESTRICT
+    ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_licenses_features1`
     FOREIGN KEY (`feature_id`)
     REFERENCES `features` (`id`)
-    ON DELETE RESTRICT
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS `usage` (
   CONSTRAINT `fk_usage_licenses1`
     FOREIGN KEY (`license_id`)
     REFERENCES `licenses` (`id`)
-    ON DELETE RESTRICT
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS `available` (
   CONSTRAINT `fk_available_licenses1`
     FOREIGN KEY (`license_id`)
     REFERENCES `licenses` (`id`)
-    ON DELETE RESTRICT
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
