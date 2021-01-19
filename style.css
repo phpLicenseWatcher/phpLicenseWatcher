@@ -22,3 +22,54 @@ body {
 table.alt-rows-bgcolor tr:nth-child(even), tr.alt-bgcolor {
     background-color: #efefef;
 }
+
+form.edit-form {
+    margin-left: 5%;
+    margin-right: auto;
+    width: 50%;
+}
+
+div.edit-form {
+    display: block;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+input[type="text"].edit-form {
+    width: 100%;
+}
+
+input[type="checkbox"].edit-form {
+    margin-left: 1rem;
+}
+
+button.edit-form {
+    float: right;
+}
+
+button.edit-submit {
+    background: none;
+    border: none;
+    color: #337ab7;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+button.edit-submit:hover,
+button.edit-submit:focus {
+    outline: none;
+    color: #23527c;
+    text-decoration: underline;
+}
+
+table.events-table {
+    border: 1px solid gray;
+    padding: 1px;
+    border-spacing: 2px;
+}
+
+table#install-check {
+    width: 60%;
+    margin-left: 20%;
+    margin-right: 20%;
+}
