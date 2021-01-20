@@ -8,11 +8,7 @@ define("PREVIOUS_PAGE", "&#9204;");
 define("NEXT_PAGE", "&#9205;");
 define("ROWS_PER_PAGE", 50);
 
-file_put_contents("/var/cache/phplw/var_export.log", var_export($_POST, true));
-
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    file_put_contents("/var/cache/phplw/var_export", date("m.d.y: ") . var_export($_POST, true));
-    //print_var($_POST); die;
     switch (true) {
     case isset($_POST['edit_id']):
         edit_form();
@@ -93,8 +89,8 @@ function main_form($response="", $page=1) {
     $prev_page_sym = PREVIOUS_PAGE; // added inline to string.
     $prev_page     = $page - 1;
 
-    $disabled_prev_button = $page <= 1          ? "DISABLED" : "";
-    $disabled_next_button = $page >= $page_last ? "DISABLED" : "";
+    $disabled_prev_button = $page <= 1          ? " DISABLED" : "";
+    $disabled_next_button = $page >= $page_last ? " DISABLED" : "";
 
     foreach (array("top", "bottom") as $loc) {
         $mid_controls_html = "";
@@ -165,7 +161,7 @@ function main_form($response="", $page=1) {
         $res = in_array(1, array_column($feature_list, $col), false);
         $val = $res ? 0 : 1;
         $chk = $res ? "UNCHECK ALL" : "CHECK ALL";
-        $chk_html[$col] = <<<HTML
+        $html[$col] = <<<HTML
         <form id='change_col_{$col}' action='features_admin.php' method='POST'>
             <input type='hidden' name='col' value='{$col}'>
             <input type='hidden' name='row_first' value='{$row_first}'>
@@ -174,32 +170,24 @@ function main_form($response="", $page=1) {
         </form>
         HTML;
     }
-    $table->add_row(array("", "", "", $chk_html['show_in_lists'], $chk_html['is_tracked'], ""), array(), "th");
+    $table->add_row(array("", "", "", $html['show_in_lists'], $html['is_tracked'], ""), array(), "th");
     $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center"));
     $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-center"));
     $table->update_cell($table->get_rows_count()-1, 5, array('class'=>"text-right"));
 
     // Build each feature row: `id`, `name`, `label`, `show_in_lists`, `is_tracked`, and EDIT control.
+    $checked_checkbox = CHECKED_CHECKBOX;
+    $empty_checkbox = EMPTY_CHECKBOX;
     foreach($feature_list as $feature) {
-        $show_in_lists['checked'] = $feature['show_in_lists'] ? CHECKED_CHECKBOX : EMPTY_CHECKBOX;
-        $show_in_lists['val'] = $feature['show_in_lists'] ? 0 : 1;
-        $show_in_lists['html'] = <<<HTML
-        <form id='sil_{$feature['id']}' action='features_admin.php' method='POST'>
-            <input type='hidden' name='id' value='{$feature['id']}'>
-            <button type='submit' form='sil_{$feature['id']}' name='change_show_in_lists' class='edit-submit chkbox' value='{$show_in_lists['val']}'>{$show_in_lists['checked']}</button>
-        </form>
-        HTML;
+        foreach(array("show_in_lists", "is_tracked") as $col) {
+            $checked = $feature[$col] ? $checked_checkbox : $empty_checkbox;
+            $val = $feature[$col] ? 0 : 1;
+            $html[$col] = <<<HTML
+            <button type='button' id='{$col}.{$feature['id']}' value='{$val}' class='edit-submit chkbox'>{$checked}</button>
+            HTML;
+        }
 
-        $is_tracked['checked'] = $feature['is_tracked'] ? CHECKED_CHECKBOX : EMPTY_CHECKBOX;
-        $is_tracked['val'] = $feature['is_tracked'] ? 0 : 1;
-        $is_tracked['html'] = <<<HTML
-        <form id='it_{$feature['id']}' action='features_admin.php' method='POST'>
-            <input type='hidden' name='id' value='{$feature['id']}'>
-            <button type='submit' form='it_{$feature['id']}' name='change_is_tracked' class='edit-submit chkbox' value='{$is_tracked['val']}'>{$is_tracked['checked']}</button>
-        </form>
-        HTML;
-
-        $edit_form_button_html = <<<HTML
+        $html['edit_button'] = <<<HTML
         <form id='edit_form_{$feature['id']}' action='features_admin.php' method='POST'>
             <input type='hidden' name='page' value='{$page}'>
             <button type='submit' form='edit_form_{$feature['id']}' name='edit_id' class='edit-submit' value='{$feature['id']}'>EDIT</button>
@@ -210,9 +198,9 @@ function main_form($response="", $page=1) {
             $feature['id'],
             $feature['name'],
             $feature['label'],
-            $show_in_lists['html'],
-            $is_tracked['html'],
-            $edit_form_button_html
+            $html['show_in_lists'],
+            $html['is_tracked'],
+            $html['edit_button']
         );
 
         $table->add_row($row);
@@ -231,6 +219,25 @@ function main_form($response="", $page=1) {
     {$page_controls['top']}
     {$table->get_html()}
     {$page_controls['bottom']}
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script>
+        $('.chkbox').click(function() {
+            var id = $(this).attr('id');
+            var vals = id.split(".");
+            vals.push($(this).val());
+            var result = $.ajax({
+                url: "admin_common.php",
+                method: "POST",
+                data: {'toggle_checkbox': "1", 'col': vals[0], 'id': vals[1], 'state': vals[2]},
+                dataType: "text",
+                async: true,
+                success: function(response, result) {
+                    // To Do: toggle checkbox icon depending on response.
+                }
+            });
+        });
+    </script>
+
     HTML;
 
     print_footer();
