@@ -7,7 +7,7 @@ define("PASS_MARK", "<span class='green-text'>&#10004; GOOD</span>");  // green 
 define("FAIL_MARK", "<span class='red-text'>&#10006; FAIL</span>");    // red cross mark
 define("REQUIRED_PHP", "7.3.0");
 
-$table = new html_table(array('id'=>"install-check"));
+$table = new html_table(array('class'=>"table alt-rows-bgcolor"));
 $table->add_row(array("TEST", "VALUE", "RESULT"), array(), "th");
 
 // Calculate minimum php version id for first test.
@@ -22,43 +22,43 @@ $table->add_row(array($test_names, $test_values, $test_results));
 
 // TO DO: Expand this test to validate config.php values.
 $test         = is_readable("config.php");
-$test_names   = "<code>config.php</code>";
+$test_names   = "config.php";
 $test_values  = $test ? "Readable" : "Not Readable";
 $test_results = $test ? PASS_MARK : FAIL_MARK;
 $table->add_row(array($test_names, $test_values, $test_results));
 
-$test         = extension_loaded("gd");
-$test_names   = "PHP Extension \"gd\" (required for graphs)";
-$test_values  = $test ? "Installed and Enabled" : "Not Found";
-$test_results = $test ? PASS_MARK : FAIL_MARK;
-$table->add_row(array($test_names, $test_values, $test_results));
-
 $test         = isset($lmutil_binary) && is_executable($lmutil_binary);
-$test_names   = "<code>lmutil</code>";
-$test_values  = $test ? "Is Executable" : "Not Executable<br>(maybe check permissions?)";
+$test_names   = "lmutil binary";
+$test_values  = $test ? "Is Executable" : "Not Executable (maybe check permissions?)";
 $test_results = $test ? PASS_MARK : FAIL_MARK;
 $table->add_row(array($test_names, $test_values, $test_results));
 
-$test = (bool) function() {
-    switch (false) {
-    case isset($db_username):
-    case isset($db_password):
-    case isset($db_hostname):
-    case isset($db_database):
-        return false;
+$test = call_user_func(function() {
+    global $db_hostname, $db_username, $db_password, $db_database; // from config.php
+
+    $err = array();
+    if (!isset($db_hostname)) $err[] = '$db_hostname';
+    if (!isset($db_username)) $err[] = '$db_username';
+    if (!isset($db_password)) $err[] = '$db_password';
+    if (!isset($db_database)) $err[] = '$db_database';
+    if (!empty($err)) {
+        $err = implode(", ", $err);
+        return array(false, "{$err} not set in config.php");
     }
 
-    $db = new mysqli($db_host, $db_user, $db_password, $db_database);
+    // Using persistent connection as denoted by 'p:' in host string.
+    $db = new mysqli("p:{$db_hostname}", $db_username, $db_password, $db_database);
     if (!is_null($db->connect_error)) {
-        return false;
+        return array(false, $db->connect_error);
     }
 
     $db->close();
-    return true;
-};
+    return array(true);
+});
+
 $test_names   = "Database Connectivity";
-$test_values  = $test ? "Connection OK" : "Connection Failed.";
-$test_results = $test ? PASS_MARK : FAIL_MARK;
+$test_values  = $test[0] ? "Connection OK" : $test[1];
+$test_results = $test[0] ? PASS_MARK : FAIL_MARK;
 $table->add_row(array($test_names, $test_values, $test_results));
 
 // Display view.
