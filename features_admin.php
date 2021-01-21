@@ -8,6 +8,8 @@ define("PREVIOUS_PAGE", "&#9204;");
 define("NEXT_PAGE", "&#9205;");
 define("ROWS_PER_PAGE", 50);
 
+file_put_contents("/var/cache/phplw/post.log", var_export($_POST, true));
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     switch (true) {
     case isset($_POST['edit_id']):
@@ -18,11 +20,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $page = strval(ceil($res['id']/ROWS_PER_PAGE));
         main_form($res['msg'], $page);
         break;
-    case isset($_POST['change_show_in_lists']):
-    case isset($_POST['change_is_tracked']):
+    case isset($_POST['toggle_checkbox']):
         $res = db_change_single();
-        $page = intval(ceil($res['id']/ROWS_PER_PAGE));
-        main_form($res['msg'], $page);
+        header("Content-Type: plain/text");
+        print $res;
         break;
     case isset($_POST['post_form']):
         $res = db_process();
@@ -183,7 +184,7 @@ function main_form($response="", $page=1) {
             $checked = $feature[$col] ? $checked_checkbox : $empty_checkbox;
             $val = $feature[$col] ? 0 : 1;
             $html[$col] = <<<HTML
-            <button type='button' id='{$col}.{$feature['id']}' value='{$val}' class='edit-submit chkbox'>{$checked}</button>
+            <button type='button' id='{$col}-{$feature['id']}' value='{$val}' class='edit-submit chkbox'>{$checked}</button>
             HTML;
         }
 
@@ -223,16 +224,23 @@ function main_form($response="", $page=1) {
     <script>
         $('.chkbox').click(function() {
             var id = $(this).attr('id');
-            var vals = id.split(".");
+            var vals = id.split("-");
             vals.push($(this).val());
             var result = $.ajax({
-                url: "admin_common.php",
+                context: this,
                 method: "POST",
                 data: {'toggle_checkbox': "1", 'col': vals[0], 'id': vals[1], 'state': vals[2]},
                 dataType: "text",
                 async: true,
                 success: function(response, result) {
-                    // To Do: toggle checkbox icon depending on response.
+                    // Response will be "1" on success or an error message on failure.
+                    if (result === "success" && response === "1") {
+                        var icon = "&#" + $(this).html().charCodeAt(0) + ";";
+                        $(this).val(icon === "{$checked_checkbox}" ? "1" : "0");
+                        $(this).html(icon === "{$checked_checkbox}" ? "{$empty_checkbox}" : "{$checked_checkbox}");
+                    } else {
+                        alert(response);
+                    }
                 }
             });
         });
@@ -356,25 +364,20 @@ function db_change_column() {
 
 function db_change_single() {
     if (isset($_POST['id'])) $id = $_POST['id'];
-    if (isset($_POST['change_show_in_lists'])) {
-        $col = 'show_in_lists';
-        $val = $_POST['change_show_in_lists'];
-    } else if (isset($_POST['change_is_tracked'])) {
-        $col = 'is_tracked';
-        $val = $_POST['change_is_tracked'];
-    }
+    if (isset($_POST['col'])) $col = $_POST['col'];
+    if (isset($_POST['state'])) $state = $_POST['state'];
 
     //validate
     switch(false) {
-    case isset($id)  && ctype_digit($id):
-    case isset($col) && preg_match("/^show_in_lists$|^is_tracked$/", $col):
-    case isset($val) && preg_match("/^[01]$/", $val):
+    case isset($id)    && ctype_digit($id):
+    case isset($col)   && preg_match("/^show_in_lists$|^is_tracked$/", $col):
+    case isset($state) && preg_match("/^[01]$/", $state):
         // Return to main form.  No DB process.
-        return array('msg'=>"<p class='red-text'>&#10006; Validation failed for 'db_change_single()'", 'id'=>"1");
+        return "Validation failed for checkbox toggle.";
     }
 
     $sql = "UPDATE `features` SET `{$col}`=? WHERE `id`=?";
-    $params = array("ii", intval($val), intval($id));
+    $params = array("ii", intval($state), intval($id));
 
     db_connect($db);
     $query = $db->prepare($sql);
@@ -382,9 +385,9 @@ function db_change_single() {
     $query->execute();
 
     if (!empty($db->error_list)) {
-        $response_msg = array('msg'=>"<p class='red-text'>&#10006; DB Error: {$db->error}.", 'id'=>intval($id));
+        $response_msg = "DB Error: {$db->error}.";
     } else {
-        $response_msg = array('msg'=>"", 'id'=>intval($id));
+        $response_msg = "1";  // indicates success.
     }
 
     $query->close();
