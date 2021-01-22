@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         main_form($res['msg'], $res['page']);
         break;
     case isset($_POST['delete_feature']):
-        $res = delete_feature();
+        $res = db_delete_feature();
         main_form($res['msg'], $res['page']);
         break;
     case isset($_POST['cancel_form']):
@@ -258,14 +258,20 @@ function edit_form() {
     // Cancel (return null) if something is wrong.
     switch(true) {
     case ctype_digit($id):
-        $feature_details = feature_details_by_getid($id);
-        if ($feature_details === false) {
-            main_form();
+        $feature_details = db_get_feature_details_by_id($id);
+        // If is_string(), $feature details contains an error message.
+        if (is_string($feature_details)) {
+            main_form($feature_details, $page);
             return null;
         }
         break;
     case $id === "new":
-        $feature_details = array('name'=>"", 'label'=>"", 'show_in_lists'=>'1', 'is_tracked'=>'1');
+        $feature_details = array(
+            'name' => "",
+            'label' => "",
+            'show_in_lists' => 1,
+            'is_tracked' => 1
+        );
         break;
     default:
         main_form();
@@ -273,8 +279,8 @@ function edit_form() {
     }
 
     // print view
-    $is_checked['show_in_lists'] = $feature_details['show_in_lists'] === "1" ? " CHECKED" : "";
-    $is_checked['is_tracked'] = $feature_details['is_tracked'] === "1" ? " CHECKED" : "";
+    $is_checked['show_in_lists'] = $feature_details['show_in_lists'] === 1 ? " CHECKED" : "";
+    $is_checked['is_tracked'] = $feature_details['is_tracked'] === 1 ? " CHECKED" : "";
     $delete_button = $id === 'new' ? "" : "<button type='button' class='btn edit-form' id='delete-button'>Remove</button>";
     print_header();
 

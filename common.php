@@ -36,6 +36,11 @@ function print_footer() {
     print file_get_contents(__DIR__ . '/footer.html');
 }
 
+/** apply trim() to entirety of superglobal $_POST */
+function trim_post() {
+    $_POST = array_map('trim', $_POST);
+}
+
 /**
  * Open persistent mysqli DB connection.
  *
