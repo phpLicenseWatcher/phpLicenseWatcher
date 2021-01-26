@@ -1,7 +1,7 @@
 FROM php:7.3-apache 
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 RUN apt-get update \
-    && apt-get install -y net-tools iputils-ping vim wget cron git \
+    && apt-get install -y net-tools iputils-ping vim wget cron git msmtp \
     && apt-get install -y software-properties-common dirmngr apt-transport-https lsb-release ca-certificates rrdtool \
     && apt-get install -y libzip-dev \
     && apt-get install -y zlib1g-dev \
@@ -26,6 +26,8 @@ RUN mkdir /app
 RUN git clone https://github.com/rpi-dotcio/phpLicenseWatcher.git /app
 RUN cp -R /app/* /var/www/html
 COPY config.php /var/www/html
+
+COPY php.ini /usr/local/etc/php/
 
 COPY crontab /root/crontab
 RUN crontab /root/crontab

@@ -1,7 +1,9 @@
 
 Add your own `lmutil` binary to `httpd/` folder before running.
 
-Also adapt `config.php` and set the passwords in `docker-compose.yml`.
+Adapt `config.php` and set the passwords in `docker-compose.yml`.
+Also change the hostname *yourhost.com* in the `php.ini` configuration
+file. Otherwise e-mails most likely won't work.
 
 # docker compose
 
