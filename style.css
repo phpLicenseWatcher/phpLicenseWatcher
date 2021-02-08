@@ -19,6 +19,18 @@ body {
     color: green;
 }
 
+.float-right {
+    float: right;
+}
+
+.inline-block {
+    display: inline-block;
+}
+
+.block {
+    display: block;
+}
+
 table.alt-rows-bgcolor tr:nth-child(even), tr.alt-bgcolor {
     background-color: #efefef;
 }
@@ -30,9 +42,7 @@ form.edit-form {
 }
 
 div.edit-form {
-    display: block;
     margin-top: 1rem;
-    width: 100%;
 }
 
 input[type="text"].edit-form {
@@ -41,16 +51,18 @@ input[type="text"].edit-form {
 
 input[type="checkbox"].edit-form {
     margin-left: 1rem;
+    margin-right: 2rem;
 }
 
 button.edit-form {
-    float: right;
+    margin-left: 1rem;
 }
 
 button.edit-submit {
     background: none;
     border: none;
     color: #337ab7;
+    font-weight: normal;
     text-decoration: none;
     cursor: pointer;
 }
@@ -60,6 +72,17 @@ button.edit-submit:focus {
     outline: none;
     color: #23527c;
     text-decoration: underline;
+    cursor: pointer;
+}
+
+button.chkbox {
+    font-size: 1.25em;
+    padding: 0px;
+}
+
+button.chkbox:hover,
+button.chkbox:focus {
+    text-decoration: none;
 }
 
 table.events-table {
