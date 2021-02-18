@@ -39,7 +39,10 @@ You may develop code for this repository on your host.  Make sure the VM is runn
 * You can view the VM server webpage at `http://localhost:50080`
 * A MySQL database viewer can connect to the VM server at `localhost`, port `53306`.
     * MySQL Workbench can connect to the VM server with user and password as `vagrant`.  Database Schema is also `vagrant`.
-* Should Apache generate a 500 error, the error will be logged to `phplw_errors.log` which can be viewed from within the `logs` folder in this repository (log files should be rotated by the vagrant box, but are not tracked by git).
+* Should Apache generate a 500 error, the error will be logged to `/home/vagrant/phplw_errors.log` within VM.
+    * You can use `vagrant up --provision-with show-log` to view the tail of the log.
+    * You can use `vagrant ssh` to get a command line shell to the VM.
+    * Some code editors have (either built-in or as a module/plugin) SFTP access to files.  You can gain access to the VM's file system (and log files) this way using the same login as ssh &mdash; port: `2222`, user: `vagrant`, password: `vagrant`.
 
 ### Tips and Tricks
 * You can use secure copy ('scp') to upload a file to the VM without it being tracked by git:<br />
@@ -49,7 +52,6 @@ You may develop code for this repository on your host.  Make sure the VM is runn
     * Virtualbox typically (but not guaranteed) assigns the VM an IP of `10.0.2.15`.  This is not visible from the host due to Virtualbox's NAT firewall.  Instead, certain ports are forwarded to the host at `localhost`.  Forwarded ports are listed, below.
     * Virtualbox's NAT firewall is meant to block connections to the VM from the Internet.
     * Your host can be seen from within the VM at `10.0.2.2`.
-* Server statuses (shown on `index.php`) get cached for two hours.  Should this cache go stale before expiration, you can delete all of the cache files with `vagrant up --provision-with delete-cache`.
 * __With the removal of PEAR libraries, Composer is no longer needed and has been disabled in Vagrant.__  Composer may return should the need arise in the future.
 
 ### Troubleshooting
@@ -70,11 +72,12 @@ Command | Purpose
 `vagrant halt` | Gracefully shutdown the VM, which will return the reserved 2GB of RAM.  Use `vagrant up` to restart the VM.
 `vagrant destroy` | Delete the VM.  It will need to be rebuilt with `vagrant up` to be used again.
 `vagrant box update` | Updates the locally cached Ubuntu image.  May reduce the time to provision a brand new VM should you destroy an existing VM.
+`vagrant ssh` | Opens a secure shell connection to the VM.
 `vagrant up --provision-with update` | Update the VM with your latest code.  You'll also have to refresh your web browser.
 `vagrant up --provision-with full-update` | Remove all code and packages from guest.  Reinstall development code from working branch.  Reinstall composer packages.  Reinstall provision configuration file.  Do this only if you need a complete reset.
-`vagrant up --provision-with composer-update` | Checks composer for&mdash;and installs&mdash;all updates to packages.  __This is currently disabled.__
+~`vagrant up --provision-with composer-update`~ | ~Checks composer for&mdash;and installs&mdash;all updates to packages.~  __This is currently disabled.__
 `vagrant up --provision-with delete-cache` | Removes all server status cache files.  Do this if the cache goes stale.
-`vagrant ssh` | Opens a secure shell connection to the VM.
+`vagrant up --provision-with show-log` | Shows the tail of the VM's logfile phplw_errors.log.
 
 ### Forwarded Ports
 Service | Guest Port | Host Port
