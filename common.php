@@ -110,7 +110,7 @@ function db_get_servers(object &$db, array $cols=array(), array $ids=array(), st
     }
 
     $is_active_queried = $is_active ? "`is_active`=1" : "TRUE";
-    $ordered_by_queried = !empty($order_by) ? "ORDER BY `{$order_by}` ASC" : "";
+    $order_by_queried = !empty($order_by) ? "ORDER BY `{$order_by}` ASC" : "";
 
     $result = $db->query("SELECT {$cols_queried} FROM `servers` WHERE {$ids_queried} {$is_active_queried} {$order_by_queried};", MYSQLI_STORE_RESULT);
     if (!$result) {
