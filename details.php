@@ -137,7 +137,7 @@ HTML;
         // Execute lmutil lmstat -A -c port@server_fqdn
         $fp = popen("{$lmutil_binary} lmstat -A -c {$server['name']}", "r");
 
-        // License counter
+        // Licenses index.  Incremented before use.
         $i = -1;
 
         // Loop through the output. Look for lines starting with Users. Then look for any
@@ -164,7 +164,7 @@ HTML;
 
             // Count the number of licenses. Each used license has ", start" string in it
             if ( preg_match("/, start/i", $line ) ){
-                $users[$server['name']][$i][] = $line;
+                $used_licenses[$server['name']][$i][] = $line;
             }
         }
 
@@ -199,51 +199,54 @@ HTML;
                     $class = $j%2===0 ? array('class'=>"alt-bgcolor") : array();
                     $table->add_row(array($licenses[$j]['feature'], $licenses_available, $license_info, ""), $class);
 
-                    for ( $k = 0; $k < sizeof($users[$server['name']][$j]); $k++ ) {
-                        /* ---------------------------------------------------------------------------
-                         * I want to know how long a license has been checked out. This
-                         * helps in case some people forgot to close an application and
-                         * have licenses checked out for too long.
-                         * LMstat view will contain a line that says
-                         * jdoe machine1 /dev/pts/4 (v4.0) (licenserver/27000 444), start Thu 12/5 9:57
-                         * the date after start is when license was checked out
-                         * ---------------------------------------------------------------------------- */
-                        $line = explode(", start ", $users[$server['name']][$j][$k]);
-                        preg_match("/(.+?) (.+?) (\d+):(\d+)/i", $line[1], $line2);
+                    // Not all used features have checkout-time data.  Skip over those that don't.
+                    if (isset($used_licenses[$server['name']][$j]) && is_countable($used_licenses[$server['name']][$j])) {
+                        foreach ($used_licenses[$server['name']][$j] as $used_license) {
+                            /* ---------------------------------------------------------------------------
+                             * I want to know how long a license has been checked out. This
+                             * helps in case some people forgot to close an application and
+                             * have licenses checked out for too long.
+                             * LMstat view will contain a line that says
+                             * jdoe machine1 /dev/pts/4 (v4.0) (licenserver/27000 444), start Thu 12/5 9:57
+                             * the date after start is when license was checked out
+                             * ---------------------------------------------------------------------------- */
+                            $line = explode(", start ", $used_license);
+                            preg_match("/(.+?) (.+?) (\d+):(\d+)/i", $line[1], $line2);
 
-                        // Convert the date and time ie 12/5 9:57 to UNIX time stamp
-                        $time_checkedout = strtotime ($line2[2] . " " . $line2[3] . ":" . $line2[4]);
-                        $time_difference = "";
+                            // Convert the date and time ie 12/5 9:57 to UNIX time stamp
+                            $time_checkedout = strtotime ($line2[2] . " " . $line2[3] . ":" . $line2[4]);
+                            $time_difference = "";
 
-                        /* ---------------------------------------------------------------------------
-                         * This is what I am not very clear on but let's say a license has been
-                         * checked out on 12/31 and today is 1/2. It is unclear to me whether
-                         * strotime will handle the conversion correctly ie. 12/31 will actually
-                         * be 12/31 of previous year and not the current. Thus I will make a
-                         * little check here. Will just append the previous year if now is less
-                         * then time_checked_out
-                         * ---------------------------------------------------------------------------- */
-                        if ( $now < $time_checkedout ) {
-                            $time_checkedout = strtotime ($line2[2] . "/" . (date("Y") - 1) . " " . $line2[3]);
-                        } else {
-                            // Get the time difference
-                            $t = new timespan( $now, $time_checkedout );
+                            /* ---------------------------------------------------------------------------
+                             * This is what I am not very clear on but let's say a license has been
+                             * checked out on 12/31 and today is 1/2. It is unclear to me whether
+                             * strotime will handle the conversion correctly ie. 12/31 will actually
+                             * be 12/31 of previous year and not the current. Thus I will make a
+                             * little check here. Will just append the previous year if now is less
+                             * then time_checked_out
+                             * ---------------------------------------------------------------------------- */
+                            if ( $now < $time_checkedout ) {
+                                $time_checkedout = strtotime ($line2[2] . "/" . (date("Y") - 1) . " " . $line2[3]);
+                            } else {
+                                // Get the time difference
+                                $t = new timespan( $now, $time_checkedout );
 
-                            // Format the date string
-                            if ( $t->years > 0) $time_difference .= $t->years . " years(s), ";
-                            if ( $t->months > 0) $time_difference .= $t->months . " month(s), ";
-                            if ( $t->weeks > 0) $time_difference .= $t->weeks . " week(s), ";
-                            if ( $t->days > 0) $time_difference .= " " . $t->days . " day(s), ";
-                            if ( $t->hours > 0) $time_difference .= " " . $t->hours . " hour(s), ";
-                            $time_difference .= $t->minutes . " minute(s)";
+                                // Format the date string
+                                if ( $t->years > 0) $time_difference .= $t->years . " years(s), ";
+                                if ( $t->months > 0) $time_difference .= $t->months . " month(s), ";
+                                if ( $t->weeks > 0) $time_difference .= $t->weeks . " week(s), ";
+                                if ( $t->days > 0) $time_difference .= " " . $t->days . " day(s), ";
+                                if ( $t->hours > 0) $time_difference .= " " . $t->hours . " hour(s), ";
+                                $time_difference .= $t->minutes . " minute(s)";
+                            }
+
+                            // Output the user line
+                            $user_line = $used_license;
+                            $user_line_parts = explode( ' ', trim($user_line) );
+                            $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> ";
+                            $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> ";
+                            $table->add_row(array("", "", $user_line_formated, $time_difference), $class);
                         }
-
-                        // Output the user line
-                        $user_line = $users[$server['name']][$j][$k];
-                        $user_line_parts = explode( ' ', trim($user_line) );
-                        $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> ";
-                        $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> ";
-                        $table->add_row(array("", "", $user_line_formated, $time_difference), $class);
                     }
                 }
             }
