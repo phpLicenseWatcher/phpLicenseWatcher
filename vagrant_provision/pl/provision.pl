@@ -17,7 +17,8 @@ print STDERR "Root required.\n" and exit 1 if ($> != 0);
 # TO DO: maybe create common config file for provision.pl and update_code.pl
 
 # Paths (as arrays of directories)
-my @REPO_PATH = (rootdir(), "home", "vagrant", "github_phplw");
+my @VAGRANT_HOMEPATH = (rootdir(), "home", "vagrant");
+my @REPO_PATH = (@VAGRANT_HOMEPATH, "github_phplw");
 my @FLEXNETSERVER_PATH = (rootdir(), "opt", "flexnetserver");
 my @HTML_PATH = (rootdir(), "var", "www", "html");
 my @LOGROTATE_PATH = (rootdir(), "etc", "logrotate.d");
@@ -114,7 +115,7 @@ sub setup_flexlm {
         print "$_ ownership granted to $FLEXLM_OWNER:$NOT_SUPERUSER\n";
 
         chmod $FLEXLM_PERMISSIONS, $dest;
-        printf "$_ permissions set to 0%o\n", $FLEXLM_PERMISSIONS);
+        printf "$_ permissions set to 0%o\n", $FLEXLM_PERMISSIONS;
     }
 }
 
@@ -129,7 +130,7 @@ sub setup_mysql {
     @hosts = split / /, `hostname -I`;
     chomp (my @filtered_hosts = grep /10\.0\.2\.\d{1,3}/, @hosts);
     $ip = $filtered_hosts[0];
-    print STDERR "IP within 10.0.2.0/24 expected, not found.  MySQL may not be accessible.\nIP(s) found: @hosts\n" if (!defined $IP);
+    print STDERR "IP within 10.0.2.0/24 expected, not found.  MySQL may not be accessible.\nIP(s) found: @hosts\n" if (!defined $ip);
 
     # bind IP in cfg if IP was found.
     if (defined $ip) {
@@ -148,7 +149,7 @@ sub setup_mysql {
         open(my $source_fh, "<:encoding(UTF-8)", $source);
         open(my $dest_fh, ">:encoding(UTF-8)", $dest);
         while(<$source_fh>) {
-            $_ =~ s/bind\-address\s+= 127\.0\.0\.1/bind\-address = $IP/g;
+            $_ =~ s/bind\-address\s+= 127\.0\.0\.1/bind\-address = $ip/g;
             print $dest_fh $_;
         }
 
@@ -226,6 +227,15 @@ sub setup_composer {
     exec_cmd("su -c \"composer -d" . catfile(@REPO_PATH) . " install\" $NOT_SUPERUSER");
 }
 
+# Create convenient symlink
+# '$ sudo perl ~/update' to updte latest code within testing server.
+sub create_symlink {
+    print "Create convenience code update symlink.\n";
+    my $script = catfile(@REPO_PATH, "vagrant_provision", "pl", $UPDATE_CODE);
+    my $link = catfile(@VAGRANT_HOMEPATH, "update");
+    symlink $script, $link;
+}
+
 # Call script to copy code files to HTML directory.
 sub copy_code {
     print "Copying repository code.\n";
@@ -243,6 +253,7 @@ setup_database();
 setup_logrotate();
 setup_apache();
 # setup_composer();  # Composer disabled.
+create_symlink();
 copy_code();
 
 # Done!
