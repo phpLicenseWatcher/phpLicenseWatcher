@@ -29,9 +29,9 @@ my @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 my @REQUIRED_PACKAGES = ("apache2", "php", "php-mysql", "mysql-server", "mysql-client", "lsb", "zip", "unzip");
 
 # Non super user account.  Some package systems run better when not as root.
-my $NOT_SUPERUSER = "vagrant";
-my $NOT_SUPERUSER_UID = getpwnam $NOT_SUPERUSER;
-my $NOT_SUPERUSER_GID = getgrnam $NOT_SUPERUSER;
+my $VAGRANT_USER = "vagrant";
+my $VAGRANT_UID = getpwnam $VAGRANT_USER;
+my $VAGRANT_GID = getgrnam $VAGRANT_USER;
 
 # Cache files owner
 my $CACHE_OWNER = "www-data";
@@ -59,6 +59,8 @@ my $SQL_FILE = "phplicensewatcher.sql";
 my $LOGROTATE_CONF_FILE = "phplw.conf";
 my $APACHE_CONF_FILE = "phplw.conf";
 my $UPDATE_CODE = "update_code.pl";
+my $LICENSE_UTIL = "license_util.php";
+my $LICENSE_CACHE = "license_cache.php";
 
 # ** -------------------------- END CONFIGURATION --------------------------- **
 
@@ -111,8 +113,8 @@ sub setup_flexlm {
             exit 1;
         }
 
-        chown $FLEXLM_OWNER_UID, $NOT_SUPERUSER_GID, $dest;
-        print "$_ ownership granted to $FLEXLM_OWNER:$NOT_SUPERUSER\n";
+        chown $FLEXLM_OWNER_UID, $VAGRANT_GID, $dest;
+        print "$_ ownership granted to $FLEXLM_OWNER:$VAGRANT_USER\n";
 
         chmod $FLEXLM_PERMISSIONS, $dest;
         printf "$_ permissions set to 0%o\n", $FLEXLM_PERMISSIONS;
@@ -224,16 +226,20 @@ sub setup_apache {
 
 # Run composer to retrieve PHP dependencies.  Composer cannot be run as superuser.
 sub setup_composer {
-    exec_cmd("su -c \"composer -d" . catfile(@REPO_PATH) . " install\" $NOT_SUPERUSER");
+    exec_cmd("su -c \"composer -d" . catfile(@REPO_PATH) . " install\" $VAGRANT_USER");
 }
 
 # Create convenient symlink
 # '$ sudo perl ~/update' to updte latest code within testing server.
 sub create_symlink {
-    print "Create convenience code update symlink.\n";
-    my $script = catfile(@REPO_PATH, "vagrant_provision", "pl", $UPDATE_CODE);
-    my $link = catfile(@VAGRANT_HOMEPATH, "update");
+    print "Create convenience symlinks.\n";
+    my ($script, $link);
+
+    $script = catfile(@REPO_PATH, "vagrant_provision", "pl", $UPDATE_CODE);
+    $link = catfile(@VAGRANT_HOMEPATH, "update");
     symlink $script, $link;
+
+    script = catfile(
 }
 
 # Call script to copy code files to HTML directory.
