@@ -233,14 +233,22 @@ sub setup_composer {
 # '$ sudo perl ~/update' to updte latest code within testing server.
 sub create_symlink {
     print "Create convenience symlinks.\n";
-    my ($script, $link);
+    my (@scripts, @links); # parralel arrays
 
-    $script = catfile(@REPO_PATH, "vagrant_provision", "pl", $UPDATE_CODE);
-    $link = catfile(@VAGRANT_HOMEPATH, "update");
-    symlink $script, $link;
+    push @scripts, catfile(@REPO_PATH, "vagrant_provision", "pl", $UPDATE_CODE);
+    push @scripts, catfile(@HTML_PATH, $LICENSE_UTIL);
+    push @scripts, catfile(@HTML_PATH, $LICENSE_CACHE);
 
-    script = catfile(
+    push @links, catfile(@VAGRANT_HOMEPATH, "update");
+    push @links, catfile(@VAGRANT_HOMEPATH, "license_util");
+    push @links, catfile(@VAGRANT_HOMEPATH, "license_cache");
+
+    my $arr_length = scalar @scripts;
+    for my $i (0..$arr_length - 1) {
+        symlink $scripts[$i], $links[$i];
+    }
 }
+
 
 # Call script to copy code files to HTML directory.
 sub copy_code {
