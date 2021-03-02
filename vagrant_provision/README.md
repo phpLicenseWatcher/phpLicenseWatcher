@@ -36,6 +36,7 @@ You may develop code for this repository on your host.  Make sure the VM is runn
 * You do _not_ need to install PHP on your host.
 * To test any code changes, the Vagrant VM needs to be updated with this command:<br />
 `vagrant up --provision-with update`
+    * Alternatively, you may update your code with `sudo perl ~/update` via ssh.  This is usually faster. `~/` refers to `/home/vagrant/`.
 * You can view the VM server webpage at `http://localhost:50080`
 * A MySQL database viewer can connect to the VM server at `localhost`, port `53306`.
     * MySQL Workbench can connect to the VM server with user and password as `vagrant`.  Database Schema is also `vagrant`.
@@ -52,6 +53,7 @@ You may develop code for this repository on your host.  Make sure the VM is runn
     * Virtualbox typically (but not guaranteed) assigns the VM an IP of `10.0.2.15`.  This is not visible from the host due to Virtualbox's NAT firewall.  Instead, certain ports are forwarded to the host at `localhost`.  Forwarded ports are listed, below.
     * Virtualbox's NAT firewall is meant to block connections to the VM from the Internet.
     * Your host can be seen from within the VM at `10.0.2.2`.
+* You can manually run `license_cache.php` and `license_util.php` via ssh with `sudo php ~/license_cache` and `sudo php ~/license_util` respectively.  `~/` refers to `/home/vagrant/`.
 * __With the removal of PEAR libraries, Composer is no longer needed and has been disabled in Vagrant.__  Composer may return should the need arise in the future.
 
 ### Troubleshooting
