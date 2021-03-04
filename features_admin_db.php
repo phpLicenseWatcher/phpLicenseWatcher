@@ -214,4 +214,25 @@ function db_delete_feature() {
 
     return array('msg'=>$response, 'page'=>intval($page));
 } //END function delete_feature()
+
+function db_search() {
+    trim_post();
+    $feature = array();
+    $search_token = "%{$_POST['search_string']}%";
+
+    $sql = "SELECT `id`, `name`, `label`, `show_in_lists`, `is_tracked` FROM `features` WHERE `name` LIKE ?";
+    $params = array("s", $search_token);
+    $query = $db->prepare($sql);
+    $query->bind_param(...$params);
+    $query->execute();
+    $query->bind_result($feature['id'], $feature['name'], $feature['label'], $feature['show_in_lists'], $feature['is_tracked']);
+    $query->fetch();
+
+    $response = !empty($db->error_list) ? "<p class='red-text'>&#10006; DB Error: {$db->error}." : "";
+
+    $query->close();
+    $db->closs();
+
+    return $response;
+} //END function db_search()
 ?>

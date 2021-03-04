@@ -3,6 +3,7 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/features_admin_db.php";
 require_once __DIR__ . "/html_table.php";
 
+define("SEARCH_ICON", "&#128269;");
 define("EMPTY_CHECKBOX", "&#9744;");
 define("CHECKED_CHECKBOX", "&#9745;");
 define("PREVIOUS_PAGE", "&#9204;");
@@ -13,6 +14,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     switch (true) {
     case isset($_POST['edit_id']):
         edit_form();
+        break;
+    case isset($_POST['search']):
+        print_var($_POST); die;
         break;
     case isset($_POST['change_col']):
         $res = db_change_column();
@@ -91,6 +95,8 @@ function main_form($response="", $page=1) {
     $disabled_prev_button = $page <= 1          ? " DISABLED" : "";
     $disabled_next_button = $page >= $page_last ? " DISABLED" : "";
 
+    $search_icon = SEARCH_ICON;
+
     foreach (array("top", "bottom") as $loc) {
         $mid_controls_html = "";
         if ($page_last > 3) {
@@ -108,14 +114,20 @@ function main_form($response="", $page=1) {
         }
 
         $page_controls[$loc] = <<<HTML
-        <div style='display: inline-block; width: 25%;'>
+        <div style='width: 15%; margin-bottom: 10px;' class='inline-block'>
         <form id='new_feature_{$loc}' action='features_admin.php' method='POST'>
             <input type='hidden' name='page' value='{$page}'>
-            <p><button type='submit' form='new_feature_top' name='edit_id' class='btn' value='new'>New Feature</button>
+            <button type='submit' form='new_feature_top' name='edit_id' class='btn' value='new'>New Feature</button>
         </form>
         </div>
-        <div style='display: inline-block; width: 50%;'>
-        <form id='page_controls_{$loc}' action='features_admin.php' method='POST' class='text-center'>
+        <div style='width: 44%;' class='inline-block'>
+        <form id='search_{$loc}' action='features_admin.php' method='POST'>
+            <input name='search-string' type="text" placeholder='Search' style='width: 365px;' aria-label='search' required />
+            <button type='submit' form='search_{$loc}' name='search' class='edit-submit chkbox'>{$search_icon}</button>
+        </form>
+        </div>
+        <div style='width: 34%;' class='inline-block text-center'>
+        <form id='page_controls_{$loc}' action='features_admin.php' method='POST'>
             <button type='submit' form='page_controls_{$loc}' name='page' value='1' class='btn'>1</button>
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$prev_page}' class='btn'{$disabled_prev_button}>{$prev_page_sym}</button>
             {$mid_controls_html}
@@ -123,7 +135,7 @@ function main_form($response="", $page=1) {
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_last}' class='btn'>{$page_last}</button>
         </form>
         </div>
-        <div style='display: inline-block; width: 24%' class='text-right'>Page {$page}</div>
+        <div style='display: inline-block; width: 5%' class='text-right'>Page {$page}</div>
         HTML;
     } // END build page controls
 
