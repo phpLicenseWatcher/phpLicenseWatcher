@@ -1,16 +1,27 @@
 package CONFIG;
+use File::Spec::Functions qw(rootdir);
 
 # ** ---------------------------- CONFIGURATION ----------------------------- **
 
 # Paths (as arrays of directories)
 our @VAGRANT_HOMEPATH = (rootdir(), "home", "vagrant");
 our @REPO_PATH = (@VAGRANT_HOMEPATH, "github_phplw");
-our @CONFIG_PATH = (@REPO_PATH, "vagrant_provision", "config");
+our @CONFIG_PATH = ("vagrant_provision", "config");  # Relative to @REPO_PATH
 our @FLEXNETSERVER_PATH = (rootdir(), "opt", "flexnetserver");
 our @HTML_PATH = (rootdir(), "var", "www", "html");
 our @LOGROTATE_PATH = (rootdir(), "etc", "logrotate.d");
 our @APACHE_PATH = (rootdir(), "etc", "apache2");
 our @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
+
+# Relevant files
+our $CONFIG_FILE = "config.php";
+our $SQL_FILE = "phplicensewatcher.sql";
+our $LOGROTATE_CONF_FILE = "phplw.conf";
+our $APACHE_CONF_FILE = "phplw.conf";
+our $UPDATE_CODE = "update_code.pl";
+our $LICENSE_UTIL = "license_util.php";
+our $LICENSE_CACHE = "license_cache.php";
+our $COMPOSER_PACKAGES = "vendor";
 
 # Packages needed for phplw.
 our @REQUIRED_PACKAGES = ("apache2", "php", "php-mysql", "mysql-server", "mysql-client", "lsb", "zip", "unzip");
@@ -40,16 +51,6 @@ our $DB_CONFIG_FILE = "mysqld.cnf";
 our $DB_NAME = "vagrant";
 our $DB_USER = "vagrant";
 our $DB_PASS = "vagrant";
-
-# Other relevant files
-our $CONFIG_FILE = "config.php";
-our $SQL_FILE = "phplicensewatcher.sql";
-our $LOGROTATE_CONF_FILE = "phplw.conf";
-our $APACHE_CONF_FILE = "phplw.conf";
-our $UPDATE_CODE = "update_code.pl";
-our $LICENSE_UTIL = "license_util.php";
-our $LICENSE_CACHE = "license_cache.php";
-our $COMPOSER_PACKAGES = "vendor";
 
 # ** -------------------------- END CONFIGURATION --------------------------- **
 

@@ -8,7 +8,7 @@ use warnings;
 use autodie;
 use File::Basename qw(dirname fileparse);
 use File::Copy qw(copy);
-use File::Spec::Functions qw(catdir catfile rootdir);
+use File::Spec::Functions qw(catdir catfile);
 use lib dirname(__FILE__);
 use config;
 
@@ -84,7 +84,7 @@ sub setup_flexlm {
         print "$_ ownership granted to $CONFIG::FLEXLM_OWNER:$CONFIG::VAGRANT_USER\n";
 
         chmod $CONFIG::FLEXLM_PERMISSIONS, $dest;
-        printf "$_ permissions set to 0%o\n", $FLEXLM_PERMISSIONS;
+        printf "$_ permissions set to 0%o\n", $CONFIG::FLEXLM_PERMISSIONS;
     }
 }
 
@@ -178,8 +178,8 @@ sub setup_apache {
     # (2) Copy phpLicenseWatcher conf file
     @source_path = (@CONFIG::REPO_PATH, "vagrant_provision", "apache");
     @dest_path   = (@CONFIG::APACHE_PATH, "sites-available");
-    $source = catfile(@source_path, $APACHE_CONF_FILE);
-    $dest   = catfile(@dest_path, $APACHE_CONF_FILE);
+    $source = catfile(@source_path, $CONFIG::APACHE_CONF_FILE);
+    $dest   = catfile(@dest_path, $CONFIG::APACHE_CONF_FILE);
     copy $source, $dest;
 
     # (3) Activate phpLicenseWatcher Apache conf file

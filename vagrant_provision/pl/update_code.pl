@@ -6,7 +6,7 @@ use warnings;
 use autodie;
 use File::Basename qw(dirname fileparse);
 use File::Path qw(remove_tree);
-use File::Spec::Functions qw(catdir catfile rootdir);
+use File::Spec::Functions qw(catdir catfile);
 
 use lib dirname(__FILE__);
 use config;
@@ -74,7 +74,7 @@ sub rsync_code {
     my $option = shift if (@_);
     if (defined $option && $option eq "full") {
         # Composer is disabled.
-        # push(@file_list, catfile(@CONFIG_PATH, $CONFIG_FILE), $COMPOSER_PACKAGES);
+        # push(@file_list, catfile(@CONFIG::CONFIG_PATH, $CONFIG::CONFIG_FILE), $CONFIG::COMPOSER_PACKAGES);
         push(@file_list, catfile(@CONFIG::CONFIG_PATH, $CONFIG::CONFIG_FILE));
     }
 
