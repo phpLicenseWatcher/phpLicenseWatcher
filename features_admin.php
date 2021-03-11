@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         edit_form();
         break;
     case isset($_POST['search']):
-        print_var($_POST); die;
+        print_var(db_search()); die;
         break;
     case isset($_POST['change_col']):
         $res = db_change_column();
@@ -123,7 +123,7 @@ function main_form($response="", $page=1) {
         <div style='width: 44%;' class='inline-block'>
         <form id='search_{$loc}' action='features_admin.php' method='POST'>
             <input name='search-string' type="text" placeholder='Search' style='width: 365px;' aria-label='search' required />
-            <button type='submit' form='search_{$loc}' name='search' class='edit-submit chkbox'>{$search_icon}</button>
+            <button type='submit' form='search_{$loc}' name='search' class='edit-submit btnlink'>{$search_icon}</button>
         </form>
         </div>
         <div style='width: 34%;' class='inline-block text-center'>
@@ -194,7 +194,7 @@ function main_form($response="", $page=1) {
             $checked = $feature[$col] ? $checked_checkbox : $empty_checkbox;
             $val = $feature[$col] ? 0 : 1;
             $html[$col] = <<<HTML
-            <button type='button' id='{$col}-{$feature['id']}' value='{$val}' class='edit-submit chkbox'>{$checked}</button>
+            <button type='button' id='{$col}-{$feature['id']}' value='{$val}' class='edit-submit btnlink chkbox'>{$checked}</button>
             HTML;
         }
 

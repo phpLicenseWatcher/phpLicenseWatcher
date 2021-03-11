@@ -75,13 +75,13 @@ button.edit-submit:focus {
     cursor: pointer;
 }
 
-button.chkbox {
+button.btnlink {
     font-size: 1.25em;
     padding: 0px;
 }
 
-button.chkbox:hover,
-button.chkbox:focus {
+button.btnlink:hover,
+button.btnlink:focus {
     text-decoration: none;
 }
 

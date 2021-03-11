@@ -217,22 +217,37 @@ function db_delete_feature() {
 
 function db_search() {
     trim_post();
-    $feature = array();
-    $search_token = "%{$_POST['search_string']}%";
+    $results = array();
+    $search_token = $_POST['search-string'];
 
-    $sql = "SELECT `id`, `name`, `label`, `show_in_lists`, `is_tracked` FROM `features` WHERE `name` LIKE ?";
+    // Use of "(SELECT @row_number := 0)" is deprecated in MySql 8+, but is needed for MySql 5.
+    $sql = "SELECT (@row_number := @row_number + 1) AS `row_index`, `id`, `name`, `label`, `show_in_lists`, `is_tracked` FROM (SELECT @row_number := 0) as `temp`, `features` WHERE `name` REGEXP ? ORDER BY `name` ASC;";
     $params = array("s", $search_token);
+
+    db_connect($db);
     $query = $db->prepare($sql);
+    if ($db->error_list) {
+        print_var($db->error_list);
+    }
     $query->bind_param(...$params);
     $query->execute();
-    $query->bind_result($feature['id'], $feature['name'], $feature['label'], $feature['show_in_lists'], $feature['is_tracked']);
-    $query->fetch();
+    $query->bind_result($r_rownum, $r_id, $r_name, $r_label, $r_lists, $r_tracked);
+    while ($query->fetch()) {
+        $results[] = array(
+            'row_num' => $r_rownum,
+            'id' => $r_id,
+            'name' => $r_name,
+            'label' => $r_label,
+            'show_in_lists' => $r_lists,
+            'is_tracked' => $r_tracked
+        );
+    }
 
     $response = !empty($db->error_list) ? "<p class='red-text'>&#10006; DB Error: {$db->error}." : "";
 
     $query->close();
-    $db->closs();
+    $db->close();
 
-    return $response;
+    return array('response' => $response, 'features' => $results);
 } //END function db_search()
 ?>
