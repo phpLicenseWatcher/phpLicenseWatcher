@@ -8,7 +8,9 @@ use File::Basename qw(dirname fileparse);
 use File::Path qw(remove_tree);
 use File::Spec::Functions qw(catdir catfile);
 
-use lib dirname(__FILE__);
+# permit us to use modules from same dir as this script.
+use Cwd qw(abs_path);
+use lib dirname(abs_path($0));  
 use config;
 
 # main()
