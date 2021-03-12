@@ -2,7 +2,7 @@
 require_once __DIR__ . "/common.php";
 
 /**
- * Retrieve server details by server ID.
+ * Retrieve feature details by feature ID.
  *
  * @param int $id
  * @return mixed either a feature's details in associative array or error message on failure.
@@ -215,26 +215,39 @@ function db_delete_feature() {
     return array('msg'=>$response, 'page'=>intval($page));
 } //END function delete_feature()
 
-function db_search() {
-    trim_post();
+function db_get_page($page, $search_token=null) {
+    $rows_per_page = ROWS_PER_PAGE;  // defined in common.php
+    $first_row = ($page-1) * $rows_per_page;  // starting row, zero based.
     $results = array();
-    $search_token = $_POST['search-string'];
 
-    // Use of "(SELECT @row_number := 0)" is deprecated in MySql 8+, but is needed for MySql 5.
-    $sql = "SELECT (@row_number := @row_number + 1) AS `row_index`, `id`, `name`, `label`, `show_in_lists`, `is_tracked` FROM (SELECT @row_number := 0) as `temp`, `features` WHERE `name` REGEXP ? ORDER BY `name` ASC;";
-    $params = array("s", $search_token);
+    // Used in 'feature_list' query.  Constrain query by search token or select entire table.
+    if (is_null($search_token)) {
+        $where = "";
+        $params = array("ii", $first_row, $rows_per_page);
+    } else {
+        $where = "WHERE `name` REGEXP ?";
+        $params = array ("sii", $search_token, $first_row, $rows_per_page);
+    }
+
+    // Query to get current page of features
+    $sql['feature_list'] = <<<SQL
+    SELECT * FROM `features`
+    {$where}
+    ORDER BY `id` ASC
+    LIMIT ?, ?
+    SQL;
+
+    // Query for how many features are in the DB?  (to determine how many pages there are)
+    $sql['feature_count'] = "SELECT COUNT(*) FROM `features`";
 
     db_connect($db);
-    $query = $db->prepare($sql);
-    if ($db->error_list) {
-        print_var($db->error_list);
-    }
+    // Run query to get features for current page
+    $query = $db->prepare($sql['feature_list']);
     $query->bind_param(...$params);
     $query->execute();
-    $query->bind_result($r_rownum, $r_id, $r_name, $r_label, $r_lists, $r_tracked);
+    $query->bind_result($r_id, $r_name, $r_label, $r_lists, $r_tracked);
     while ($query->fetch()) {
         $results[] = array(
-            'row_num' => $r_rownum,
             'id' => $r_id,
             'name' => $r_name,
             'label' => $r_label,
@@ -242,12 +255,20 @@ function db_search() {
             'is_tracked' => $r_tracked
         );
     }
+    $query->close();
+
+    // Run query to get feature count and determine how many pages there are.
+    $query = $db->prepare($sql['feature_count']);
+    $query->execute();
+    $query->bind_result($r_count);
+    $query->fetch();
+    $total_pages = intval(ceil($r_count / $rows_per_page));
 
     $response = !empty($db->error_list) ? "<p class='red-text'>&#10006; DB Error: {$db->error}." : "";
 
     $query->close();
     $db->close();
 
-    return array('response' => $response, 'features' => $results);
+    return array('response' => $response, 'features' => $results, 'current_page' => $page, 'total_pages' => $total_pages);
 } //END function db_search()
 ?>

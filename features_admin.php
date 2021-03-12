@@ -3,20 +3,14 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/features_admin_db.php";
 require_once __DIR__ . "/html_table.php";
 
-define("SEARCH_ICON", "&#128269;");
-define("EMPTY_CHECKBOX", "&#9744;");
-define("CHECKED_CHECKBOX", "&#9745;");
-define("PREVIOUS_PAGE", "&#9204;");
-define("NEXT_PAGE", "&#9205;");
-define("ROWS_PER_PAGE", 50);
-
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     switch (true) {
     case isset($_POST['edit_id']):
         edit_form();
         break;
     case isset($_POST['search']):
-        print_var(db_search()); die;
+        trim_post();
+        print_var(db_get_page(1, $_POST['search-string'])); die;
         break;
     case isset($_POST['change_col']):
         $res = db_change_column();
@@ -42,70 +36,59 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         main_form("", $page);
         break;
     default:
-        main_form();
+        $page = 1;
+        $res = db_get_page($page);
+        main_form($res['features'], $page, $res['total_pages'], $res['response']);
     }
 } else {
-    main_form();
+    $page = 1;
+    $res = db_get_page($page);
+    main_form($res['features'], $page, $res['total_pages'], $res['response']);
 }
 
 exit;
 
 /**
  * Display server list and controls to add or edit a server.
- *
- * @param string $response Print any error/success messages from a add or edit.
- * @param integer $page View pages consists of 'ROWS_PER_PAGE' number of rows, each.
  */
-function main_form($response="", $page=1) {
-    db_connect($db);
+function main_form($feature_list, $current_page, $last_page, $response=null) {
 
-    // How many features exist?
-    $result = $db->query("SELECT max(`id`) FROM `features`");
-    $rows_total = $result->fetch_row()[0];
-
-    // What is the last page?
-    $page_last = intval(ceil($rows_total / ROWS_PER_PAGE));
-
-    // requested $page validation.
+    // $page validation.
     // correct $page when validation case proves FALSE.
     switch(false) {
-    case $page >= 1:
-        $page = 1;
+    case $current_page >= 1:
+        $current_page = 1;
         break;
-    case $page <= $page_last:
-        $page = $page_last;
+    case $current_page <= $last_page:
+        $current_page = $last_page;
         break;
     }
 
-    // Determine which rows (by index) are displayed in this page.
-    $row_first = ($page - 1) * ROWS_PER_PAGE + 1;
-    $row_last = min($row_first + ROWS_PER_PAGE - 1, $rows_total);
-
+    // Build page controls
     // formulae for $page_1q and $page_3q preserve equidistance from $page_mid in consideration to intdiv rounding.
-    $page_mid = intdiv($page_last, 2);
+    $page_mid = intval(ceil($last_page / 2));
     $page_1q = $page_mid - intdiv($page_mid, 2);
     $page_3q = $page_mid + intdiv($page_mid, 2);
 
-    //build page controls
     $next_page_sym = NEXT_PAGE;     // added inline to string.
     $next_page     = $page + 1;
     $prev_page_sym = PREVIOUS_PAGE; // added inline to string.
     $prev_page     = $page - 1;
 
-    $disabled_prev_button = $page <= 1          ? " DISABLED" : "";
-    $disabled_next_button = $page >= $page_last ? " DISABLED" : "";
+    $disabled_prev_button = $current_page <= 1          ? " DISABLED" : "";
+    $disabled_next_button = $current_page >= $last_page ? " DISABLED" : "";
 
     $search_icon = SEARCH_ICON;
 
     foreach (array("top", "bottom") as $loc) {
         $mid_controls_html = "";
-        if ($page_last > 3) {
+        if ($last_page > 3) {
             $mid_controls_html = <<<HTML
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_mid}' class='btn'>{$page_mid}</button>
             HTML;
         }
 
-        if ($page_last > 7) {
+        if ($last_page > 7) {
             $mid_controls_html = <<<HTML
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_1q}' class='btn'>{$page_1q}</button>
             {$mid_controls_html}
@@ -116,7 +99,7 @@ function main_form($response="", $page=1) {
         $page_controls[$loc] = <<<HTML
         <div style='width: 15%; margin-bottom: 10px;' class='inline-block'>
         <form id='new_feature_{$loc}' action='features_admin.php' method='POST'>
-            <input type='hidden' name='page' value='{$page}'>
+            <input type='hidden' name='page' value='{$current_page}'>
             <button type='submit' form='new_feature_top' name='edit_id' class='btn' value='new'>New Feature</button>
         </form>
         </div>
@@ -132,33 +115,12 @@ function main_form($response="", $page=1) {
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$prev_page}' class='btn'{$disabled_prev_button}>{$prev_page_sym}</button>
             {$mid_controls_html}
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$next_page}' class='btn'{$disabled_next_button}>{$next_page_sym}</button>
-            <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_last}' class='btn'>{$page_last}</button>
+            <button type='submit' form='page_controls_{$loc}' name='page' value='{$total_pages}' class='btn'>{$last_page}</button>
         </form>
         </div>
-        <div style='display: inline-block; width: 5%' class='text-right'>Page {$page}</div>
+        <div style='display: inline-block; width: 5%' class='text-right'>Page {$current_page}</div>
         HTML;
     } // END build page controls
-
-    // Get rows for current $page.
-    $sql = "SELECT * FROM `features` WHERE `id` BETWEEN ? AND ? ORDER BY `id` ASC";
-    $params = array("ii", $row_first, $row_last);
-
-    $query = $db->prepare($sql);
-    $query->bind_param(...$params);
-    $query->bind_result($p_id, $p_name, $p_label, $p_show_in_lists, $p_is_tracked);
-    $query->store_result();
-    $query->execute();
-    while ($query->fetch()) {
-        $feature_list[] = array(
-            'id'            => $p_id,
-            'name'          => $p_name,
-            'label'         => $p_label,
-            'show_in_lists' => $p_show_in_lists,
-            'is_tracked'    => $p_is_tracked
-        );
-    }
-    $query->close();
-    $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
     $headers = array("ID", "Name", "Label", "Show In Lists", "Is Tracked", "");

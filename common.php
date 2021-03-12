@@ -19,6 +19,14 @@ define ('SERVER_UP', "UP");
 define ('SERVER_DOWN', "DOWN");
 define ('SERVER_VENDOR_DOWN', "VENDOR DOWN");
 
+// View controls
+define("SEARCH_ICON", "&#128269;");
+define("EMPTY_CHECKBOX", "&#9744;");
+define("CHECKED_CHECKBOX", "&#9745;");
+define("PREVIOUS_PAGE", "&#9204;");
+define("NEXT_PAGE", "&#9205;");
+define("ROWS_PER_PAGE", 50);
+
 // $lmutil_loc has been renamed $lmutil_binary, but master branch still has $lmutil_loc.
 if (isset($lmutil_loc) && !isset($lmutil_binary)) {
     $lmutil_binary = $lmutil_loc;
