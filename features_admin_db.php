@@ -215,7 +215,7 @@ function db_delete_feature() {
     return array('msg'=>$response, 'page'=>intval($page));
 } //END function delete_feature()
 
-function db_get_page($page, $search_token=null) {
+function db_get_page_data($page, $search_token=null) {
     $rows_per_page = ROWS_PER_PAGE;  // defined in common.php
     $first_row = ($page-1) * $rows_per_page;  // starting row, zero based.
     $results = array();
