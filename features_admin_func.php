@@ -16,12 +16,7 @@ function func_get_features_table_html($feature_list) {
         $val = $res ? 0 : 1;
         $chk = $res ? "UNCHECK ALL" : "CHECK ALL";
         $html[$col] = <<<HTML
-        <form id='change_col_{$col}' action='features_admin.php' method='POST'>
-            <input type='hidden' name='col' value='{$col}'>
-            <input type='hidden' name='row_first' value='{$row_first}'>
-            <input type='hidden' name='row_last' value='{$row_last}'>
-            <button type='submit' form='change_col_{$col}' name='change_col' value='{$val}' class='edit-submit'>{$chk}</button>
-        </form>
+        <button type='button' value='{$val}' name='{$col}' class='edit-submit column_checkboxes'>{$chk}</button>
         HTML;
     }
     $table->add_row(array("", "", "", $html['show_in_lists'], $html['is_tracked'], ""), array(), "th");
@@ -66,22 +61,29 @@ function func_get_features_table_html($feature_list) {
     return $table->get_html();
 } // END func_get_feature_table_html()
 
-function func_get_controlpanel_html($last_page) {
-    // Build page controls
+function func_get_controlpanel_html($current_page, $last_page, $search_token="") {
+    // SZetup page control properties.
     // formulae for $page_1q and $page_3q preserve equidistance from $page_mid in consideration to intdiv rounding.
     $page_mid = intval(ceil($last_page / 2));
     $page_1q = $page_mid - intdiv($page_mid, 2);
     $page_3q = $page_mid + intdiv($page_mid, 2);
 
     $next_page_sym = NEXT_PAGE;     // added inline to string.
-    $next_page     = $page + 1;
+    $next_page     = $current_page + 1;
     $prev_page_sym = PREVIOUS_PAGE; // added inline to string.
-    $prev_page     = $page - 1;
+    $prev_page     = $current_page - 1;
 
     $disabled_prev_button = $current_page <= 1          ? " DISABLED" : "";
     $disabled_next_button = $current_page >= $last_page ? " DISABLED" : "";
 
-    $search_icon = SEARCH_ICON;
+    // Setup search bar properties
+    if ($search_token === "") {
+        $search_icon = SEARCH_ICON;
+        $search_value = "";
+    } else {
+        $search_icon = CANCEL_SEARCH;
+        $search_value = "value='{$search_token}' ";
+    }
 
     foreach (array("top", "bottom") as $loc) {
         $mid_controls_html = "";
@@ -100,17 +102,15 @@ function func_get_controlpanel_html($last_page) {
         }
 
         $page_controls[$loc] = <<<HTML
+        <!-- BEGIN Control Panel {$loc} -->
         <div style='width: 15%; margin-bottom: 10px;' class='inline-block'>
         <form id='new_feature_{$loc}' action='features_admin.php' method='POST'>
-            <input type='hidden' name='page' value='{$current_page}'>
             <button type='submit' form='new_feature_top' name='edit_id' class='btn' value='new'>New Feature</button>
         </form>
         </div>
         <div style='width: 44%;' class='inline-block'>
-        <form id='search_{$loc}' action='features_admin.php' method='POST'>
-            <input name='search-string' type="text" placeholder='Search' style='width: 365px;' aria-label='search' required />
-            <button type='submit' form='search_{$loc}' name='search' class='edit-submit btnlink'>{$search_icon}</button>
-        </form>
+        <input id='search_box_{$loc}' class='search_box' type="text" placeholder='Search' style='width: 365px;' aria-label='search' required />
+        <button type='button' form='search_{$loc}' class='edit-submit btnlink search_button'>{$search_icon}</button>
         </div>
         <div style='width: 34%;' class='inline-block text-center'>
         <form id='page_controls_{$loc}' action='features_admin.php' method='POST'>
@@ -118,14 +118,31 @@ function func_get_controlpanel_html($last_page) {
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$prev_page}' class='btn'{$disabled_prev_button}>{$prev_page_sym}</button>
             {$mid_controls_html}
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$next_page}' class='btn'{$disabled_next_button}>{$next_page_sym}</button>
-            <button type='submit' form='page_controls_{$loc}' name='page' value='{$total_pages}' class='btn'>{$last_page}</button>
+            <button type='submit' form='page_controls_{$loc}' name='page' value='{$last_page}' class='btn'>{$last_page}</button>
         </form>
         </div>
-        <div style='display: inline-block; width: 5%' class='text-right'>Page {$current_page}</div>
+        <div style='width: 5%' class='inline-block text-right'>Page {$current_page}</div>
+        <!-- END Control Panel {$loc} -->
         HTML;
     }
 
     return $page_controls;
 } // END func_get_controlpanel()
+
+function get_checkbox_ajax() {
+    $checked_checkbox = CHECKED_CHECKBOX;
+    $empty_checkbox = EMPTY_CHECKBOX;
+
+    return <<<JS
+
+    JS;
+} // END get_checkbox_ajax()
+
+function get_checkbox_column_ajax() {
+    return <<<JS
+
+    JS;
+}
+
 
 ?>

@@ -86,7 +86,7 @@ function db_change_column() {
  */
 function db_change_single() {
     //validate
-    trim_post();
+    clean_post();
     switch(false) {
     case isset($_POST['id']) && ctype_digit($_POST['id']):
     case isset($_POST['col']) && preg_match("/^show_in_lists$|^is_tracked$/", $_POST['col']):
@@ -125,7 +125,7 @@ function db_change_single() {
  */
 function db_process() {
     // Validate and set.
-    trim_post();
+    clean_post();
     $id = isset($_POST['id']) ? $_POST['id'] : null;
     $name = isset($_POST['name']) ? htmlspecialchars($_POST['name']) : null;
     $label = isset($_POST['label']) && !empty($_POST['label']) ? htmlspecialchars($_POST['label']) : null;
@@ -183,7 +183,7 @@ function db_process() {
  */
 function db_delete_feature() {
     // validate
-    trim_post();
+    clean_post();
     switch (false) {
     case isset($_POST['name']):
     case isset($_POST['id']) && ctype_digit($_POST['id']):
@@ -215,13 +215,13 @@ function db_delete_feature() {
     return array('msg'=>$response, 'page'=>intval($page));
 } //END function delete_feature()
 
-function db_get_page_data($page, $search_token=null) {
+function db_get_page_data($page, $search_token="") {
     $rows_per_page = ROWS_PER_PAGE;  // defined in common.php
     $first_row = ($page-1) * $rows_per_page;  // starting row, zero based.
     $results = array();
 
     // Used in 'feature_list' query.  Constrain query by search token or select entire table.
-    if (is_null($search_token)) {
+    if ($search_token === "") {
         $where = "";
         $params = array("ii", $first_row, $rows_per_page);
     } else {
@@ -269,6 +269,6 @@ function db_get_page_data($page, $search_token=null) {
     $query->close();
     $db->close();
 
-    return array('response' => $response, 'features' => $results, 'current_page' => $page, 'total_pages' => $total_pages);
+    return array('response' => $response, 'features' => $results, 'last_page' => $total_pages);
 } //END function db_search()
 ?>

@@ -9,8 +9,8 @@ if (is_readable(__DIR__ . "/config.php")) {
 <h1>Missing Component</h1>
 <p>Configuration file <code>config.php</code> could not be read.  Please notify your system administrator.
 HTML;
-	  print_footer();
-	  exit;
+    print_footer();
+    exit;
 }
 
 // Constants
@@ -19,8 +19,9 @@ define ('SERVER_UP', "UP");
 define ('SERVER_DOWN', "DOWN");
 define ('SERVER_VENDOR_DOWN', "VENDOR DOWN");
 
-// View controls
+// Features admin view controls
 define("SEARCH_ICON", "&#128269;");
+define("CANCEL_SEARCH", "&#10060;");
 define("EMPTY_CHECKBOX", "&#9744;");
 define("CHECKED_CHECKBOX", "&#9745;");
 define("PREVIOUS_PAGE", "&#9204;");
@@ -45,8 +46,10 @@ function print_footer() {
 }
 
 /** apply trim() to entirety of superglobal $_POST */
-function trim_post() {
+function clean_post() {
     $_POST = array_map('trim', $_POST);
+    // Prevent XSS
+    $_POST = array_map('htmlspecialchars', $_POST);
 }
 
 /**

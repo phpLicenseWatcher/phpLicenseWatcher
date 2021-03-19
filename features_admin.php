@@ -5,12 +5,21 @@ require_once __DIR__ . "/features_admin_func.php";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     switch (true) {
+    case isset($_POST['refresh']) && $_POST['refresh'] === "1":
+        clean_post();
+        $page = ctype_digit($_POST['page']) ? intval($_POST['page']) : 1;
+        $search_token = $_POST['search_token'];
+        $res = db_get_page_data($page, $search_token);
+        file_put_contents('/home/vagrant/out.log', print_r($res, true));
+
+        $controls_html = func_get_controlpanel_html($page, $res['last_page'], $search_token);
+        $table_html = func_get_features_table_html($res['features']);
+
+        header("Content-Type: plain/text");
+        print $controls_html['top'] . $table_html . $controls_html['bottom'];
+        break;
     case isset($_POST['edit_id']):
         edit_form();
-        break;
-    case isset($_POST['search']):
-        trim_post();
-        print_var(db_get_page(1, $_POST['search-string'])); die;
         break;
     case isset($_POST['change_col']):
         $res = db_change_column();
@@ -32,8 +41,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         break;
     case isset($_POST['cancel_form']):
     case isset($_POST['page']):
-        $page = ctype_digit($_POST['page']) ? intval($_POST['page']) : 1;
-        main_form("", $page);
         break;
     default:
         $page = 1;
@@ -41,68 +48,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         main_form($res['features'], $page, $res['total_pages'], $res['response']);
     }
 } else {
-    $page = 1;
-    $res = db_get_page_data($page);
-    main_form($res['features'], $page, $res['total_pages'], $res['response']);
+    main_form();
 }
 
 exit;
 
 /**
- * Display server list and controls to add or edit a server.
+ * Send initial page HTML to view.
  */
-function main_form($feature_list, $current_page, $last_page, $response=null) {
+function main_form() {
+    // Most of this page is controlled by Jquery and Ajax.
 
-    // $page validation.
-    // correct $page when validation case proves FALSE.
-    switch(false) {
-    case $current_page >= 1:
-        $current_page = 1;
-        break;
-    case $current_page <= $last_page:
-        $current_page = $last_page;
-        break;
-    }
-
-    $page_controls = func_get_controlpanel_html($last_page);
-    $features_table_html = func_get_features_table_html($feature_list);
-
-    // Print view.
+    // Print initial view.
     print_header();
 
     print <<<HTML
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="features_admin_jquery.js"></script>
     <h1>Features Administration</h1>
     <p>You may edit an existing feature's name, label, boolean statuses, or add a new feature to the database.
-    {$response}
-    {$page_controls['top']}
-    {$features_table_html}
-    {$page_controls['bottom']}
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script>
-        $('.chkbox').click(function() {
-            var id = $(this).attr('id');
-            var vals = id.split("-");
-            vals.push($(this).val());
-            var result = $.ajax({
-                context: this,
-                method: "POST",
-                data: {'toggle_checkbox': "1", 'col': vals[0], 'id': vals[1], 'state': vals[2]},
-                dataType: "text",
-                async: true,
-                success: function(response, result) {
-                    // Response will be "1" on success or an error message on failure.
-                    if (result === "success" && response === "1") {
-                        var icon = "&#" + $(this).html().charCodeAt(0) + ";";
-                        $(this).val(icon === "{$checked_checkbox}" ? "1" : "0");
-                        $(this).html(icon === "{$checked_checkbox}" ? "{$empty_checkbox}" : "{$checked_checkbox}");
-                    } else {
-                        alert(response);
-                    }
-                }
-            });
-        });
-    </script>
-
+    <div id='features_admin_body'></div>
     HTML;
 
     print_footer();
