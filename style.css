@@ -80,6 +80,11 @@ button.btnlink {
     padding: 0px;
 }
 
+button.btnlink svg {
+    display: inline-block;
+    vertical-align: middle;
+}
+
 button.btnlink:hover,
 button.btnlink:focus {
     text-decoration: none;
