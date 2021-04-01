@@ -71,7 +71,7 @@ button.edit-submit:hover,
 button.edit-submit:focus {
     outline: none;
     color: #23527c;
-    text-decoration: underline;
+    text-decoration: none;
     cursor: pointer;
 }
 
@@ -83,6 +83,12 @@ button.btnlink {
 button.btnlink svg {
     display: inline-block;
     vertical-align: middle;
+}
+
+button.btnlink:hover svg,
+button.btnlink:focus svg {
+    fill: #23527c;
+    cursor: pointer;
 }
 
 button.btnlink:hover,

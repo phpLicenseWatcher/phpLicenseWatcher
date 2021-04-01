@@ -10,38 +10,42 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $page = ctype_digit($_POST['page']) ? intval($_POST['page']) : 1;
         $search_token = $_POST['search_token'];
         $res = db_get_page_data($page, $search_token);
-        file_put_contents('/home/vagrant/out.log', print_r($res, true));
-
         $controls_html = func_get_controlpanel_html($page, $res['last_page'], $search_token);
         $table_html = func_get_features_table_html($res['features']);
-
         header("Content-Type: plain/text");
         print $controls_html['top'] . $table_html . $controls_html['bottom'];
         break;
-    case isset($_POST['edit_id']):
-        edit_form();
-        break;
-    case isset($_POST['change_col']):
+
+    case isset($_POST['toggle_column']) && $_POST['toggle_column'] === "1":
         $res = db_change_column();
-        $page = strval(ceil($res['id']/ROWS_PER_PAGE));
-        main_form($res['msg'], $page);
+        header("Content-Type: plain/text");
+        print $res;
         break;
-    case isset($_POST['toggle_checkbox']):
+
+    case isset($_POST['toggle_checkbox']) && $_POST['toggle_checkbox'] === "1":
         $res = db_change_single();
         header("Content-Type: plain/text");
         print $res;
         break;
+
+    case isset($_POST['edit_id']):
+        edit_form();
+        break;
+
     case isset($_POST['post_form']):
         $res = db_process();
         main_form($res['msg'], $res['page']);
         break;
+
     case isset($_POST['delete_feature']):
         $res = db_delete_feature();
         main_form($res['msg'], $res['page']);
         break;
+
     case isset($_POST['cancel_form']):
     case isset($_POST['page']):
         break;
+
     default:
         $page = 1;
         $res = db_get_page_data($page);

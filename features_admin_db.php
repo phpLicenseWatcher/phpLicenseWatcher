@@ -42,36 +42,49 @@ function db_get_feature_details_by_id($id) {
  * @return string response message to display on main form.  Or empty string for no message.
  */
 function db_change_column() {
-    // extract values from POST
-    if (isset($_POST['change_col'])) $checked   = $_POST['change_col'];
-    if (isset($_POST['col']))        $col       = $_POST['col'];
-    if (isset($_POST['row_first']))  $row_first = $_POST['row_first'];
-    if (isset($_POST['row_last']))   $row_last  = $_POST['row_last'];
+    clean_post();
 
     // validate
     switch (false) {
-    case isset($checked)    && preg_match("/^[01]$/", $checked):
-    case isset($col)        && preg_match("/^show_in_lists$|^is_tracked$/", $col):
-    case isset($row_first)  && ctype_digit($row_first):
-    case isset($row_last)   && ctype_digit($row_last):
-    case intval($row_first) <= intval($row_last):
+    case isset($_POST['val']) && preg_match("/^[01]$/", $_POST['val']):
+    case isset($_POST['col']) && preg_match("/^show_in_lists$|^is_tracked$/", $_POST['col']):
+    case isset($_POST['page']) && ctype_digit($_POST['page']):
         // Return to main form.  No DB process.
-        return array('msg'=>"<p class='red-text'>&#10006; Validation failed for 'db_change_column()'", 'id'=>"1");
+        return "Validation failed for check/uncheck column";
     }
 
-    //To Do: Page processing with $vals['start'] and $vals['end']
-    $sql = "UPDATE `features` SET `{$col}`=? WHERE `id` BETWEEN ? AND ?";
-    $params = array("iii", intval($checked), intval($row_first), intval($row_last));
+    // extract values from POST
+    $col = $_POST['col'];
+    $val = $_POST['val'];
+    $page = intval($_POST['page']);
+
+    $rows_per_page = ROWS_PER_PAGE;  // defined in common.php
+    $first_row = ($page-1) * $rows_per_page;  // starting row, zero based.
+
+    // DB query.
+    $sql = <<<SQL
+    UPDATE `features` f, (
+        SELECT `id`
+        FROM `features`
+        ORDER BY `id` ASC
+        LIMIT ?,?
+    ) AS ftmp
+    SET f.`{$col}`=?
+    WHERE f.`id`=ftmp.`id`;
+    SQL;
+
+    $params = array("iii", $first_row, $rows_per_page, $val);
 
     db_connect($db);
     $query = $db->prepare($sql);
     $query->bind_param(...$params);
     $query->execute();
 
+    // result from query.
     if (!empty($db->error_list)) {
-        $response_msg = array('msg'=>"<p class='red-text'>&#10006; DB Error: {$db->error}.", 'id'=>intval($row_first));
+        $response_msg = "DB Error: {$db->error}.";
     } else {
-        $response_msg = array('msg'=>"", 'id'=>intval($row_first));
+        $response_msg = "OK";
     }
 
     $query->close();
@@ -92,11 +105,11 @@ function db_change_single() {
     case isset($_POST['col']) && preg_match("/^show_in_lists$|^is_tracked$/", $_POST['col']):
     case isset($_POST['state']) && preg_match("/^[01]$/", $_POST['state']):
         // Return to main form.  No DB process.
-        return "<p class='red-text'>&#10006; Validation failed for checkbox toggle.";
+        return "Validation failed for checkbox toggle.";
     }
 
-    $id = intval($_POST['id']);
-    $state = intval($_POST['state']);
+    $id = $_POST['id'];
+    $state = $_POST['state'];
     $col = $_POST['col'];
 
     $sql = "UPDATE `features` SET `{$col}`=? WHERE `id`=?";
@@ -110,7 +123,7 @@ function db_change_single() {
     if (!empty($db->error_list)) {
         $response_msg = "DB Error: {$db->error}.";
     } else {
-        $response_msg = "1";  // indicates success.
+        $response_msg = "OK";  // indicate success.
     }
 
     $query->close();
