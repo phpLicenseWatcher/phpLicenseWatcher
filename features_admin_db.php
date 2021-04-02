@@ -49,6 +49,7 @@ function db_change_column() {
     case isset($_POST['val']) && preg_match("/^[01]$/", $_POST['val']):
     case isset($_POST['col']) && preg_match("/^show_in_lists$|^is_tracked$/", $_POST['col']):
     case isset($_POST['page']) && ctype_digit($_POST['page']):
+    case isset($_POST['search']):
         // Return to main form.  No DB process.
         return "Validation failed for check/uncheck column";
     }
@@ -57,23 +58,31 @@ function db_change_column() {
     $col = $_POST['col'];
     $val = $_POST['val'];
     $page = intval($_POST['page']);
+    $search_token = $_POST['search'];
 
     $rows_per_page = ROWS_PER_PAGE;  // defined in common.php
     $first_row = ($page-1) * $rows_per_page;  // starting row, zero based.
+
+    if ($search_token !== "") {
+        $regexp = "AND `name` REGEXP ?";
+        $params = array("siii",  $search_token, $first_row, $rows_per_page, $val);
+    } else {
+        $regexp = "";
+        $params = array("iii", $first_row, $rows_per_page, $val);
+    }
 
     // DB query.
     $sql = <<<SQL
     UPDATE `features` f, (
         SELECT `id`
         FROM `features`
+        {$regexp}
         ORDER BY `id` ASC
         LIMIT ?,?
     ) AS ftmp
     SET f.`{$col}`=?
     WHERE f.`id`=ftmp.`id`;
     SQL;
-
-    $params = array("iii", $first_row, $rows_per_page, $val);
 
     db_connect($db);
     $query = $db->prepare($sql);

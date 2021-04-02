@@ -2,6 +2,23 @@
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/html_table.php";
 
+function func_get_page() {
+    clean_post();
+    switch (false) {
+    case isset($_POST['page']) && ctype_digit($_POST['page']):
+    case isset($_POST['search_token']):
+        return "<span class='text-danger'><strong>Page view validation error</strong></span>";
+    }
+
+    $page = ctype_digit($_POST['page']) ? intval($_POST['page']) : 1;
+    $search_token = $_POST['search_token'];
+    $res = db_get_page_data($page, $search_token);
+    $controls_html = func_get_controlpanel_html($page, $res['last_page'], $search_token);
+    $table_html = func_get_features_table_html($res['features']);
+
+    return $controls_html['top'] . $table_html . $controls_html['bottom'];
+} // END function func_get_page()
+
 function func_get_features_table_html($feature_list) {
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
     $headers = array("ID", "Name", "Label", "Show In Lists", "Is Tracked", "");
@@ -38,7 +55,6 @@ function func_get_features_table_html($feature_list) {
 
         $html['edit_button'] = <<<HTML
         <form id='edit_form_{$feature['id']}' action='features_admin.php' method='POST'>
-            <input type='hidden' name='page' value='{$page}'>
             <button type='submit' form='edit_form_{$feature['id']}' name='edit_id' class='edit-submit' value='{$feature['id']}'>EDIT</button>
         </form>
         HTML;
@@ -85,19 +101,25 @@ function func_get_controlpanel_html($current_page, $last_page, $search_token="")
         $search_value = "value='{$search_token}' ";
     }
 
+    // Search box only appears on top control panel.
+    $search_box['top'] = <<<HTML
+    <input type="text" id='search_box' placeholder='Search' style='width: 365px;' {$search_value}aria-label='search' required />
+    <button type='button' id='search_button' class='edit-submit btnlink'>{$search_icon}</button>
+    HTML;
+
+    $search_box['bottom'] = "";
+
     foreach (array("top", "bottom") as $loc) {
         $mid_controls_html = "";
-        if ($last_page > 3) {
-            $mid_controls_html = <<<HTML
-            <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_mid}' class='btn'>{$page_mid}</button>
-            HTML;
-        }
-
         if ($last_page > 7) {
             $mid_controls_html = <<<HTML
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_1q}' class='btn'>{$page_1q}</button>
             {$mid_controls_html}
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_3q}' class='btn'>{$page_3q}</button>
+            HTML;
+        } else if ($last_page > 3) {
+            $mid_controls_html = <<<HTML
+            <button type='submit' form='page_controls_{$loc}' name='page' value='{$page_mid}' class='btn'>{$page_mid}</button>
             HTML;
         }
 
@@ -109,17 +131,14 @@ function func_get_controlpanel_html($current_page, $last_page, $search_token="")
         </form>
         </div>
         <div style='width: 44%;' class='inline-block'>
-        <input id='search_box_{$loc}' class='search_box' type="text" placeholder='Search' style='width: 365px;' aria-label='search' required />
-        <button type='button' form='search_{$loc}' class='edit-submit btnlink search_button'>{$search_icon}</button>
+            {$search_box[$loc]}
         </div>
         <div style='width: 34%;' class='inline-block text-center'>
-        <form id='page_controls_{$loc}' action='features_admin.php' method='POST'>
             <button type='submit' form='page_controls_{$loc}' name='page' value='1' class='btn'>1</button>
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$prev_page}' class='btn'{$disabled_prev_button}>{$prev_page_sym}</button>
             {$mid_controls_html}
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$next_page}' class='btn'{$disabled_next_button}>{$next_page_sym}</button>
             <button type='submit' form='page_controls_{$loc}' name='page' value='{$last_page}' class='btn'>{$last_page}</button>
-        </form>
         </div>
         <div style='width: 5%' class='inline-block text-right'>Page {$current_page}</div>
         <!-- END Control Panel {$loc} -->
@@ -128,21 +147,5 @@ function func_get_controlpanel_html($current_page, $last_page, $search_token="")
 
     return $page_controls;
 } // END func_get_controlpanel()
-
-function get_checkbox_ajax() {
-    $checked_checkbox = CHECKED_CHECKBOX;
-    $empty_checkbox = EMPTY_CHECKBOX;
-
-    return <<<JS
-
-    JS;
-} // END get_checkbox_ajax()
-
-function get_checkbox_column_ajax() {
-    return <<<JS
-
-    JS;
-}
-
 
 ?>

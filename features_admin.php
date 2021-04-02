@@ -6,14 +6,10 @@ require_once __DIR__ . "/features_admin_func.php";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     switch (true) {
     case isset($_POST['refresh']) && $_POST['refresh'] === "1":
-        clean_post();
-        $page = ctype_digit($_POST['page']) ? intval($_POST['page']) : 1;
-        $search_token = $_POST['search_token'];
-        $res = db_get_page_data($page, $search_token);
-        $controls_html = func_get_controlpanel_html($page, $res['last_page'], $search_token);
-        $table_html = func_get_features_table_html($res['features']);
+        $res = func_get_page();
+        file_put_contents('/home/vagrant/log.out', print_r($res, true));
         header("Content-Type: plain/text");
-        print $controls_html['top'] . $table_html . $controls_html['bottom'];
+        print $res;
         break;
 
     case isset($_POST['toggle_column']) && $_POST['toggle_column'] === "1":
@@ -43,7 +39,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         break;
 
     case isset($_POST['cancel_form']):
-    case isset($_POST['page']):
         break;
 
     default:
@@ -150,8 +145,4 @@ function edit_form() {
 
     print_footer();
 } // END function edit_form()
-
-function build_table($data) {
-
-}
 ?>
