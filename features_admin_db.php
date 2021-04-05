@@ -64,7 +64,7 @@ function db_change_column() {
     $first_row = ($page-1) * $rows_per_page;  // starting row, zero based.
 
     if ($search_token !== "") {
-        $regexp = "AND `name` REGEXP ?";
+        $regexp = "WHERE `name` REGEXP ?";
         $params = array("siii",  $search_token, $first_row, $rows_per_page, $val);
     } else {
         $regexp = "";
@@ -86,6 +86,9 @@ function db_change_column() {
 
     db_connect($db);
     $query = $db->prepare($sql);
+    if (is_bool($query)) {
+        return $db->error;
+    }
     $query->bind_param(...$params);
     $query->execute();
 
@@ -245,11 +248,16 @@ function db_get_page_data($page, $search_token="") {
     // Used in 'feature_list' query.  Constrain query by search token or select entire table.
     if ($search_token === "") {
         $where = "";
-        $params = array("ii", $first_row, $rows_per_page);
+        $params['feature_list'] = array("ii", $first_row, $rows_per_page);
+        $params['feature_count'] = null;
+
     } else {
         $where = "WHERE `name` REGEXP ?";
-        $params = array ("sii", $search_token, $first_row, $rows_per_page);
+        $params['feature_list'] = array ("sii", $search_token, $first_row, $rows_per_page);
+        $params['feature_count'] = array("s", $search_token);
     }
+
+    file_put_contents("/home/vagrant/var.out", var_export($first_row, true) . PHP_EOL);
 
     // Query to get current page of features
     $sql['feature_list'] = <<<SQL
@@ -260,12 +268,12 @@ function db_get_page_data($page, $search_token="") {
     SQL;
 
     // Query for how many features are in the DB?  (to determine how many pages there are)
-    $sql['feature_count'] = "SELECT COUNT(*) FROM `features`";
+    $sql['feature_count'] = "SELECT COUNT(*) FROM `features` {$where}";
 
     db_connect($db);
     // Run query to get features for current page
     $query = $db->prepare($sql['feature_list']);
-    $query->bind_param(...$params);
+    $query->bind_param(...$params['feature_list']);
     $query->execute();
     $query->bind_result($r_id, $r_name, $r_label, $r_lists, $r_tracked);
     while ($query->fetch()) {
@@ -281,9 +289,12 @@ function db_get_page_data($page, $search_token="") {
 
     // Run query to get feature count and determine how many pages there are.
     $query = $db->prepare($sql['feature_count']);
+    if (!is_null($params['feature_count'])) $query->bind_param(...$params['feature_count']);
     $query->execute();
     $query->bind_result($r_count);
     $query->fetch();
+
+    file_put_contents("/home/vagrant/var.out", var_export($sql['feature_count'], true) . PHP_EOL);
     $total_pages = intval(ceil($r_count / $rows_per_page));
 
     $response = !empty($db->error_list) ? "<p class='red-text'>&#10006; DB Error: {$db->error}." : "";
