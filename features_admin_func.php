@@ -65,7 +65,7 @@ function func_get_features_table_html($feature_list) {
 
         $html['edit_button'] = <<<HTML
         <form id='edit_form_{$feature['id']}' action='features_admin.php' method='POST'>
-            <button type='submit' form='edit_form_{$feature['id']}' name='edit_id' class='edit-submit' value='{$feature['id']}'>EDIT</button>
+            <button type='submit' form='edit_form_{$feature['id']}' name='edit-feature' class='edit-submit' value='{$feature['id']}'>EDIT</button>
         </form>
         HTML;
 
@@ -153,7 +153,7 @@ function func_get_controlpanel_html($current_page, $last_page, $search_token="")
         <!-- BEGIN Control Panel {$loc} -->
         <div style='width: 15%; margin-bottom: 10px;' class='inline-block'>
         <form id='new_feature_{$loc}' action='features_admin.php' method='POST'>
-            <button type='submit' form='new_feature_top' name='edit_id' class='btn' value='new'>New Feature</button>
+            <button type='submit' form='new_feature_top' name='edit-feature' class='btn' value='new'>New Feature</button>
         </form>
         </div>
         <div style='width: 44%;' class='inline-block'>

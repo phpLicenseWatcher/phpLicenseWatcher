@@ -148,7 +148,7 @@ function db_change_single() {
  *
  * @return string response message from operation (either success or error message).
  */
-function db_process() {
+function db_edit_feature() {
     // Validate and set.
     clean_post();
     $id = isset($_POST['id']) ? $_POST['id'] : null;
@@ -198,7 +198,7 @@ function db_process() {
     $query->close();
     $db->close();
 
-    return array('msg'=>$response_msg, 'page'=>$page);
+    return $response_msg;
 } // END function db_process()
 
 /**
@@ -229,15 +229,15 @@ function db_delete_feature() {
     $query->execute();
 
     if (empty($db->error_list)) {
-        $response = "<p class='green-text'>&#10004; Successfully deleted ID {$id}: {$name}";
+        $response_msg = "<p class='green-text'>&#10004; Successfully deleted ID {$id}: {$name}";
     } else {
-        $response = "<p class='red-text'>&#10006; ID ${id}: ${name}, DB Error: {$db->error}.";
+        $response_msg = "<p class='red-text'>&#10006; ID ${id}: ${name}, DB Error: {$db->error}.";
     }
 
     $query->close();
     $db->close();
 
-    return array('msg'=>$response, 'page'=>intval($page));
+    return $response_msg;
 } //END function delete_feature()
 
 function db_get_page_data($page, $search_token="") {
