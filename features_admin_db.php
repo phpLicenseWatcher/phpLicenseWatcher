@@ -162,10 +162,10 @@ function db_edit_feature() {
     switch(false) {
     // $id must be all numbers or the word "new"
     case preg_match("/^\d+$|^new$/", $id):
-        return array('msg'=>"<p class='red-text'>&#10006; Invalid feature ID \"{$id}\"", 'page'=>$page);
+        return array('msg'=>"Invalid feature ID \"{$id}\"", 'lvl'=>"failure");
     // $name cannot be blank
     case !empty($name):
-        return array('msg'=>"<p class='red-text'>&#10006; Feature name cannot be blank", 'page'=>$page);
+        return array('msg'=>"Feature name cannot be blank", 'lvl'=>"failure");
     }
     // $label can be blank.
     // END error check
@@ -190,9 +190,9 @@ function db_edit_feature() {
 
     if (empty($db->error_list)) {
         if (!empty($label)) $label = " ({$label})";
-        $response_msg = "<span class='green-text'>&#10004; {$name}{$label} successfully {$op}.</span>";
+        $response_msg = array('msg' => "{$name}{$label} successfully {$op}.", 'lvl' => "success");
     } else {
-        $response_msg = "<span class='red-text'>&#10006; (${name}) DB Error: {$db->error}.</span>";
+        $response_msg = array('msg' => "(${name}) DB Error: {$db->error}.", 'lvl' => "failure");
     }
 
     $query->close();
@@ -207,16 +207,13 @@ function db_edit_feature() {
  * @return array success/error message and page to return to.
  */
 function db_delete_feature() {
-    log_var($_POST);
-
-
     // validate
     clean_post();
     switch (false) {
     case isset($_POST['name']):
     case isset($_POST['id']) && ctype_digit($_POST['id']):
         // Do not process
-        return "<p class='red-text'>&#10006; Request to delete a feature has failed validation.";
+        return array('msg' => "Request to delete a feature has failed validation.", 'lvl' => "failure");
     }
 
     $name = htmlspecialchars($_POST['name']);
@@ -230,9 +227,9 @@ function db_delete_feature() {
     $query->execute();
 
     if (empty($db->error_list)) {
-        $response_msg = "<p class='green-text'>&#10004; Successfully deleted ID {$id}: {$name}";
+        $response_msg = array('msg' => "Successfully deleted ID {$id}: {$name}", 'lvl' => "success");
     } else {
-        $response_msg = "<p class='red-text'>&#10006; ID ${id}: ${name}, DB Error: {$db->error}.";
+        $response_msg = array('msg' => "ID ${id}: ${name}, DB Error: {$db->error}.", 'lvl' => "failure");
     }
 
     $query->close();

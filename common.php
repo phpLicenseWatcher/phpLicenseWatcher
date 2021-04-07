@@ -125,6 +125,39 @@ function db_get_servers(object &$db, array $cols=array(), array $ids=array(), st
 }
 
 /**
+ * Get HTML block to display a bootstrap alert
+ *
+ * @param string $msg Alert message to display
+ * @param string $lvl Alert level ("success", "failure", or default of info alert);
+ * @return string HTML block of alert to be added to view.
+ */
+function get_alert_html($msg, $lvl="info") {
+    switch($lvl) {
+    case "success":
+        $msg = "&#10004; " . $msg;  // prepend checkmark
+        $class = "alert-success";   // bootstrap class
+        break;
+    case "failure":
+        $msg = "&#10006; " . $msg;  // prepend crossmark
+        $class = "alert-danger";    // bootstrap class
+        break;
+    default:
+        $class = "alert-info";
+        break;
+    }
+
+    return <<<HTML
+    <div class='alert {$class} alert-dismissible' role='alert'>
+        {$msg}
+        <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
+            <span aria-hidden='true'>&times;</span>
+        </button>
+    </div>
+    HTML;
+
+}
+
+/**
  * Debug helper function to print preformatted SQL code to browser.
  *
  * This is extremely similar to print_var().  Possibly remove this function in the future.

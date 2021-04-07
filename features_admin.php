@@ -53,20 +53,20 @@ exit;
  *
  * Control panel and features table are controlled by Jquery/Ajax.
  *
- * @param string $msg Optional error/confirmation message to add to view.
+ * @param mixed $alert Optional alert message to display.
  */
-function main_form($msg="") {
-    // wrap existing $msg into bootstrap alert
-    if ($msg !== "") {
-        $msg = "<p>" . $msg;
-        // $msg = <<<HTML
-        // <div class='alert alert-primary alert-dismissible' role='alert'>
-        //     {$msg}
-        //     <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
-        //         <span aria-hidden='true'>&times;</span>
-        //     </button>
-        // </div>
-        // HTML;
+function main_form($alert=NULL) {
+    switch(true) {
+    case is_string($alert):
+        $alert_html = get_alert_html($alert);
+        break;
+    case isset($alert['msg']) && isset($alert['lvl']):
+        $alert_html = get_alert_html($alert['msg'], $alert['lvl']);
+        break;
+    case is_null($alert):
+    default:
+        $alert_html = "";
+        break;
     }
 
     // Print initial view.  Ajax data is added to DOM at #features_admin_body.
@@ -77,7 +77,7 @@ function main_form($msg="") {
     <script src="features_admin_jquery.js"></script>
     <h1>Features Administration</h1>
     <p>You may edit an existing feature's name, label, boolean statuses, or add a new feature to the database.
-    {$msg}
+    {$alert_html}
     <div id='features_admin_body'></div>
     HTML;
 
