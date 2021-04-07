@@ -152,4 +152,11 @@ function print_var ($var) {
     }
 }
 
+function log_var($var, $num=0) {
+    global $debug; // from config.php
+    if (isset($debug) && $debug == 1) {
+        $export = var_export($var, true);
+        file_put_contents("/home/vagrant/var{$num}.log", $export);
+    }
+}
 ?>

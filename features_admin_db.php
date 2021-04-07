@@ -190,9 +190,9 @@ function db_edit_feature() {
 
     if (empty($db->error_list)) {
         if (!empty($label)) $label = " ({$label})";
-        $response_msg = "<p class='green-text'>&#10004; {$name}{$label} successfully {$op}.";
+        $response_msg = "<span class='green-text'>&#10004; {$name}{$label} successfully {$op}.</span>";
     } else {
-        $response_msg = "<p class='red-text'>&#10006; (${name}) DB Error: {$db->error}.";
+        $response_msg = "<span class='red-text'>&#10006; (${name}) DB Error: {$db->error}.</span>";
     }
 
     $query->close();
@@ -207,19 +207,20 @@ function db_edit_feature() {
  * @return array success/error message and page to return to.
  */
 function db_delete_feature() {
+    log_var($_POST);
+
+
     // validate
     clean_post();
     switch (false) {
     case isset($_POST['name']):
     case isset($_POST['id']) && ctype_digit($_POST['id']):
-    case isset($_POST['page']) && ctype_digit($_POST['page']):
         // Do not process
-        return array('msg'=>"<p class='red-text'>&#10006; Request to delete a feature has failed validation.", 'page'=>1);
+        return "<p class='red-text'>&#10006; Request to delete a feature has failed validation.";
     }
 
     $name = htmlspecialchars($_POST['name']);
     $id = intval($_POST['id']);
-    $page = intval($_POST['page']);
 
     db_connect($db);
     $sql = "DELETE FROM `features` WHERE `id`=?";
@@ -257,8 +258,6 @@ function db_get_page_data($page, $search_token="") {
         $params['feature_count'] = array("s", $search_token);
     }
 
-    file_put_contents("/home/vagrant/var.out", var_export($first_row, true) . PHP_EOL);
-
     // Query to get current page of features
     $sql['feature_list'] = <<<SQL
     SELECT * FROM `features`
@@ -294,7 +293,6 @@ function db_get_page_data($page, $search_token="") {
     $query->bind_result($r_count);
     $query->fetch();
 
-    file_put_contents("/home/vagrant/var.out", var_export($sql['feature_count'], true) . PHP_EOL);
     $total_pages = intval(ceil($r_count / $rows_per_page));
 
     $response = !empty($db->error_list) ? "<p class='red-text'>&#10006; DB Error: {$db->error}." : "";

@@ -3,6 +3,8 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/features_admin_db.php";
 require_once __DIR__ . "/features_admin_func.php";
 
+log_var($_POST, 1);
+
 // Process paths
 switch (true) {
 case isset($_POST['refresh']) && $_POST['refresh'] === "1":
@@ -34,6 +36,7 @@ case isset($_POST['post-edit-feature']) && $_POST['post-edit-feature'] === "1":
 
 case isset($_POST['delete-feature']) && $_POST['delete-feature'] === "1":
     $msg = db_delete_feature();
+    log_var($msg);
     main_form($msg);
     break;
 
@@ -53,8 +56,18 @@ exit;
  * @param string $msg Optional error/confirmation message to add to view.
  */
 function main_form($msg="") {
-    // prepend paragraph tag to any existing $msg
-    if ($msg !== "") $msg = "<p>" . $msg;
+    // wrap existing $msg into bootstrap alert
+    if ($msg !== "") {
+        $msg = "<p>" . $msg;
+        // $msg = <<<HTML
+        // <div class='alert alert-primary alert-dismissible' role='alert'>
+        //     {$msg}
+        //     <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
+        //         <span aria-hidden='true'>&times;</span>
+        //     </button>
+        // </div>
+        // HTML;
+    }
 
     // Print initial view.  Ajax data is added to DOM at #features_admin_body.
     print_header();
@@ -101,7 +114,7 @@ function edit_form() {
     // print view
     $is_checked['show_in_lists'] = $feature_details['show_in_lists'] === 1 ? " CHECKED" : "";
     $is_checked['is_tracked'] = $feature_details['is_tracked'] === 1 ? " CHECKED" : "";
-    $delete_button = $id === 'new' ? "" : "<button type='button' class='btn edit-form' id='delete-button' name='delete-feature' value='1'>Remove</button>";
+    $is_disabled = $id === 'new' ? " DISABLED" : "";
     print_header();
 
     print <<<HTML
@@ -119,17 +132,18 @@ function edit_form() {
             <label for='is_tracked'>Is Tracked?</label>
             <input type='checkbox' name='is_tracked' id='is_tracked' class='edit-form'{$is_checked['is_tracked']}>
             <input type='hidden' name='id' value='{$id}'>
-            <input type='hidden' id='delete-feature'>
+            <input type='hidden' name='delete-feature' value='0'>
         </div><div class='edit-form inline-block float-right'>
             <button type='submit' class='btn btn-cancel' name='cancel-edit-feature' value='1'>Cancel</button>
             <button type='submit' class='btn btn-primary edit-form' name='post-edit-feature' value='1'>Submit</button>
-            {$delete_button}
+            <button type='button' class='btn edit-form' id='delete-button'{$is_disabled}>Remove</button>
         </div>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script>
         $('#delete-button').click(function() {
             var name = $('#name').val();
             if (confirm("Confirm removal for \\"" + name + "\\"\\n*** THIS WILL REMOVE ALL USAGE HISTORY\\n*** THIS CANNOT BE UNDONE")) {
+                $('input[name="delete-feature"]').val("1");
                 $('form').submit();
             }
         });
