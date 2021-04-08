@@ -4,7 +4,7 @@ require_once __DIR__ . "/common.php";
 /**
  * Retrieve feature details by feature ID.
  *
- * @param int $id
+ * @param int $id Feature ID to lookup
  * @return mixed either a feature's details in associative array or error message on failure.
  */
 function db_get_feature_details_by_id($id) {
@@ -25,7 +25,7 @@ function db_get_feature_details_by_id($id) {
 
     if (!empty($db->error_list)) {
         $err_msg = htmlspecialchars($db->error);
-        return "<p class='red-text'>&#10006; DB Error: {$err_msg}.";
+        return array('msg' => "DB Error: {$err_msg}.", 'lvl' => "failure");
     }
 
     $query->close();
@@ -33,11 +33,13 @@ function db_get_feature_details_by_id($id) {
 
     // Make sure that $feature isn't an empty set.  Return error message when an empty set.
     $validate_feature = array_filter($feature, function($val) { return strlen($val) > 0; });
-    return !empty($validate_feature) ? $feature : "<p class='red-text'>&#10006; DB returned empty set during feature lookup.";
+    return !empty($validate_feature) ? $feature : array('msg' => "DB returned empty set during feature lookup.", 'lvl' => "failure");
 } // END function db_get_feature_details_by_id()
 
 /**
  * Change the status of either 'show_in_lists' or is_tracked' for all features.
+ *
+ * Used via POST/AJAX.
  *
  * @return string response message to display on main form.  Or empty string for no message.
  */
@@ -107,7 +109,9 @@ function db_change_column() {
 /**
  * Change a single feature's 'show_in_lists' or 'is_tracked' column.
  *
- * @return string response message to indocate success or error.
+ * Used via POST/AJAX.
+ *
+ * @return string response message to indicate success or error.
  */
 function db_change_single() {
     //validate
@@ -156,7 +160,6 @@ function db_edit_feature() {
     $label = isset($_POST['label']) && !empty($_POST['label']) ? htmlspecialchars($_POST['label']) : null;
     $show_in_lists = isset($_POST['show_in_lists']) && ($_POST['show_in_lists'] === "on" || $_POST['show_in_lists'] === true) ? 1 : 0;
     $is_tracked = isset($_POST['is_tracked']) && ($_POST['is_tracked'] === "on" || $_POST['is_tracked'] === true) ? 1 : 0;
-    $page = isset($_POST['page']) && ctype_digit($_POST['page']) ? intval($_POST['page']) : 1;
 
     // Further validate.  On error, stop and return error message.
     switch(false) {
@@ -238,6 +241,16 @@ function db_delete_feature() {
     return $response_msg;
 } //END function delete_feature()
 
+/**
+ * Get features table results from DB based on $page and $search_token.
+ *
+ * Used via POST/AJAX.  Page depends on constant ROWS_PER_PAGE, defined in common.php
+ * Result set is a single page subset of the Features table.
+ *
+ * @param string $page Page number of result subset.
+ * @param string $search_token Feature's `name` column search string for DB lookup.
+ * @return array ['response'] => alert to display, ['features'] => DB result set, ['last_page'] => final page number in DB result set.
+ */
 function db_get_page_data($page, $search_token="") {
     $rows_per_page = ROWS_PER_PAGE;  // defined in common.php
     $first_row = ($page-1) * $rows_per_page;  // starting row, zero based.
@@ -292,7 +305,7 @@ function db_get_page_data($page, $search_token="") {
 
     $total_pages = intval(ceil($r_count / $rows_per_page));
 
-    $response = !empty($db->error_list) ? "<p class='red-text'>&#10006; DB Error: {$db->error}." : "";
+    $response = !empty($db->error_list) ? "DB Error: {$db->error}." : "";
 
     $query->close();
     $db->close();

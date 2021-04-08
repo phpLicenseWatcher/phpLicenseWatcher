@@ -19,6 +19,9 @@ define ('SERVER_UP', "UP");
 define ('SERVER_DOWN', "DOWN");
 define ('SERVER_VENDOR_DOWN', "VENDOR DOWN");
 
+// Page size for features table
+define("ROWS_PER_PAGE", 50);
+
 // $lmutil_loc has been renamed $lmutil_binary, but master branch still has $lmutil_loc.
 if (isset($lmutil_loc) && !isset($lmutil_binary)) {
     $lmutil_binary = $lmutil_loc;

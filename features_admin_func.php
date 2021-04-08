@@ -10,8 +10,15 @@ define("EMPTY_CHECKBOX", '<svg xmlns="http://www.w3.org/2000/svg" height="24px" 
 define("CHECKED_CHECKBOX", '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#337ab7"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM17.99 9l-1.41-1.42-6.59 6.59-2.58-2.57-1.42 1.41 4 3.99z"/></svg>');
 define("PREVIOUS_PAGE", '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 0 24 24" width="16px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.61 7.41L14.2 6l-6 6 6 6 1.41-1.41L11.03 12l4.58-4.59z"/></svg>');
 define("NEXT_PAGE", '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 0 24 24" width="16px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M10.02 6L8.61 7.41 13.19 12l-4.58 4.59L10.02 18l6-6-6-6z"/></svg>');
-define("ROWS_PER_PAGE", 50);
 
+/**
+ * Get HTML of control panels and features table to be inserted into DOM.
+ *
+ * Requested via AJAX.  Requires 'page' number and 'search-token' via $_POST.
+ * Search token should be an empty string when no search is requested.
+ *
+ * @return string HTML for control panels and features table.
+ */
 function func_get_page() {
     clean_post();
     switch (false) {
@@ -28,6 +35,12 @@ function func_get_page() {
 
     return $controls_html['top'] . $table_html . $controls_html['bottom'];
 } // END function func_get_page()
+
+/**
+ * Get HTML for features table.  Requires feature's table result set from DB.
+ *
+ * @param array HTML tabvle of $feature_list
+ */
 
 function func_get_features_table_html($feature_list) {
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));

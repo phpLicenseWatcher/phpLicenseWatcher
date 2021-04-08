@@ -95,6 +95,20 @@ function edit_form() {
         if (is_string($feature_details)) {
             return $feature_details;
         }
+        // Provide delete button and handler script.
+        $delete_button = "<button type='button' class='btn edit-form' id='delete-button'>Remove</button>";
+        $delete_button_handler = <<<JS
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script>
+        $('#delete-button').click(function() {
+            var name = $('#name').val();
+            if (confirm("Confirm removal for \\"" + name + "\\"\\n*** THIS WILL REMOVE ALL USAGE HISTORY\\n*** THIS CANNOT BE UNDONE")) {
+                $('input[name="delete-feature"]').val("1");
+                $('form').submit();
+            }
+        });
+        </script>
+        JS;
         break;
     case $id === "new":
         $feature_details = array(
@@ -103,6 +117,9 @@ function edit_form() {
             'show_in_lists' => 1,
             'is_tracked' => 1
         );
+        // No delete button and handler script.
+        $delete_button = "";
+        $delete_button_handler = "";
         break;
     default:
         // Silently return to main view.
@@ -112,9 +129,8 @@ function edit_form() {
     // print view
     $is_checked['show_in_lists'] = $feature_details['show_in_lists'] === 1 ? " CHECKED" : "";
     $is_checked['is_tracked'] = $feature_details['is_tracked'] === 1 ? " CHECKED" : "";
-    $is_disabled = $id === 'new' ? " DISABLED" : "";
-    print_header();
 
+    print_header();
     print <<<HTML
     <h1>Feature Details</h1>
     <form action='features_admin.php' method='post' class='edit-form'>
@@ -134,18 +150,9 @@ function edit_form() {
         </div><div class='edit-form inline-block float-right'>
             <button type='submit' class='btn btn-cancel' name='cancel-edit-feature' value='1'>Cancel</button>
             <button type='submit' class='btn btn-primary edit-form' name='post-edit-feature' value='1'>Submit</button>
-            <button type='button' class='btn edit-form' id='delete-button'{$is_disabled}>Remove</button>
+            {$delete_button}
         </div>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script>
-        $('#delete-button').click(function() {
-            var name = $('#name').val();
-            if (confirm("Confirm removal for \\"" + name + "\\"\\n*** THIS WILL REMOVE ALL USAGE HISTORY\\n*** THIS CANNOT BE UNDONE")) {
-                $('input[name="delete-feature"]').val("1");
-                $('form').submit();
-            }
-        });
-        </script>
+        {$delete_button_handler}
     </form>
     HTML;
 
