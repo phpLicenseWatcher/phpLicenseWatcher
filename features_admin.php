@@ -3,8 +3,6 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/features_admin_db.php";
 require_once __DIR__ . "/features_admin_func.php";
 
-log_var($_POST, 1);
-
 // Process paths
 switch (true) {
 case isset($_POST['refresh']) && $_POST['refresh'] === "1":
@@ -55,7 +53,7 @@ exit;
  *
  * @param mixed $alert Optional alert message to display.
  */
-function main_form($alert=NULL) {
+function main_form($alert=null) {
     switch(true) {
     case is_string($alert):
         $alert_html = get_alert_html($alert);

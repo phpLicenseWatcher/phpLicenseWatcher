@@ -190,7 +190,7 @@ function db_edit_feature() {
 
     if (empty($db->error_list)) {
         if (!empty($label)) $label = " ({$label})";
-        $response_msg = array('msg' => "{$name}{$label} successfully {$op}.", 'lvl' => "success");
+        $response_msg = array('msg' => "{$name}{$label} successfully {$op}.", 'lvl' => "failure");
     } else {
         $response_msg = array('msg' => "(${name}) DB Error: {$db->error}.", 'lvl' => "failure");
     }
