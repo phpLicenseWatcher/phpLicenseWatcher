@@ -44,11 +44,11 @@ function func_get_page() {
 
 function func_get_features_table_html($feature_list) {
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
-    $headers = array("ID", "Name", "Label", "Show In Lists", "Is Tracked", "");
+    $headers = array("Name", "Label", "Show In Lists", "Is Tracked", "");
     $table->add_row($headers, array(), "th");
+    $table->update_cell($table->get_rows_count()-1, 2, array('class'=>"text-center"));
     $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center"));
-    $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-center"));
-    $table->update_cell($table->get_rows_count()-1, 5, array('class'=>"text-right"));
+    $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-right"));
 
     // Add an "uncheck/check all" button for checkbox columns
     foreach (array('show_in_lists', 'is_tracked') as $col) {
@@ -59,10 +59,10 @@ function func_get_features_table_html($feature_list) {
         <button type='button' value='{$val}' name='{$col}' class='edit-submit column_checkboxes'>{$chk}</button>
         HTML;
     }
-    $table->add_row(array("", "", "", $html['show_in_lists'], $html['is_tracked'], ""), array(), "th");
+    $table->add_row(array("", "", $html['show_in_lists'], $html['is_tracked'], ""), array(), "th");
+    $table->update_cell($table->get_rows_count()-1, 2, array('class'=>"text-center"));
     $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center"));
-    $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-center"));
-    $table->update_cell($table->get_rows_count()-1, 5, array('class'=>"text-right"));
+    $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-right"));
 
     // Build each feature row: `id`, `name`, `label`, `show_in_lists`, `is_tracked`, and EDIT control.
     $checked_checkbox = CHECKED_CHECKBOX;
@@ -83,7 +83,6 @@ function func_get_features_table_html($feature_list) {
         HTML;
 
         $row = array(
-            $feature['id'],
             $feature['name'],
             $feature['label'],
             $html['show_in_lists'],
@@ -92,9 +91,9 @@ function func_get_features_table_html($feature_list) {
         );
 
         $table->add_row($row);
+        $table->update_cell($table->get_rows_count()-1, 2, array('class'=>"text-center")); // class referred by bootstrap
         $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center")); // class referred by bootstrap
-        $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-center")); // class referred by bootstrap
-        $table->update_cell($table->get_rows_count()-1, 5, array('class'=>"text-right"));  // class referred by bootstrap
+        $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-right"));  // class referred by bootstrap
     }
 
     return $table->get_html();

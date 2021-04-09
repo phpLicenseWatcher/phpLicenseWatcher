@@ -54,6 +54,7 @@ exit;
  * @param mixed $alert Optional alert message to display.
  */
 function main_form($alert=null) {
+    // Format any alerts for display.
     switch(true) {
     case is_string($alert):
         $alert_html = get_alert_html($alert);
@@ -161,9 +162,9 @@ function edit_form() {
 } // END function edit_form()
 
 /**
- * Send response data to AJAX request.
+ * Send response data to Ajax request.
  *
- * @param string $data AJAX response data
+ * @param string $data Ajax response data
  */
 function ajax_send_data($data) {
     header("Content-Type: plain/text");

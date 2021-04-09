@@ -1,18 +1,34 @@
 <?php
 require_once __DIR__ . "/common.php";
 
+/* ----------------------------------------------------------------------------
+ * Notes
+ * Some functions will return an alert message, but it could be a string or
+ * array of strings depending on where the DB lookup result was requested.
+ *
+ * Alerts responding to Ajax requests should be a string message that will be
+ * printed via JS.  There are no green/red/blue alert designations.
+ *
+ * Any alerts responding to the feature edit form (via POST) can be either a
+ * "success" alert or "failure" alert.  This is sent via array with
+ * ['msg'] being the alert message, and ['lvl'] being "success" (green alert),
+ * "failure' (red alert), or "info" (blue alert).  Alternatively, the feature
+ * edit page alert can be a string message (not in an array), and it will be
+ * assumed to be a blue info alert.
+ * ------------------------------------------------------------------------- */
+
 /**
  * Retrieve feature details by feature ID.
  *
+ * This query is used by the feature edit form to pre-fill input elements.
+ *
  * @param int $id Feature ID to lookup
- * @return mixed either a feature's details in associative array or error message on failure.
+ * @return mixed either a feature's details in associative array or error message string on failure.
  */
 function db_get_feature_details_by_id($id) {
     if (!ctype_digit($id)) {
         return false;
     }
-
-    $id = intval($id);
 
     db_connect($db);
     $sql = "SELECT `name`, `label`, `show_in_lists`, `is_tracked` FROM `features` WHERE `id`=?";
@@ -25,7 +41,7 @@ function db_get_feature_details_by_id($id) {
 
     if (!empty($db->error_list)) {
         $err_msg = htmlspecialchars($db->error);
-        return array('msg' => "DB Error: {$err_msg}.", 'lvl' => "failure");
+        return "DB Error: {$err_msg}.";
     }
 
     $query->close();
@@ -33,7 +49,7 @@ function db_get_feature_details_by_id($id) {
 
     // Make sure that $feature isn't an empty set.  Return error message when an empty set.
     $validate_feature = array_filter($feature, function($val) { return strlen($val) > 0; });
-    return !empty($validate_feature) ? $feature : array('msg' => "DB returned empty set during feature lookup.", 'lvl' => "failure");
+    return !empty($validate_feature) ? $feature : "DB returned empty set during feature lookup.";
 } // END function db_get_feature_details_by_id()
 
 /**
@@ -41,7 +57,7 @@ function db_get_feature_details_by_id($id) {
  *
  * Used via POST/AJAX.
  *
- * @return string response message to display on main form.  Or empty string for no message.
+ * @return string alert message to display.  Or empty string for no alert.
  */
 function db_change_column() {
     clean_post();
@@ -79,7 +95,7 @@ function db_change_column() {
         SELECT `id`
         FROM `features`
         {$regexp}
-        ORDER BY `id` ASC
+        ORDER BY `name` ASC
         LIMIT ?,?
     ) AS ftmp
     SET f.`{$col}`=?
@@ -129,7 +145,7 @@ function db_change_single() {
     $col = $_POST['col'];
 
     $sql = "UPDATE `features` SET `{$col}`=? WHERE `id`=?";
-    $params = array("ii", intval($state), intval($id));
+    $params = array("ii", $state, $id);
 
     db_connect($db);
     $query = $db->prepare($sql);
@@ -180,7 +196,6 @@ function db_edit_feature() {
         $op = "added";
     } else {
         // Editing an existing server
-        $id = intval($id);
         $sql = "UPDATE `features` SET `name`=?, `label`=?, `show_in_lists`=?, `is_tracked`=? WHERE `ID`=?";
         $params = array("ssiii", $name, $label, $show_in_lists, $is_tracked, $id);
         $op = "updated";
@@ -193,7 +208,7 @@ function db_edit_feature() {
 
     if (empty($db->error_list)) {
         if (!empty($label)) $label = " ({$label})";
-        $response_msg = array('msg' => "{$name}{$label} successfully {$op}.", 'lvl' => "failure");
+        $response_msg = array('msg' => "{$name}{$label} successfully {$op}.", 'lvl' => "success");
     } else {
         $response_msg = array('msg' => "(${name}) DB Error: {$db->error}.", 'lvl' => "failure");
     }
@@ -220,7 +235,7 @@ function db_delete_feature() {
     }
 
     $name = htmlspecialchars($_POST['name']);
-    $id = intval($_POST['id']);
+    $id = $_POST['id'];
 
     db_connect($db);
     $sql = "DELETE FROM `features` WHERE `id`=?";
@@ -230,9 +245,9 @@ function db_delete_feature() {
     $query->execute();
 
     if (empty($db->error_list)) {
-        $response_msg = array('msg' => "Successfully deleted ID {$id}: {$name}", 'lvl' => "success");
+        $response_msg = array('msg' => "Successfully deleted {$name}", 'lvl' => "success");
     } else {
-        $response_msg = array('msg' => "ID ${id}: ${name}, DB Error: {$db->error}.", 'lvl' => "failure");
+        $response_msg = array('msg' => "({$name}) DB Error: {$db->error}.", 'lvl' => "failure");
     }
 
     $query->close();
@@ -249,7 +264,7 @@ function db_delete_feature() {
  *
  * @param string $page Page number of result subset.
  * @param string $search_token Feature's `name` column search string for DB lookup.
- * @return array ['response'] => alert to display, ['features'] => DB result set, ['last_page'] => final page number in DB result set.
+ * @return array ['alert'] => alert to display, ['features'] => DB result set, ['last_page'] => final page number in DB result set.
  */
 function db_get_page_data($page, $search_token="") {
     $rows_per_page = ROWS_PER_PAGE;  // defined in common.php
@@ -261,7 +276,6 @@ function db_get_page_data($page, $search_token="") {
         $where = "";
         $params['feature_list'] = array("ii", $first_row, $rows_per_page);
         $params['feature_count'] = null;
-
     } else {
         $where = "WHERE `name` REGEXP ?";
         $params['feature_list'] = array ("sii", $search_token, $first_row, $rows_per_page);
@@ -272,11 +286,11 @@ function db_get_page_data($page, $search_token="") {
     $sql['feature_list'] = <<<SQL
     SELECT * FROM `features`
     {$where}
-    ORDER BY `id` ASC
+    ORDER BY `name` ASC
     LIMIT ?, ?
     SQL;
 
-    // Query for how many features are in the DB?  (to determine how many pages there are)
+    // Query for how many features are in the DB. (to determine how many pages there are)
     $sql['feature_count'] = "SELECT COUNT(*) FROM `features` {$where}";
 
     db_connect($db);
@@ -305,11 +319,11 @@ function db_get_page_data($page, $search_token="") {
 
     $total_pages = intval(ceil($r_count / $rows_per_page));
 
-    $response = !empty($db->error_list) ? "DB Error: {$db->error}." : "";
+    $alert = !empty($db->error_list) ? "DB Error: {$db->error}." : "";
 
     $query->close();
     $db->close();
 
-    return array('response' => $response, 'features' => $results, 'last_page' => $total_pages);
-} //END function db_search()
+    return array('alert' => $alert, 'features' => $results, 'last_page' => $total_pages);
+} //END function db_get_page_data()
 ?>
