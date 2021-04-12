@@ -69,6 +69,11 @@ function db_connect(&$db) {
     if (!is_null($db->connect_error)) {
         die("Database Connect Error {$db->connect_errno}: {$db->connect_error}");
     }
+
+    // ensure we are using utf8mb4 character set
+    if (!$db->set_charset("utf8mb4")) {
+        die("DB Error: Could not set client character set.");
+    }
 }
 
 /**

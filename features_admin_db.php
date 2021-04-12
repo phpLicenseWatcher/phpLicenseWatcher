@@ -274,19 +274,27 @@ function db_get_page_data($page, $search_token="") {
     // Used in 'feature_list' query.  Constrain query by search token or select entire table.
     if ($search_token === "") {
         $where = "";
+        $order_by = "ORDER BY `name` ASC";
         $params['feature_list'] = array("ii", $first_row, $rows_per_page);
         $params['feature_count'] = null;
     } else {
-        $where = "WHERE `name` REGEXP ?";
-        $params['feature_list'] = array ("sii", $search_token, $first_row, $rows_per_page);
-        $params['feature_count'] = array("s", $search_token);
+        // REGEXP is not utf8 safe, so we are using LIKE to pattern match.
+        // Wildcards ('%' and '_') and '\' need to be escaped.
+        $search_token = preg_replace("/(%|_|\\\)/u", '\\\$0', $search_token); // escaping chars.
+        $search_token = "%{$search_token}%"; // adding wildcards to complete search pattern.
+        $where = "WHERE `name` LIKE ? OR `label` LIKE ?";
+        // ORDER BY `label` IS NULL ensures that NULL cols are sorted last.
+        // This works because 0 (false) is lower than 1 (true).
+        $order_by = "ORDER BY `label` IS NULL, `label` ASC, `name` ASC";
+        $params['feature_list'] = array ("ssii", $search_token, $search_token, $first_row, $rows_per_page);
+        $params['feature_count'] = array("ss", $search_token, $search_token);
     }
 
     // Query to get current page of features
     $sql['feature_list'] = <<<SQL
     SELECT * FROM `features`
     {$where}
-    ORDER BY `name` ASC
+    {$order_by}
     LIMIT ?, ?
     SQL;
 
