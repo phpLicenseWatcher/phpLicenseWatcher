@@ -279,7 +279,7 @@ function db_get_page_data($page, $search_token="") {
         $params['feature_count'] = null;
     } else {
         // REGEXP is not utf8 safe, so we are using LIKE to pattern match.
-        // Wildcards ('%' and '_') and '\' need to be escaped.
+        // Wildcard chars ('%' and '_') and '\' need to be escaped.
         $search_token = preg_replace("/(%|_|\\\)/u", '\\\$0', $search_token); // escaping chars.
         $search_token = "%{$search_token}%"; // adding wildcards to complete search pattern.
         $where = "WHERE `name` LIKE ? OR `label` LIKE ?";
