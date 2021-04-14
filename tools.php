@@ -16,11 +16,11 @@ function build_license_expiration_array($server, &$expiration_array) {
         $line = fgets ($file, 1024);
         if ( preg_match("/INCREMENT .*/i", $line, $out ) || preg_match("/FEATURE .*/i", $line, $out ) ) {
             $license = explode(" ", $out[0]);
-
-        	if ( $license[4] )  {
-            	// UNIX time stamps go only till year 2038 (or so) so convert
-            	// any license dates 9999 or 0000 (which means infinity) to
-            	// an acceptable year. 2036 seems like a good number
+            $days_to_expiration = 4001;  # > 4000;
+            if ( $license[4] )  {
+                // UNIX time stamps go only till year 2038 (or so) so convert
+                // any license dates 9999 or 0000 (which means infinity) to
+                // an acceptable year. 2036 seems like a good number
                 $license[4] = strtolower($license[4]);
                 $license[4] = str_replace("-9999", "-2036", $license[4]);
                 $license[4] = str_replace("-0000", "-2036", $license[4]);
@@ -34,10 +34,9 @@ function build_license_expiration_array($server, &$expiration_array) {
 
                 // Convert the date you got into UNIX time
                 $unixdate2 = strtotime($license[4]);
-        	}
-
-            $days_to_expiration = ceil ((1 + strtotime($license[4]) - $today) / 86400);
-
+                $dte = ceil ((1 + $unixdate2 - $today) / 86400);
+                $days_to_expiration = $dte;
+            }
             // If there is more than 4000 days (10 years+) until expiration, I
             // will consider the license to be permanent
             if ( $days_to_expiration > 4000 ) {
@@ -47,7 +46,7 @@ function build_license_expiration_array($server, &$expiration_array) {
 
             // Add to the expiration array
             $expiration_array[$license[1]][] = array (
-        	    "vendor_daemon"      => $license[2],
+                "vendor_daemon"      => $license[2],
                 "expiration_date"    => $license[4],
                 "num_licenses"       => $license[5],
                 "days_to_expiration" => (int) $days_to_expiration
@@ -151,16 +150,16 @@ function num_licenses_available($feature) {
 
     $fp = popen("{$lmutil_binary} lmstat -f {$feature} -c {$license_file}", "r");
     while ( !feof ($fp) ) {
-    	$line = fgets ($fp, 1024);
+        $line = fgets ($fp, 1024);
 
         // Look for features in the output. You will see stuff like
-    	// Users of Allegro_Viewer: (Total of 5 licenses available
-    	if ( preg_match("/^Users of/i", $line ) )  {
-    		$out = explode(" ", $line);
+        // Users of Allegro_Viewer: (Total of 5 licenses available
+        if ( preg_match("/^Users of/i", $line ) )  {
+            $out = explode(" ", $line);
             pclose($fp);
             // Return the number
-    		return $out[6];
-    	}
+            return $out[6];
+        }
     }
 }
 
@@ -193,8 +192,8 @@ function num_licenses_used($feature) {
         $line = fgets ($fp, 1024);
 
         // Look for features in the output. You will see stuff like
-	    // Users of Allegro_Viewer: (Total of 5 licenses available
-	    if ( preg_match("/, start/i", $line ) )
+        // Users of Allegro_Viewer: (Total of 5 licenses available
+        if ( preg_match("/, start/i", $line ) )
             $num_licenses++;
     }
 
@@ -328,12 +327,12 @@ class timespan
         $year = $this->leap($dec);
 
         while (floor($duration / $year) >= 1) {
-	       // We don't need this VV
-           //print date("F j, Y\n",$dec);
-           $this->years += 1;
-           $duration -= (int)$year;
-           $dec -= (int)$year;
-           $year = $this->leap($dec);
+            // We don't need this VV
+            //print date("F j, Y\n",$dec);
+            $this->years += 1;
+            $duration -= (int)$year;
+            $dec -= (int)$year;
+            $year = $this->leap($dec);
         }
 
         // 2. Number of months
