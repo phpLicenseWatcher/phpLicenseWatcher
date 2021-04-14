@@ -39,19 +39,19 @@ for ($i = 0; $i < count($expiration_array); $i++) {
                 if ((strcmp($myarray[$j]["days_to_expiration"], "permanent") != 0) && ($myarray[$j]["days_to_expiration"] <= $lead_time)) {
                     if ($myarray[$j]["days_to_expiration"] < 0) {
                         $myarray[$j]["days_to_expiration"] = "<span style='font-weight:bold;'>Already expired</span>";
-                        $table->add_row(array(
-                             $servers[$i]['name'],
-                             $servers[$i]['label'],
-                             $key,
-                             $myarray[$j]["expiration_date"],
-                             $myarray[$j]["days_to_expiration"],
-                             $myarray[$j]["num_licenses"]
-                        ));
-                        $table->update_cell(($table->get_rows_count()-1), 1, array('style'=>"text-align:center;"));
-                        $table->update_cell(($table->get_rows_count()-1), 3, array('style'=>"text-align:center;"));
-                        $table->update_cell(($table->get_rows_count()-1), 4, array('style'=>"text-align:center;"));
-                        $table->update_cell(($table->get_rows_count()-1), 5, array('style'=>"text-align:center;"));
                     }
+                    $table->add_row(array(
+                        $servers[$i]['name'],
+                        $servers[$i]['label'],
+                        $key,
+                        $myarray[$j]["expiration_date"],
+                        $myarray[$j]["days_to_expiration"],
+                        $myarray[$j]["num_licenses"]
+                    ));
+                    $table->update_cell(($table->get_rows_count()-1), 1, array('style'=>"text-align:center;"));
+                    $table->update_cell(($table->get_rows_count()-1), 3, array('style'=>"text-align:center;"));
+                    $table->update_cell(($table->get_rows_count()-1), 4, array('style'=>"text-align:center;"));
+                    $table->update_cell(($table->get_rows_count()-1), 5, array('style'=>"text-align:center;"));
                 }
             }
         }
@@ -79,7 +79,7 @@ if ($table->get_rows_count() > 1) {
         $headers[] = "Reply-To: {$do_not_reply_email}";
         $headers[] = 'X-Mailer: PHP/' . phpversion();
         mail($notify_address, "ALERT: License expiration within {$lead_time} days", $message , implode("\r\n", $headers));
-   }
+    }
 }
 
 // Print View
