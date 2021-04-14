@@ -75,6 +75,8 @@ HTML;
     // their expiration dates etc.
     foreach ($expiration_array as $key => $feature_array) {
         $total_licenses = 0;
+        $dte = 4000;
+
         for ($p = 0; $p < count($feature_array); $p++) {
             // Keep track of total number of licenses for a particular feature
             // this is since you can have licenses with different expiration
@@ -82,19 +84,19 @@ HTML;
 
             // Set row class if license is close to the expiration date.
             $row_attributes = array();
-            if ( $feature_array[$p]["days_to_expiration"] < 4000 ) {
-                if ( $feature_array[$p]["days_to_expiration"] <= $lead_time && $feature_array[$p]["days_to_expiration"] >= 0 ) {
+            if ( $feature_array[$p]["days_to_expiration"] < $dte ) {
+                $dte = $feature_array[$p]["days_to_expiration"];
+                if ( $dte <= $lead_time && $dte >= 0 ) {
                     $row_attributes['class'] = "expires_soon";
                 }
 
-                if ( $feature_array[$p]["days_to_expiration"] < 0 ) {
+                if ( $dte < 0 ) {
                     $row_attributes['class'] = "already_expired";
                 }
+                $license_msg  = "{$feature_array[$p]['num_licenses']} license(s) expire(s) in ";
+                $license_msg .= "{$feature_array[$p]['days_to_expiration']} day(s) Date of expiration: ";
+                $license_msg .= "{$feature_array[$p]['expiration_date']}";
             }
-
-            $license_msg  = "{$feature_array[$p]['num_licenses']} license(s) expire(s) in ";
-            $license_msg .= "{$feature_array[$p]['days_to_expiration']} day(s) Date of expiration: ";
-            $license_msg .= "{$feature_array[$p]['expiration_date']}";
         }
 
         $table->add_row(array($key, $feature_array[0]["vendor_daemon"], $total_licenses, $license_msg), $row_attributes);
