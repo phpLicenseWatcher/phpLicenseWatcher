@@ -1,0 +1,7 @@
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+*/4 * * * * wget -O - http://localhost/license_util.php >> /dev/null
+15 0 * * *  wget -O - http://localhost/license_cache.php >> /dev/null
+16 4 * * *  wget -O - http://localhost/license_alert.php >> /dev/null
+
