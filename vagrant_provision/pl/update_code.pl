@@ -10,7 +10,7 @@ use File::Spec::Functions qw(catdir catfile);
 
 # permit us to use modules from same dir as this script.
 use Cwd qw(abs_path);
-use lib dirname(abs_path($0));  
+use lib dirname(abs_path($0));
 use config;
 
 # main()
@@ -69,7 +69,7 @@ sub clear_html_folder {
 sub rsync_code {
     my ($source, $files);
     my $dest = catdir(@CONFIG::HTML_PATH);
-    my @file_list = qw(*.php *.html *.css);
+    my @file_list = qw(*.php *.html *.css *.js);
 
     # Normally, we just want to rsync development code, but a full provision
     # also requires config file and composer packages.

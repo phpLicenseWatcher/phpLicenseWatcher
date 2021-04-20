@@ -71,17 +71,28 @@ button.edit-submit:hover,
 button.edit-submit:focus {
     outline: none;
     color: #23527c;
-    text-decoration: underline;
+    text-decoration: none;
     cursor: pointer;
 }
 
-button.chkbox {
+button.btnlink {
     font-size: 1.25em;
     padding: 0px;
 }
 
-button.chkbox:hover,
-button.chkbox:focus {
+button.btnlink svg {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+button.btnlink:hover svg,
+button.btnlink:focus svg {
+    fill: #23527c;
+    cursor: pointer;
+}
+
+button.btnlink:hover,
+button.btnlink:focus {
     text-decoration: none;
 }
 

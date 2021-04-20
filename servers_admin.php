@@ -30,7 +30,7 @@ exit;
  *
  * @param string $response Print any error/success messages from a add or edit.
  */
-function main_form($response="") {
+function main_form($alert=null) {
     db_connect($db);
     $server_list = db_get_servers($db, array(), array(), "id", false);
     $db->close();
@@ -69,6 +69,20 @@ function main_form($response="") {
         }
     }
 
+    // Get alert HTML based on message/properties.
+    switch(true) {
+    case is_string($alert):
+        $alert_html = get_alert_html($alert);
+        break;
+    case isset($alert['msg']) && isset($alert['lvl']):
+        $alert_html = get_alert_html($alert['msg'], $alert['lvl']);
+        break;
+    case is_null($alert):
+    default:
+        $alert_html = "";
+        break;
+    }
+
     // Print view.
     print_header();
 
@@ -76,7 +90,7 @@ function main_form($response="") {
     <h1>Server Administration</h1>
     <p>You may edit an existing server's name, label, active status, or add a new server to the database.<br>
     Server names must be unique and in the form of "<code>port@domain.tld</code>".
-    {$response}
+    {$alert_html}
     <form id='server_list' action='servers_admin.php' method='POST'>
     {$table->get_html()}
     <p><button type='submit' form='server_list' name='edit_id' class='btn' value='new'>New Server</button>
@@ -92,7 +106,7 @@ function edit_form() {
 
     // Validate adding a new server or editing an existing server.
     // Skip back to the main_form() if something is wrong.
-    $err_msg = "<p class='red-text'>&#10006; Validation failed when requesting form to edit an existing server.";
+    $err_msg = array('msg' => "Validation failed when requesting form to edit an existing server.", 'lvl' => "failure");
     switch(true) {
     case ctype_digit($id):
         $server_details = server_details_by_getid($id);
@@ -154,19 +168,20 @@ function db_process() {
     $id = $_POST['submit_id'];
     $name = $_POST['name'];
     $label = $_POST['label'];
-    $is_active = $_POST['is_active'] === "on" ? 1 : 0;
+    // checkboxes are not included in POST when unchecked.
+    $is_active = isset($_POST['is_active']) && $_POST['is_active'] === "on" ? 1 : 0;
 
     // Error check.  On error, stop and return error message.
     switch(false) {
     // $id must be all numbers or the word "new"
     case preg_match("/^\d+$|^new$/", $id):
-        return "<p class='red-text'>&#10006; Invalid server ID \"{$id}\"";
+        return array('msg' => "Invalid server ID \"{$id}\"", 'lvl' => "failure");
     // $name must match port@domain.tld
     case preg_match("/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $name,):
-        return "<p class='red-text'>&#10006; Server name MUST be in form <code>port@domain.tld</code>";
+        return array('msg' => "Server name MUST be in form <code>port@domain.tld</code>", 'lvl' => "failure");
     // $label cannot be blank
     case !empty($label):
-        return "<p class='red-text'>&#10006; Server's label cannot be blank";
+        return array('msg' => "Server's label cannot be blank", 'lvl' => "failure");
     }
     // END error check
 
@@ -188,9 +203,9 @@ function db_process() {
     $query->execute();
 
     if (empty($db->error_list)) {
-        $response_msg = "<p class='green-text'>&#10004; {$name} ({$label}) successfully {$op}.";
+        $response_msg = array('msg' => "{$name} ({$label}) successfully {$op}.", 'lvl' => "success");
     } else {
-        $response_msg = "<p class='red-text'>&#10006; (${name}) DB Error: {$db->error}.";
+        $response_msg = array('msg' => "(${name}) DB Error: {$db->error}.", 'lvl' => "failure");
     }
 
     $query->close();
@@ -216,7 +231,7 @@ function db_delete_server() {
     if (ctype_digit($_POST['delete_id'])) {
         $id = $_POST['delete_id'];
     } else {
-        return "<p class='red-text'>&#10006; Validation failed when attempting to remove a server from DB.";
+        return array('msg' => "Validation failed when attempting to remove a server from DB.", 'lvl' => "failure");
     }
 
     $sql = "DELETE FROM `servers` WHERE `id`=?";
@@ -231,9 +246,9 @@ function db_delete_server() {
     $query->execute();
 
     if (empty($db->error_list)) {
-        $response = "<p class='green-text'>&#10004; Successfully deleted ID {$id}: \"{$name}\" ({$label})";
+        $response = array('msg' => "Successfully deleted ID {$id}: \"{$name}\" ({$label})", 'lvl' => "success");
     } else {
-        $response = "<p class='red-text'>&#10006; ID ${id}: \"${name}\" ({$label}), DB Error: \"{$db->error}\"";
+        $response = array('msg' => "ID ${id}: \"${name}\" ({$label}), DB Error: \"{$db->error}\"", 'lvl' => "failure");
     }
 
     $query->close();
