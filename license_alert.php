@@ -13,7 +13,7 @@ require_once __DIR__ . "/tools.php";
 require_once __DIR__ . "/html_table.php";
 
 db_connect($db);
-$servers = db_get_servers($db, array('name'));
+$servers = db_get_servers($db, array('name', 'label'));
 $db->close();
 
 // Date when the licenses will expire
@@ -26,8 +26,8 @@ foreach ($servers as $i => $server) {
 
 $table = new html_table(array('class'=>"table alt-rows-bgcolor"));
 
-$colHeaders = array("Server", "Server description", "Feature expiring", "Expiration date",
-    "Days to expiration", "Number of license(s) expiring");
+$colHeaders = array("Server", "Server label", "Feature expiring", "Expiration date",
+                    "Days to expiration", "Number of license(s) expiring");
 
 $table->add_row($colHeaders, array(), "th");
 
@@ -42,7 +42,7 @@ for ($i = 0; $i < count($expiration_array); $i++) {
                     }
                     $table->add_row(array(
                         $servers[$i]['name'],
-                        $description[$i],
+                        $servers[$i]['label'],
                         $key,
                         $myarray[$j]["expiration_date"],
                         $myarray[$j]["days_to_expiration"],
@@ -69,14 +69,14 @@ Licenses will expire at 23:59 on the day of expiration.
 HTML;
 
 // If the table has more than one row (header row will be one) there are
-// expiring licenses.  We may also add a message to the view.
+// expiring licenses alerts to be emailed.
 if ($table->get_rows_count() > 1) {
-    if ($notify_address && !isset($_GET['nomail'])) {
+    if ($notify_address && $do_not_reply_address && !isset($_GET['nomail'])) {
         $message .= "Emailing to {$notify_address}<p>\n";
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-type: text/html; charset=iso-8859-1';
-        $headers[] = 'From: arc-donotreply@rpi.edu' ;
-        $headers[] = 'Reply-To: arc-donotreply@rpi.edu' ;
+        $headers[] = "From: {$do_not_reply_email}";
+        $headers[] = "Reply-To: {$do_not_reply_email}";
         $headers[] = 'X-Mailer: PHP/' . phpversion();
         mail($notify_address, "ALERT: License expiration within {$lead_time} days", $message , implode("\r\n", $headers));
     }
