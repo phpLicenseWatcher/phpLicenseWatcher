@@ -1,9 +1,9 @@
 <?php
-// Config file for Vagrant VM
+// This is a sample config file that can be copied to webroot and adjusted as needed.
 
 // $lmutil_binary is the full path & file where lmutil is located.
 // lmutil must have execute permissions for the web server user.
-$lmutil_binary="/opt/flexnetserver/lmutil";
+$lmutil_binary="/usr/local/bin/lmutil";
 
 // $cache_dir specifies what directory is used to store/process cache files.
 // /tmp is not advised.  $cache_lifetime is how long a cache file is retained
@@ -27,11 +27,12 @@ $collection_interval=10;
 
 // Database information.  Note that only the mysqli driver is suppoprted.
 $db_hostname="localhost";
-$db_username="vagrant";
-$db_password="vagrant";
-$db_database="vagrant";
+$db_username="phplw";
+$db_password="phplw_password";
+$db_database="licenses";
 
 // IMPORTANT: Change this to 0 when used in production!
 // Allows debug logging when set to 1.
-$debug = 1;
+$debug = 0;
+
 ?>
