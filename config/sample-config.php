@@ -1,5 +1,6 @@
 <?php
-// This is a sample config file that can be copied to webroot and adjusted as needed.
+// This is a sample config file that can be copied to webroot
+// (e.g. /var/www/html) as "config.php" and adjusted as needed.
 
 // $lmutil_binary is the full path & file where lmutil is located.
 // lmutil must have execute permissions for the web server user.
@@ -14,7 +15,7 @@ $cache_lifetime=7200;
 // License expiration alerts are sent to $notify_address.
 // $do_not_reply_address is filled in the reply field.
 // License alert emails are disabled when either is left blank.
-// Licenses expiring within $lead_time (in days) are noted in the alerts.
+// Licenses expiring within $lead_time (in days) are included in the alerts.
 $notify_address="";
 $do_not_reply_address="";
 $lead_time=30;
@@ -33,6 +34,6 @@ $db_database="licenses";
 
 // IMPORTANT: Change this to 0 when used in production!
 // Allows debug logging when set to 1.
-$debug = 0;
+$debug=0;
 
 ?>
