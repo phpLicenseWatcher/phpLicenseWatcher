@@ -5,12 +5,12 @@ Adapt `config.php` and set the passwords in `docker-compose.yml`.
 Also change the hostname *yourhost.com* in the `php.ini` configuration
 file. Otherwise e-mails most likely won't work.
 
-# docker compose
+# Docker Compose
 Run this command from the `docker` directory.
 
 * `docker-compose up --build --force-recreate --no-deps -d`
 
-# Setup MySQL DB
+# Setup MariaDB DB
 Run these commands from the `database` directory.
 
 1. `docker cp phplicensewatcher.maria.sql docker_mariadb_1:/app`
