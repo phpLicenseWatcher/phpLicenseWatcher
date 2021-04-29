@@ -20,6 +20,13 @@ $test_values  = phpversion();
 $test_results = $test ? PASS_MARK : FAIL_MARK;
 $table->add_row(array($test_names, $test_values, $test_results));
 
+// Check for 64-bit Unix timestamp
+$test         = strtotime("9999-12-31") === 253402214400;
+$test_names   = "64-bit Unix Timestamp";
+$test_values  = $test ? "64-bit" : "32-bit";
+$test_results = $test ? PASS_MARK : FAIL_MARK;
+$table->add_row(array($test_names, $test_values, $test_results));
+
 // TO DO: Expand this test to validate config.php values.
 $test         = is_readable("config.php");
 $test_names   = "config.php";

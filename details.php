@@ -93,9 +93,16 @@ HTML;
                 if ( $dte < 0 ) {
                     $row_attributes['class'] = "already_expired";
                 }
-                $license_msg  = "{$feature_array[$p]['num_licenses']} license(s) expire(s) in ";
-                $license_msg .= "{$feature_array[$p]['days_to_expiration']} day(s) Date of expiration: ";
-                $license_msg .= "{$feature_array[$p]['expiration_date']}";
+
+                if ($feature_array[$p]['expiration_date'] === "permanent") {
+                    $license_msg = "{$feature_array[$p]['num_licenses']} license(s) are permanent.";
+                } else {
+                    $license_msg = <<<MSG
+                    {$feature_array[$p]['num_licenses']} license(s) expire(s) in
+                    {$feature_array[$p]['days_to_expiration']} day(s) Date of expiration:
+                    {$feature_array[$p]['expiration_date']}
+                    MSG;
+                }
             }
         }
 
