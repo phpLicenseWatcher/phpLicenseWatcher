@@ -22,12 +22,12 @@ function build_license_expiration_array($server, &$expiration_array) {
                 $license[4] = strtolower($license[4]);
                 switch(true) {
                 // Indicators that license is perpetual/permanent
-                case preg_match("/-0000$/", license[4]) === 1:
-                case preg_match("/-9999$/", license[4]) === 1:
-                case preg_match("/-2099$/", license[4]) === 1:
-                case preg_match("/-2242$/", license[4]) === 1:
-                case preg_match("/-00$/", license[4]) === 1:
-                case preg_match("/-0$/", license[4]) === 1:
+                case preg_match("/-0000$/", $license[4]) === 1:
+                case preg_match("/-9999$/", $license[4]) === 1:
+                case preg_match("/-2099$/", $license[4]) === 1:
+                case preg_match("/-2242$/", $license[4]) === 1:
+                case preg_match("/-00$/", $license[4]) === 1:
+                case preg_match("/-0$/", $license[4]) === 1:
                 case $license[4] === "permanent":
                     $days_to_expiration = 0;
                     $license[4] = "permanent";
