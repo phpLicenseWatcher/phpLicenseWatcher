@@ -5,6 +5,7 @@ $lmutil_binary="/opt/flexnetserver/lmutil";
 $cache_dir="/var/cache/phplw/";
 $cache_lifetime=7200;  // In seconds. e.g. 7200 = 2 hours.
 $notify_address="";
+$do_not_reply_address="";
 $lead_time=30;
 $disable_autorefresh=0;
 //$disable_license_removal=1;
