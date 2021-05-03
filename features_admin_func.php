@@ -4,10 +4,10 @@ require_once __DIR__ . "/html_table.php";
 
 // Features admin view control icons
 // Open source SVG Material Icons retrieved from https://fonts.google.com/icons
-define("SEARCH_ICON", '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#337ab7"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
-define("CANCEL_SEARCH", '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#337ab7"><g><rect fill="none" height="24" width="24"/></g><g><g><path d="M15.5,14h-0.79l-0.28-0.27C15.41,12.59,16,11.11,16,9.5C16,5.91,13.09,3,9.5,3C6.08,3,3.28,5.64,3.03,9h2.02 C5.3,6.75,7.18,5,9.5,5C11.99,5,14,7.01,14,9.5S11.99,14,9.5,14c-0.17,0-0.33-0.03-0.5-0.05v2.02C9.17,15.99,9.33,16,9.5,16 c1.61,0,3.09-0.59,4.23-1.57L14,14.71v0.79l5,4.99L20.49,19L15.5,14z"/><polygon points="6.47,10.82 4,13.29 1.53,10.82 0.82,11.53 3.29,14 0.82,16.47 1.53,17.18 4,14.71 6.47,17.18 7.18,16.47 4.71,14 7.18,11.53"/></g></g></svg>');
-define("EMPTY_CHECKBOX", '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#337ab7"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>');
-define("CHECKED_CHECKBOX", '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#337ab7"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM17.99 9l-1.41-1.42-6.59 6.59-2.58-2.57-1.42 1.41 4 3.99z"/></svg>');
+define("SEARCH_ICON", '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#2f6fa7"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
+define("CANCEL_SEARCH", '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#2f6fa7"><g><rect fill="none" height="24" width="24"/></g><g><g><path d="M15.5,14h-0.79l-0.28-0.27C15.41,12.59,16,11.11,16,9.5C16,5.91,13.09,3,9.5,3C6.08,3,3.28,5.64,3.03,9h2.02 C5.3,6.75,7.18,5,9.5,5C11.99,5,14,7.01,14,9.5S11.99,14,9.5,14c-0.17,0-0.33-0.03-0.5-0.05v2.02C9.17,15.99,9.33,16,9.5,16 c1.61,0,3.09-0.59,4.23-1.57L14,14.71v0.79l5,4.99L20.49,19L15.5,14z"/><polygon points="6.47,10.82 4,13.29 1.53,10.82 0.82,11.53 3.29,14 0.82,16.47 1.53,17.18 4,14.71 6.47,17.18 7.18,16.47 4.71,14 7.18,11.53"/></g></g></svg>');
+define("EMPTY_CHECKBOX", '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#2f6fa7"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>');
+define("CHECKED_CHECKBOX", '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#2f6fa7"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM17.99 9l-1.41-1.42-6.59 6.59-2.58-2.57-1.42 1.41 4 3.99z"/></svg>');
 define("PREVIOUS_PAGE", '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 0 24 24" width="16px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.61 7.41L14.2 6l-6 6 6 6 1.41-1.41L11.03 12l4.58-4.59z"/></svg>');
 define("NEXT_PAGE", '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 0 24 24" width="16px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M10.02 6L8.61 7.41 13.19 12l-4.58 4.59L10.02 18l6-6-6-6z"/></svg>');
 
@@ -44,11 +44,10 @@ function func_get_page() {
 
 function func_get_features_table_html($feature_list) {
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
-    $headers = array("Name", "Label", "Show In Lists", "Is Tracked", "");
+    $headers = array("Name", "Label", "Show In Lists", "Is Tracked");
     $table->add_row($headers, array(), "th");
     $table->update_cell($table->get_rows_count()-1, 2, array('class'=>"text-center"));
     $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center"));
-    $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-right"));
 
     // Add an "uncheck/check all" button for checkbox columns
     foreach (array('show_in_lists', 'is_tracked') as $col) {
@@ -59,7 +58,7 @@ function func_get_features_table_html($feature_list) {
         <button type='button' value='{$val}' name='{$col}' class='edit-submit column_checkboxes'>{$chk}</button>
         HTML;
     }
-    $table->add_row(array("", "", $html['show_in_lists'], $html['is_tracked'], ""), array(), "th");
+    $table->add_row(array("", "", $html['show_in_lists'], $html['is_tracked'], ""), array(), "td");
     $table->update_cell($table->get_rows_count()-1, 2, array('class'=>"text-center"));
     $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center"));
     $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-right"));
@@ -171,10 +170,10 @@ function func_get_controlpanel_html($current_page, $last_page, $search_token="")
         <div style='width: 44%;' class='inline-block'>
             {$search_box[$loc]}
         </div>
-        <div style='width: 34%;' class='inline-block text-center'>
+        <div style='width: 29%;' class='inline-block text-center'>
             {$page_navigation}
         </div>
-        <div style='width: 5%' class='inline-block text-right'>Page {$current_page}</div>
+        <div style='width: 10%' class='inline-block text-right'>Page {$current_page}</div>
         <!-- END Control Panel {$loc} -->
         HTML;
     }

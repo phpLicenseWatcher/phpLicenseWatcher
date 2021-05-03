@@ -10,13 +10,19 @@ body {
     margin-top: 50px;
 }
 
-/* We will use crimson instead of red for contrast ratio > 4.5:1 */
-.red-text {
-    color: crimson;
+/* Override bootstrap -- need darker color for contrast ratio */
+a {
+    color: #2f6fa7;
 }
 
+/* Red (#ff0000) is too light for contrast ratio > 4.5:1 against white and #efefef. */
+.red-text {
+    color: firebrick;
+}
+
+/* Green (#008000) is too light for contrast ratio < 4.5:1 against #efefef. */
 .green-text {
-    color: green;
+    color: darkgreen;
 }
 
 .float-right {
@@ -61,7 +67,7 @@ button.edit-form {
 button.edit-submit {
     background: none;
     border: none;
-    color: #337ab7;
+    color: #2f6fa7;
     font-weight: normal;
     text-decoration: none;
     cursor: pointer;

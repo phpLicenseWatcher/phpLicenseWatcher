@@ -36,7 +36,7 @@ function main_form($alert=null) {
     $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
-    $headers = array("ID", "Name", "Label", "Is Active", "Status", "LMGRD Version", "Last Updated", "");
+    $headers = array("ID", "Name", "Label", "Is Active", "Status", "LMGRD Version", "Last Updated");
     $table->add_row($headers, array(), "th");
 
     foreach($server_list as $i => $server) {
