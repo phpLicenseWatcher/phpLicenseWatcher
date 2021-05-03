@@ -53,7 +53,8 @@
    mysqladmin create licenses
    mysql -f licenses < phplicensewatcher.sql
    ```
-4. Update config file "./config.php" with proper values for your setup
+4. Copy "config/sample-config.php" to "./config.php" and edit it for the proper values for your setup.  Brief instructions are provided within the file as code comments.
+
 5. Setup cron to run scheduled tasks
    ```
    0 6 * * 1 php /var/www/html/license_alert.php >> /dev/null
