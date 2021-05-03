@@ -16,8 +16,12 @@ $table = new html_table(array('class'=>"table alt-rows-bgcolor"));
 $col_headers = array("Description", "License port@server", "Status", "Current Usage", "Available features/license", "lmgrd version","Last Update");
 $table->add_row($col_headers, array(), "th");
 
-// $class refers to bootstrap, not local CSS.
+// Whether or not to display notice about setting up cron jobs.
+// Notice is displayed when at least one server is configured and all servers
+// have not been polled.  e.g. such as the first run.
+$display_cron_notice = count($servers) > 0 ? true : false;
 foreach ($servers as $server) {
+    // $class refers to bootstrap, not local CSS.
     switch ($server['status']) {
     case null:
         $server['status']="Not Polled";
@@ -26,17 +30,20 @@ foreach ($servers as $server) {
         $listing_expiration_link="";
         break;
     case SERVER_UP:
+        $display_cron_notice = false;
         $class = array(); // no color
         $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
         $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
         break;
     case SERVER_VENDOR_DOWN:
+        $display_cron_notice = false;
         $class = array('class' => "warning"); // yellow
 	    $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
 	    $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
         break;
     case SERVER_DOWN:
     default:
+        $display_cron_notice = false;
         $class = array('class' => "danger"); // red
         $detail_link="No Details";
         $listing_expiration_link="";
@@ -57,6 +64,10 @@ foreach ($servers as $server) {
 	$table->update_cell(($table->get_rows_count() - 1), 2, $class);
 }
 
+$cron_notice = !$display_cron_notice ? "" : <<<HTML
+<p class='text-danger'>&#10006; <strong>No servers have been polled. Make sure that license_util.php, licence_cache.php, and license_alert.php are setup on a cron schedule.</strong>
+HTML;
+
 // Output view.
 print_header();
 print <<< HTML
@@ -64,6 +75,7 @@ print <<< HTML
 <hr />
 <h2>Flexlm Servers</h2>
 <p>To get current usage for an individual server please click on the "Details" link next to the server. If you would like to get current usage for multiple servers on the same page use checkbox on the right of the server then click on the "Get current usage for multiple servers on one page".</p>
+{$cron_notice}
 {$table->get_html()}
 HTML;
 
