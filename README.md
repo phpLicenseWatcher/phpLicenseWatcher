@@ -29,7 +29,7 @@
 
 ## Requirements
 
-* PHP enabled web server
+* 64-bit PHP enabled web server
 * MySQL
 * FlexLM lmstat/lmutil/lmdiag binaries for the OS you are running the web server on.
 
