@@ -54,8 +54,9 @@ function func_get_features_table_html($feature_list) {
         $res = in_array(1, array_column($feature_list, $col), false);
         $val = $res ? 0 : 1;
         $chk = $res ? "UNCHECK ALL" : "CHECK ALL";
+        $aria_val = $res ? "uncheck entire column {$col}" : "check entire column {$col}";
         $html[$col] = <<<HTML
-        <button type='button' value='{$val}' name='{$col}' class='edit-submit column_checkboxes'>{$chk}</button>
+        <button type='button' value='{$val}' name='{$col}' class='btn btn-link column_checkboxes' style='font-size:inherit;' aria-label='{$aria_val}'>{$chk}</button>
         HTML;
     }
     $table->add_row(array("", "", $html['show_in_lists'], $html['is_tracked'], ""), array(), "td");
@@ -69,15 +70,16 @@ function func_get_features_table_html($feature_list) {
     foreach($feature_list as $feature) {
         foreach(array("show_in_lists", "is_tracked") as $col) {
             $checked = $feature[$col] ? $checked_checkbox : $empty_checkbox;
-            $val = $feature[$col] ? 0 : 1;
+            $val = $feature[$col] ? 1 : 0;
+            $aria_val = $feature[$col] ? "on" : "off";
             $html[$col] = <<<HTML
-            <button type='button' id='{$col}-{$feature['id']}' value='{$val}' class='edit-submit btnlink chkbox'>{$checked}</button>
+            <button type='button' id='{$col}-{$feature['id']}' value='{$val}' class='btn btn-link single_checkbox' aria-label='{$feature['name']} {$col} checkbox {$aria_val}'>{$checked}</button>
             HTML;
         }
 
         $html['edit_button'] = <<<HTML
         <form id='edit_form_{$feature['id']}' action='features_admin.php' method='POST'>
-            <button type='submit' form='edit_form_{$feature['id']}' name='edit-feature' class='edit-submit' value='{$feature['id']}'>EDIT</button>
+            <button type='submit' form='edit_form_{$feature['id']}' name='edit-feature' class='btn btn-link' value='{$feature['id']}' aria-label='edit {$feature['name']}'>EDIT</button>
         </form>
         HTML;
 
@@ -90,6 +92,7 @@ function func_get_features_table_html($feature_list) {
         );
 
         $table->add_row($row);
+        $table->update_cell($table->get_rows_count()-1, 0, null, null, "th"); // feature name is a row header
         $table->update_cell($table->get_rows_count()-1, 2, array('class'=>"text-center")); // class referred by bootstrap
         $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"text-center")); // class referred by bootstrap
         $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"text-right"));  // class referred by bootstrap
@@ -119,24 +122,24 @@ function func_get_controlpanel_html($current_page, $last_page, $search_token="")
 
         if ($last_page > 7) {
             $page_mid_controls_html = <<<HTML
-            <button name='page' value='{$page_1q}' class='btn'>{$page_1q}</button>
-            <button name='page' value='{$page_mid}' class='btn'>{$page_mid}</button>
-            <button name='page' value='{$page_3q}' class='btn'>{$page_3q}</button>
+            <button name='page' value='{$page_1q}' class='btn' aria-label='go to page {$page_1q}'>{$page_1q}</button>
+            <button name='page' value='{$page_mid}' class='btn' aria-label='go to page {$page_mid}'>{$page_mid}</button>
+            <button name='page' value='{$page_3q}' class='btn' aria-label='go to page {$page_3q}'>{$page_3q}</button>
             HTML;
         } else if ($last_page > 3) {
             $page_mid_controls_html = <<<HTML
-            <button name='page' value='{$page_mid}' class='btn'>{$page_mid}</button>
+            <button name='page' value='{$page_mid}' class='btn' aria-label='go to page {$page_mid}'>{$page_mid}</button>
             HTML;
         } else {
             $page_mid_controls_html = "";
         }
 
         $page_navigation = <<<HTML
-        <button name='page' value='1' class='btn'>1</button>
-        <button name='page' value='{$prev_page}' class='btn'{$disabled_prev_button}>{$prev_page_sym}</button>
+        <button name='page' value='1' class='btn' aria-label='go to page 1'>1</button>
+        <button name='page' value='{$prev_page}' class='btn' aria-label='go to page {$prev_page}'{$disabled_prev_button}>{$prev_page_sym}</button>
         {$page_mid_controls_html}
-        <button name='page' value='{$next_page}' class='btn'{$disabled_next_button}>{$next_page_sym}</button>
-        <button name='page' value='{$last_page}' class='btn'>{$last_page}</button>
+        <button name='page' value='{$next_page}' class='btn' aria-label='go to page {$next_page}'{$disabled_next_button}>{$next_page_sym}</button>
+        <button name='page' value='{$last_page}' class='btn' aria-label='go to page {$last_page}'>{$last_page}</button>
         HTML;
     }
 
@@ -145,16 +148,18 @@ function func_get_controlpanel_html($current_page, $last_page, $search_token="")
         $search_icon = SEARCH_ICON;
         $search_value = "";
         $disabled_search_box = "";
+        $aria_label_button = "show search results";
     } else {
         $search_icon = CANCEL_SEARCH;
         $search_value = "value='{$search_token}' ";
         $disabled_search_box = " disabled";
+        $aria_label_button = "stop showing search results";
     }
 
     // Search box only appears on top control panel.
     $search_box['top'] = <<<HTML
-    <input type="text" id='search_box' placeholder='Search' style='width: 365px;' {$search_value}aria-label='search'{$disabled_search_box} />
-    <button type='button' id='search_button' class='edit-submit btnlink'>{$search_icon}</button>
+    <input type="text" id='search_box' placeholder='Search' style='width: 365px;' {$search_value}aria-label='enter search text'{$disabled_search_box} />
+    <button type='button' id='search_button' class='btn btn-link btn-search' aria-label='{$aria_label_button}'>{$search_icon}</button>
     HTML;
 
     $search_box['bottom'] = "";

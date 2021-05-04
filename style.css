@@ -66,7 +66,7 @@ button.edit-form {
 
 button.edit-submit {
     background: none;
-    border: none;
+    border: 1px solid transparent;
     color: #2f6fa7;
     font-weight: normal;
     text-decoration: none;
@@ -81,26 +81,41 @@ button.edit-submit:focus {
     cursor: pointer;
 }
 
-button.btnlink {
-    font-size: 1.25em;
-    padding: 0px;
+/* bootstrap btn class overrides */
+button.btn {
+    font-size: inherit;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 6px;
+    padding-right: 6px;
+    min-width: 32px;
 }
 
-button.btnlink svg {
-    display: inline-block;
+button.btn-link:hover,
+button.btn-link:focus {
+    text-decoration: none;
+}
+
+button.btn svg {
     vertical-align: middle;
 }
 
-button.btnlink:hover svg,
-button.btnlink:focus svg {
+button.btn:hover svg,
+button.btn:focus svg {
     fill: #23527c;
     cursor: pointer;
 }
 
-button.btnlink:hover,
-button.btnlink:focus {
+button.btn-search {
+
+}
+
+/*
+button.btn-link-override:hover,
+button.btn-link-override:focus {
     text-decoration: none;
 }
+*/
 
 table.events-table {
     border: 1px solid gray;

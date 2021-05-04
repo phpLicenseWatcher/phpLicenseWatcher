@@ -47,7 +47,7 @@ $(document).ready(function() {
     refresh_body({});
 
     // Individual checkbox control handler
-    $('#features_admin_body').on('click', '.chkbox', function() {
+    $('#features_admin_body').on('click', '.single_checkbox', function() {
         var id = $(this).attr('id');
         var vals = id.split("-");
         vals.push($(this).val());
