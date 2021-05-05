@@ -36,35 +36,36 @@ function main_form($alert=null) {
     $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
-    $headers = array("ID", "Name", "Label", "Is Active", "Status", "LMGRD Version", "Last Updated");
+    $headers = array("Name", "Label", "Is Active", "Status", "LMGRD Version", "Last Updated");
     $table->add_row($headers, array(), "th");
 
     foreach($server_list as $i => $server) {
         $row = array(
-            $server['id'],
             $server['name'],
             $server['label'],
             $server['is_active'] ? "True" : "False",
             $server['status'],
             $server['lmgrd_version'],
             date_format(date_create($server['last_updated']), "m/d/Y h:ia"),
-            "<button type='submit' form='server_list' name='edit_id' class='edit-submit' value='{$server['id']}'>EDIT</button>"
+            "<button type='submit' form='server_list' name='edit_id' class='btn btn-link' value='{$server['id']}' aria-label='edit {$server['name']}'>EDIT</button>"
         );
-
         $table->add_row($row);
+
+        $last_row = $table->get_rows_count() - 1;
+        $table->update_cell($last_row, 0, null, null, "th");
         switch($server['status']) {
         case null:
-            $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"info"), "Not Polled");
+            $table->update_cell($last_row, 3, array('class'=>"info"), "Not Polled");
             break;
         case SERVER_UP:
             // Do nothing.
             break;
         case SERVER_VENDOR_DOWN:
-            $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"warning"));
+            $table->update_cell($last_row, 3, array('class'=>"warning"));
             break;
         case SERVER_DOWN:
         default:
-            $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"danger"));
+            $table->update_cell($last_row, 3, array('class'=>"danger"));
             break;
         }
     }
