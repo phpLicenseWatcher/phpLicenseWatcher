@@ -44,7 +44,7 @@ $(document).ready(function() {
         sessionStorage.setItem('features_page', "1");
     }
 
-    refresh_body({});
+    refresh_body();
 
     // Individual checkbox control handler
     $('#features_admin_body').on('click', '.single_checkbox', function() {

@@ -64,23 +64,6 @@ button.edit-form {
     margin-left: 1rem;
 }
 
-button.edit-submit {
-    background: none;
-    border: 1px solid transparent;
-    color: #2f6fa7;
-    font-weight: normal;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-button.edit-submit:hover,
-button.edit-submit:focus {
-    outline: none;
-    color: #23527c;
-    text-decoration: none;
-    cursor: pointer;
-}
-
 /* bootstrap btn class overrides */
 button.btn {
     font-size: inherit;
