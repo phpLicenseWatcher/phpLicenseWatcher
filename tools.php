@@ -29,7 +29,7 @@ function build_license_expiration_array($server, &$expiration_array) {
                 case preg_match("/-00$/", $license[4]) === 1:
                 case preg_match("/-0$/", $license[4]) === 1:
                 case $license[4] === "permanent":
-                    $days_to_expiration = 0;
+                    $days_to_expiration = PHP_INT_MAX;
                     $license[4] = "permanent";
                     break;
                 // License not indicated as permanent.  Calculate days remaining.
@@ -37,14 +37,14 @@ function build_license_expiration_array($server, &$expiration_array) {
                 default:
                     $days_to_expiration = ceil((1 + strtotime($license[4]) - $today) / 86400);
                     if ($days_to_expiration > $permanent_threshold) {
-                        $days_to_expiration = 0;
+                        $days_to_expiration = PHP_INT_MAX;
                         $license[4] = "permanent";
                     }
                     break;
                 }
             } else {
                 // We didn't find an expiration date, so assume license is permanent.
-                $days_to_expiration = 0;
+                $days_to_expiration = PHP_INT_MAX;
                 $license[4] = "permanent";
             }
 
