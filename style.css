@@ -91,6 +91,10 @@ button.btn {
     min-width: 32px;
 }
 
+button.btn-link {
+    color: #2f6fa7;
+}
+
 button.btn-link:hover,
 button.btn-link:focus {
     text-decoration: none;
