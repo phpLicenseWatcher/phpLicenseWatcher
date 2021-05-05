@@ -9,7 +9,7 @@ function build_license_expiration_array($server, &$expiration_array) {
 
     $file = popen("{$lmutil_binary} lmcksum -c {$server}", "r");
     $today = time();
-    // Expirations (in days) longer than 10 years are assumed permanent.
+    // Expirations (in days) longer than 10 years are assumed to be permanent.
     $permanent_threshold = 4000; // Nice round number greater than 10 years (in days)
 
     // Let's read in the file line by line
@@ -17,7 +17,6 @@ function build_license_expiration_array($server, &$expiration_array) {
         $line = fgets ($file, 1024);
         if ( preg_match("/INCREMENT .*/i", $line, $out ) || preg_match("/FEATURE .*/i", $line, $out ) ) {
             $license = explode(" ", $out[0]);
-            // $days_to_expiration = 4001;  # > 4000;
             if ($license[4]) {
                 $license[4] = strtolower($license[4]);
                 switch(true) {
@@ -36,6 +35,7 @@ function build_license_expiration_array($server, &$expiration_array) {
                 // We are assuming 64-bit Unix time.
                 default:
                     $days_to_expiration = ceil((1 + strtotime($license[4]) - $today) / 86400);
+                    // Although licenses more than 10 years old are still considered permanent.
                     if ($days_to_expiration > $permanent_threshold) {
                         $days_to_expiration = PHP_INT_MAX;
                         $license[4] = "permanent";
@@ -47,28 +47,6 @@ function build_license_expiration_array($server, &$expiration_array) {
                 $days_to_expiration = PHP_INT_MAX;
                 $license[4] = "permanent";
             }
-
-            //     $license[4] = str_replace("-9999", "-2036", $license[4]);
-            //     $license[4] = str_replace("-0000", "-2036", $license[4]);
-            //     $license[4] = str_replace("-2099", "-2036", $license[4]);
-            //     $license[4] = str_replace("-2242", "-2036", $license[4]);
-            //     $license[4] = str_replace("-jan-00", "-jan-2036", $license[4]);
-            //     $license[4] = str_replace("-jan-0", "-jan-2036", $license[4]);
-            //     $license[4] = str_replace("-0", "-2036", $license[4]);
-            //     $license[4] = str_replace("permanent", "05-jul-2036", $license[4]);
-            //     $unixdate2 = strtotime($license[4]);
-            //
-            //     // Convert the date you got into UNIX time
-            //     $unixdate2 = strtotime($license[4]);
-            //     $dte = ceil ((1 + $unixdate2 - $today) / 86400);
-            //     $days_to_expiration = $dte;
-            // }
-            // // If there is more than 4000 days (10 years+) until expiration, I
-            // // will consider the license to be permanent
-            // if ( $days_to_expiration > 4000 ) {
-            //     $license[4] = "permanent";
-            //     // $days_to_expiration = "permanent";
-            // }
 
             // Add to the expiration array
             $expiration_array[$license[1]][] = array (
