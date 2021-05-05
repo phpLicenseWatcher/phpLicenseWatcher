@@ -141,11 +141,11 @@ function db_change_single() {
     }
 
     $id = $_POST['id'];
-    $state = $_POST['state'];
+    $new_state = $_POST['state'] === "0" ? 1 : 0;
     $col = $_POST['col'];
 
     $sql = "UPDATE `features` SET `{$col}`=? WHERE `id`=?";
-    $params = array("ii", $state, $id);
+    $params = array("ii", $new_state, $id);
 
     db_connect($db);
     $query = $db->prepare($sql);

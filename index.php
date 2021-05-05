@@ -32,14 +32,14 @@ foreach ($servers as $server) {
     case SERVER_UP:
         $display_cron_notice = false;
         $class = array(); // no color
-        $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
-        $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
+        $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}' aria-label='usage details for {$server['label']})'>Usage Details</a>";
+        $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}' aria-label='listing and expiration dates for {$server['label']})'>Listing/Expiration dates</a>";
         break;
     case SERVER_VENDOR_DOWN:
         $display_cron_notice = false;
         $class = array('class' => "warning"); // yellow
-	    $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}'>Details</a>";
-	    $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}'>Listing/Expiration dates</a>";
+	    $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}' aria-label='usage details for {$server['label']})'>Usage Details</a>";
+	    $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}' aria-label='listing and expiration dates for {$server['label']})'>Listing/Expiration dates</a>";
         break;
     case SERVER_DOWN:
     default:
@@ -59,6 +59,9 @@ foreach ($servers as $server) {
         $server['lmgrd_version'],
         date_format(date_create($server['last_updated']), "m/d/Y h:ia")
     ));
+
+    // Set server label as row header
+    $table->update_cell(($table->get_rows_count() - 1), 0, null, null, "th");
 
 	// Set the background color of status cell via class attribute
 	$table->update_cell(($table->get_rows_count() - 1), 2, $class);
