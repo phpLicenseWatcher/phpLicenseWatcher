@@ -166,6 +166,16 @@ function get_alert_html($msg, $lvl="info") {
 }
 
 /**
+ * Send response data to Ajax request.
+ *
+ * @param string $data Ajax response data
+ */
+function ajax_send_data($data) {
+    header("Content-Type: plain/text");
+    print $data;
+} // END function ajax_send_data()
+
+/**
  * Debug helper function to print preformatted SQL code to browser.
  *
  * This is extremely similar to print_var().  Possibly remove this function in the future.
