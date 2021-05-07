@@ -17,7 +17,10 @@ case isset($_POST['delete_id']):
     break;
 case isset($_POST['export_servers']) && $_POST['export_servers'] === "1":
     $json = db_get_servers_json();
-    ajax_send_data($json);  // q.v. common.php
+    ajax_send_data($json, "application/json");  // q.v. common.php
+    break;
+case isset($_POST['import_servers']):
+
     break;
 case isset($_POST['cancel']):
 default:
@@ -86,11 +89,14 @@ function main_form($alert=null) {
 
     // Control Panel
     $control_panel_html = <<<HTML
-    <p id='control_panel'>
-    <button type='submit' form='server_list' name='edit_id' class='btn servers-control-panel' value='new'>New Server</button>
-    <button type='button' id='export' class='btn servers-control-panel'>Export Servers</button>
-    <button type='button' id='import' class='btn servers-control-panel'>Import Servers</button>
-    <input type='file' id='upload' class='servers-control-panel'>
+    <div id='control_panel'>
+        <button type='submit' form='server_list' name='edit_id' class='btn servers-control-panel' value='new'>New Server</button>
+        <button type='button' id='export' class='btn servers-control-panel'>Export Servers</button>
+        <button type='button' id='import' class='btn servers-control-panel'>Import Servers</button>
+        <form method="post" action="" enctype="multipart/form-data">
+            <input type='file' accept='application/json' id='upload' name='server_import' class='servers-control-panel'>
+        </form>
+    </div>
 
     HTML;
 

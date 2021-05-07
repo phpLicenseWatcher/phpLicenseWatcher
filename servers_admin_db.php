@@ -94,23 +94,17 @@ function db_delete_server() {
     return $response;
 } // END function db_delete_server()
 
+/**
+ * Retrieve server list and return json encoded.
+ *
+ * @return string json encoded server list
+ */
 function db_get_servers_json() {
-
-    $data = array();
-    $sql = "SELECT `name`, `label`, `is_active` FROM `servers`;";
-
     db_connect($db);
-    $res = $db->query($sql);
-
-    $row = $res->fetch_assoc();
-    while (!is_null($row)) {
-        $data[] = $row;
-        $row = $res->fetch_assoc();
-    }
-
+    $res = $db->query("SELECT `name`, `label`, `is_active` FROM `servers`;");
+    $data = $res->fetch_all(MYSQLI_ASSOC);
     $res->free();
     $db->close();
-
     return json_encode($data);
 }
 

@@ -170,8 +170,8 @@ function get_alert_html($msg, $lvl="info") {
  *
  * @param string $data Ajax response data
  */
-function ajax_send_data($data) {
-    header("Content-Type: plain/text");
+function ajax_send_data($data, $mime='plain/text') {
+    header("Content-Type: {$mime}");
     print $data;
 } // END function ajax_send_data()
 

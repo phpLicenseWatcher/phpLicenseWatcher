@@ -31,8 +31,10 @@ body {
     display: block;
 }
 
+/* server admin UI */
 button.servers-control-panel {
     margin-right: 1.25rem;
+    margin-bottom: 10px;
     display: inline-block;
 }
 
@@ -43,6 +45,7 @@ input[type=file].servers-control-panel {
     margin: 0;
     visibility: hidden;
 }
+/* END server admin UI */
 
 table.alt-rows-bgcolor tr:nth-child(even), tr.alt-bgcolor {
     background-color: #efefef;
@@ -53,7 +56,6 @@ form.edit-form {
     margin-right: auto;
     width: 50%;
 }
-
 
 div.edit-form {
     margin-top: 1rem;
