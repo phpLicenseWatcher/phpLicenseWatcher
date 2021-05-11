@@ -26,17 +26,20 @@ $(document).ready(function() {
 
     $('#control_panel').on('input', '#upload', function() {
         var form_data = new FormData();
-        var files = $('#upload')[0].files[0];
-        form_data.append('files', files);
-
+        var file = $('#upload')[0].files[0];
+        form_data.append('import_servers', file);
         var result = $.ajax({
-            url: 'servers_admin.php',
-            type: 'POST',
+            context: this,
+            method: "POST",
             data: form_data,
+            dataType: "text",
             contentType: false,
             processData: false,
+            async: true,
             success: function(response, result) {
-
+                if (response !== "OK") {
+                    alert(response);
+                }
             },
         });
     });

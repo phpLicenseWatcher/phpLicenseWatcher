@@ -106,6 +106,17 @@ function db_get_servers_json() {
     $res->free();
     $db->close();
     return json_encode($data);
-}
+} // END Function db_get_servers_json()
+
+function db_import_servers_json() {
+
+    $file = file_get_contents($_FILE['import_servers']['tmp_name']);
+    $json = json_decode($file);
+
+    if ($file === false || is_null($json)) {
+        return false;
+    }
+
+} // END Function db_import_servers_json()
 
 ?>

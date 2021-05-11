@@ -3,6 +3,12 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/html_table.php";
 require_once __DIR__ . "/servers_admin_db.php";
 
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    log_var($_POST, 0);
+    log_var($_FILES, 1);
+    log_var(isset($_FILES['import_servers']));
+}
+
 switch(true) {
 case isset($_POST['submit_id']):
     $msg = db_process();
@@ -19,8 +25,9 @@ case isset($_POST['export_servers']) && $_POST['export_servers'] === "1":
     $json = db_get_servers_json();
     ajax_send_data($json, "application/json");  // q.v. common.php
     break;
-case isset($_POST['import_servers']):
-
+case isset($_FILES['import_servers']):
+    $msg = validate_uploaded_json() && db_import_servers_json() ? "OK" : "Invalid import data";
+    ajax_send_data($msg);
     break;
 case isset($_POST['cancel']):
 default:
@@ -182,5 +189,15 @@ function edit_form() {
     print_footer();
 } // END function edit_form()
 
+function validate_uploaded_json() {
+    switch(false) {
+    case isset($_FILES['import_servers']['tmp_name']) && is_uploaded_file($_FILES['import_servers']['tmp_name']):
+    case isset($_FILES['import_servers']['type'])     && $_FILES['import_servers']['type']  === "application/json":
+    case isset($_FILES['import_servers']['error'])    && $_FILES['import_servers']['error'] === 0:
+        return false;
+    }
+
+    return true;
+} // END Function validate_uploaded_file()
 
 ?>
