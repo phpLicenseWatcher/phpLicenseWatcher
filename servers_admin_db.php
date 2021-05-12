@@ -83,9 +83,9 @@ function db_delete_server() {
     $query->execute();
 
     if (empty($db->error_list)) {
-        $response = array('msg' => "Successfully deleted ID {$id}: \"{$name}\" ({$label})", 'lvl' => "success");
+        $response = array('msg' => "Successfully deleted \"{$name}\" ({$label})", 'lvl' => "success");
     } else {
-        $response = array('msg' => "ID ${id}: \"${name}\" ({$label}), DB Error: \"{$db->error}\"", 'lvl' => "failure");
+        $response = array('msg' => "\"${name}\" ({$label}), DB Error: \"{$db->error}\"", 'lvl' => "failure");
     }
 
     $query->close();
@@ -108,15 +108,25 @@ function db_get_servers_json() {
     return json_encode($data);
 } // END Function db_get_servers_json()
 
-function db_import_servers_json() {
-
-    $file = file_get_contents($_FILE['import_servers']['tmp_name']);
-    $json = json_decode($file);
-
-    if ($file === false || is_null($json)) {
-        return false;
+function db_import_servers_json($json) {
+    db_connect($db);
+    $sql = "INSERT IGNORE INTO `servers` (`name`, `label`, `is_active`) VALUES (?, ?, ?);";
+    $query = $db->prepare($sql);
+    if ($query === false) {
+        return $db->error;
     }
 
+    foreach($json as $row) {
+        $query->bind_param("ssi", $row['name'], $row['label'], $row['is_active']);
+        $query->execute();
+        if ($query === false) {
+            return $db->error;
+        }
+    }
+
+    $query->close();
+    $db->close();
+    return true;
 } // END Function db_import_servers_json()
 
 ?>

@@ -41,6 +41,9 @@ $(document).ready(function() {
                     alert(response);
                 }
             },
+            complete: function() {
+                location.reload(true);
+            }
         });
     });
 });

@@ -3,12 +3,6 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/html_table.php";
 require_once __DIR__ . "/servers_admin_db.php";
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    log_var($_POST, 0);
-    log_var($_FILES, 1);
-    log_var(isset($_FILES['import_servers']));
-}
-
 switch(true) {
 case isset($_POST['submit_id']):
     $msg = db_process();
@@ -26,8 +20,17 @@ case isset($_POST['export_servers']) && $_POST['export_servers'] === "1":
     ajax_send_data($json, "application/json");  // q.v. common.php
     break;
 case isset($_FILES['import_servers']):
-    $msg = validate_uploaded_json() && db_import_servers_json() ? "OK" : "Invalid import data";
-    ajax_send_data($msg);
+    $json = validate_uploaded_json();
+    if ($json === false) {
+        ajax_send_data("Invalid import data.");
+    } else {
+        $res = (db_import_servers_json($json));
+        if ($res === true) {
+            ajax_send_data("OK");
+        } else {
+            ajax_send_data("DB Error: {$res}");
+        }
+    }
     break;
 case isset($_POST['cancel']):
 default:
@@ -43,16 +46,18 @@ exit;
  */
 function main_form($alert=null) {
     db_connect($db);
-    $server_list = db_get_servers($db, array(), array(), "id", false);
+    $server_list = db_get_servers($db, array(), array(), "label", false);
     $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
-    $headers = array("ID", "Name", "Label", "Is Active", "Status", "LMGRD Version", "Last Updated", "");
+    $headers = array("Name", "Label", "Is Active", "Status", "LMGRD Version", "Last Updated", "");
     $table->add_row($headers, array(), "th");
 
+    // Don't display "no servers polled" notice when there are no servers in DB.
+    // Otherwise, assume all servers aren't polled until shown otherwise.
+    $display_notice = count($server_list) > 0 ? true : false;
     foreach($server_list as $i => $server) {
         $row = array(
-            $server['id'],
             $server['name'],
             $server['label'],
             $server['is_active'] ? "True" : "False",
@@ -65,17 +70,20 @@ function main_form($alert=null) {
         $table->add_row($row);
         switch($server['status']) {
         case null:
-            $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"info"), "Not Polled");
+            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"info"), "Not Polled");
             break;
         case SERVER_UP:
-            // Do nothing.
+            // No table cell update.
+            $display_notice = false;
             break;
         case SERVER_VENDOR_DOWN:
-            $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"warning"));
+            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"warning"));
+            $display_notice = false;
             break;
         case SERVER_DOWN:
         default:
-            $table->update_cell($table->get_rows_count()-1, 4, array('class'=>"danger"));
+            $table->update_cell($table->get_rows_count()-1, 3, array('class'=>"danger"));
+            $display_notice = false;
             break;
         }
     }
@@ -94,13 +102,17 @@ function main_form($alert=null) {
         break;
     }
 
+    if ($display_notice) {
+        $alert_html .= get_not_polled_notice();
+    }
+
     // Control Panel
     $control_panel_html = <<<HTML
     <div id='control_panel'>
         <button type='submit' form='server_list' name='edit_id' class='btn servers-control-panel' value='new'>New Server</button>
         <button type='button' id='export' class='btn servers-control-panel'>Export Servers</button>
         <button type='button' id='import' class='btn servers-control-panel'>Import Servers</button>
-        <form method="post" action="" enctype="multipart/form-data">
+        <form method="post" action="" enctype="multipart/form-data" class='inline-block'>
             <input type='file' accept='application/json' id='upload' name='server_import' class='servers-control-panel'>
         </form>
     </div>
@@ -190,14 +202,38 @@ function edit_form() {
 } // END function edit_form()
 
 function validate_uploaded_json() {
+    $tmp_name = $_FILES['import_servers']['tmp_name'];
+    $type     = $_FILES['import_servers']['type'];
+    $error    = $_FILES['import_servers']['error'];
+
     switch(false) {
-    case isset($_FILES['import_servers']['tmp_name']) && is_uploaded_file($_FILES['import_servers']['tmp_name']):
-    case isset($_FILES['import_servers']['type'])     && $_FILES['import_servers']['type']  === "application/json":
-    case isset($_FILES['import_servers']['error'])    && $_FILES['import_servers']['error'] === 0:
+    case isset($tmp_name) && is_uploaded_file($tmp_name):
+    case isset($type)     && $type  === "application/json":
+    case isset($error)    && $error === 0:
         return false;
     }
 
-    return true;
+    $file = file_get_contents($tmp_name);
+    if ($file === false) {
+        return false;
+    }
+
+    $json = json_decode($file, true);
+    if (is_null($json)) {
+        return false;
+    }
+
+    foreach ($json as $row) {
+        switch (false) {
+        case is_array($row):
+        case array_key_exists('name', $row) && preg_match("/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $row['name']):
+        case array_key_exists('label', $row);
+        case array_key_exists('is_active', $row) && preg_match("/^[01]$/", $row['is_active']):
+            return false;
+        }
+    }
+
+    return $json;
 } // END Function validate_uploaded_file()
 
 ?>
