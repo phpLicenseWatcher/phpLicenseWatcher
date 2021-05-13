@@ -113,20 +113,20 @@ function db_import_servers_json($json) {
     $sql = "INSERT IGNORE INTO `servers` (`name`, `label`, `is_active`) VALUES (?, ?, ?);";
     $query = $db->prepare($sql);
     if ($query === false) {
-        return $db->error;
+        return array('msg' => "DB error: {$db->error}", 'lvl' => "failure");
     }
 
     foreach($json as $row) {
         $query->bind_param("ssi", $row['name'], $row['label'], $row['is_active']);
         $query->execute();
         if ($query === false) {
-            return $db->error;
+            return array('msg' => "DB error: {$db->error}", 'lvl' => "failure");
         }
     }
 
     $query->close();
     $db->close();
-    return true;
+    return array('msg' => "Import succeeded.", 'lvl' => "success");
 } // END Function db_import_servers_json()
 
 ?>

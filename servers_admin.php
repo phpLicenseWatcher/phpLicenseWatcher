@@ -3,6 +3,9 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/html_table.php";
 require_once __DIR__ . "/servers_admin_db.php";
 
+log_var($_POST, 0);
+log_var($_FILES, 1);
+
 switch(true) {
 case isset($_POST['submit_id']):
     $msg = db_process();
@@ -19,18 +22,14 @@ case isset($_POST['export_servers']) && $_POST['export_servers'] === "1":
     $json = db_get_servers_json();
     ajax_send_data($json, "application/json");  // q.v. common.php
     break;
-case isset($_FILES['import_servers']):
+case isset($_FILES['server_import']):
     $json = validate_uploaded_json();
     if ($json === false) {
-        ajax_send_data("Invalid import data.");
+        $msg = array('msg' => "Invalid server JSON.", 'lvl' => "failure");
     } else {
-        $res = (db_import_servers_json($json));
-        if ($res === true) {
-            ajax_send_data("OK");
-        } else {
-            ajax_send_data("DB Error: {$res}");
-        }
+        $msg = db_import_servers_json($json);
     }
+    main_form($msg);
     break;
 case isset($_POST['cancel']):
 default:
@@ -112,7 +111,7 @@ function main_form($alert=null) {
         <button type='submit' form='server_list' name='edit_id' class='btn servers-control-panel' value='new'>New Server</button>
         <button type='button' id='export' class='btn servers-control-panel'>Export Servers</button>
         <button type='button' id='import' class='btn servers-control-panel'>Import Servers</button>
-        <form method="post" action="" enctype="multipart/form-data" class='inline-block'>
+        <form method="post" action="" enctype="multipart/form-data" id='upload-form' class='inline-block'>
             <input type='file' accept='application/json' id='upload' name='server_import' class='servers-control-panel'>
         </form>
     </div>
@@ -202,24 +201,27 @@ function edit_form() {
 } // END function edit_form()
 
 function validate_uploaded_json() {
-    $tmp_name = $_FILES['import_servers']['tmp_name'];
-    $type     = $_FILES['import_servers']['type'];
-    $error    = $_FILES['import_servers']['error'];
+    $tmp_name = $_FILES['server_import']['tmp_name'];
+    $type     = $_FILES['server_import']['type'];
+    $error    = $_FILES['server_import']['error'];
 
     switch(false) {
     case isset($tmp_name) && is_uploaded_file($tmp_name):
     case isset($type)     && $type  === "application/json":
     case isset($error)    && $error === 0:
+        log_var($_FILES, 2);
         return false;
     }
 
     $file = file_get_contents($tmp_name);
     if ($file === false) {
+        log_var($tmp_name, 3);
         return false;
     }
 
     $json = json_decode($file, true);
     if (is_null($json)) {
+        log_var($file, 4);
         return false;
     }
 
@@ -229,6 +231,7 @@ function validate_uploaded_json() {
         case array_key_exists('name', $row) && preg_match("/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $row['name']):
         case array_key_exists('label', $row);
         case array_key_exists('is_active', $row) && preg_match("/^[01]$/", $row['is_active']):
+            log_var($row, 5);
             return false;
         }
     }
