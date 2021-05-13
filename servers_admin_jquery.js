@@ -26,25 +26,5 @@ $(document).ready(function() {
 
     $('#control_panel').on('input', '#upload', function() {
         $('#upload-form').submit();
-        // var form_data = new FormData();
-        // var file = $('#upload')[0].files[0];
-        // form_data.append('import_servers', file);
-        // var result = $.ajax({
-        //     context: this,
-        //     method: "POST",
-        //     data: form_data,
-        //     dataType: "text",
-        //     contentType: false,
-        //     processData: false,
-        //     async: true,
-        //     success: function(response, result) {
-        //         if (response !== "OK") {
-        //             alert(response);
-        //         }
-        //     },
-        //     complete: function() {
-        //         location.reload(true);
-        //     }
-        // });
     });
 });

@@ -101,7 +101,7 @@ function db_delete_server() {
  */
 function db_get_servers_json() {
     db_connect($db);
-    $res = $db->query("SELECT `name`, `label`, `is_active` FROM `servers`;");
+    $res = $db->query("SELECT `name`, `label`, `is_active` FROM `servers` ORDER BY `label`;");
     $data = $res->fetch_all(MYSQLI_ASSOC);
     $res->free();
     $db->close();
@@ -116,14 +116,17 @@ function db_import_servers_json($json) {
         return array('msg' => "DB error: {$db->error}", 'lvl' => "failure");
     }
 
+    $db->begin_transaction(0, "import");
     foreach($json as $row) {
         $query->bind_param("ssi", $row['name'], $row['label'], $row['is_active']);
         $query->execute();
         if ($query === false) {
+            $db->rollback(0, "import");
             return array('msg' => "DB error: {$db->error}", 'lvl' => "failure");
         }
     }
 
+    $db->commit(0, "import");
     $query->close();
     $db->close();
     return array('msg' => "Import succeeded.", 'lvl' => "success");
