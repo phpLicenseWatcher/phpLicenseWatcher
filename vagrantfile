@@ -20,7 +20,7 @@ Vagrant.configure(2) do |config|
         # Resync the clock if it drifts by more than 10 seconds.  Useful for when host wakes up from sleep.
         virtualbox.customize ['guestproperty', 'set', :id, '/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold', 10000]
         # Helps work around DNS problems that may happen with large campus LANs or VPN.
-        virtualbox.customize ['modifyvm', :id, '--natdnsproxy1', 'on']
+        virtualbox.customize ['modifyvm', :id, '--natdnshostresolver1', 'on']
     end
 
     config.vm.define "dev_box", primary: true do |phplw|
