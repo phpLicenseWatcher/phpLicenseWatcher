@@ -66,6 +66,7 @@ You may develop code for this repository on your host.  Make sure the VM is runn
 * If you are getting a "connection was reset" error in your web browser, Apache may not be running.
     1. Enter the Vagrant box via ssh. `vagrant ssh`
     2. Start Apache. `sudo apachectl start` or `sudo apachectl restart`
+* Should `vagrant ssh` fail to authenticate, you can alternatively try `ssh -p 2222 vagrant@localhost`.  Password is `vagrant`.
 
 ### Common Commands
 Command | Purpose
