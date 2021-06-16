@@ -37,6 +37,22 @@ a {
     display: block;
 }
 
+/* server admin UI */
+button.servers-control-panel {
+    margin-right: 1.25rem;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+/* A button will trigger this control */
+input[type=file].servers-control-panel {
+    display: inline-block;
+    width: 1px;
+    margin: 0;
+    visibility: hidden;
+}
+/* END server admin UI */
+
 table.alt-rows-bgcolor tr:nth-child(even), tr.alt-bgcolor {
     background-color: #efefef;
 }

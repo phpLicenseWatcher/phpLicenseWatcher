@@ -7,17 +7,17 @@ require_once __DIR__ . "/features_admin_func.php";
 switch (true) {
 case isset($_POST['refresh']) && $_POST['refresh'] === "1":
     $response = func_get_page();
-    ajax_send_data($response);
+    ajax_send_data($response); // q.v. common.php
     break;
 
 case isset($_POST['toggle_column']) && $_POST['toggle_column'] === "1":
     $response = db_change_column();
-    ajax_send_data($response);
+    ajax_send_data($response); // q.v. common.php
     break;
 
 case isset($_POST['toggle_checkbox']) && $_POST['toggle_checkbox'] === "1":
     $response = db_change_single();
-    ajax_send_data($response);
+    ajax_send_data($response); // q.v. common.php
     break;
 
 case isset($_POST['edit-feature']):
@@ -34,7 +34,6 @@ case isset($_POST['post-edit-feature']) && $_POST['post-edit-feature'] === "1":
 
 case isset($_POST['delete-feature']) && $_POST['delete-feature'] === "1":
     $msg = db_delete_feature();
-    log_var($msg);
     main_form($msg);
     break;
 
@@ -161,13 +160,4 @@ function edit_form() {
     return null;
 } // END function edit_form()
 
-/**
- * Send response data to Ajax request.
- *
- * @param string $data Ajax response data
- */
-function ajax_send_data($data) {
-    header("Content-Type: plain/text");
-    print $data;
-} // END function ajax_send_data()
 ?>

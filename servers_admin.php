@@ -1,25 +1,35 @@
 <?php
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/html_table.php";
+require_once __DIR__ . "/servers_admin_db.php";
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    switch(true) {
-    case isset($_POST['submit_id']):
-        $msg = db_process();
-        main_form($msg);
-        break;
-    case isset($_POST['edit_id']):
-        edit_form();
-        break;
-    case isset($_POST['delete_id']):
-        $msg = db_delete_server();
-        main_form($msg);
-        break;
-    case isset($_POST['cancel']):
-    default:
-        main_form();
+switch(true) {
+case isset($_POST['submit_id']):
+    $msg = db_process();
+    main_form($msg);
+    break;
+case isset($_POST['edit_id']):
+    edit_form();
+    break;
+case isset($_POST['delete_id']):
+    $msg = db_delete_server();
+    main_form($msg);
+    break;
+case isset($_POST['export_servers']) && $_POST['export_servers'] === "1":
+    $json = db_get_servers_json();
+    ajax_send_data($json, "application/json");  // q.v. common.php
+    break;
+case isset($_FILES['server_import']):
+    $json = validate_uploaded_json();
+    if ($json === false) {
+        $msg = array('msg' => "Invalid server JSON.", 'lvl' => "failure");
+    } else {
+        $msg = db_import_servers_json($json);
     }
-} else {
+    main_form($msg);
+    break;
+case isset($_POST['cancel']):
+default:
     main_form();
 }
 
@@ -32,13 +42,16 @@ exit;
  */
 function main_form($alert=null) {
     db_connect($db);
-    $server_list = db_get_servers($db, array(), array(), "id", false);
+    $server_list = db_get_servers($db, array(), array(), "label", false);
     $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
     $headers = array("Name", "Label", "Is Active", "Status", "LMGRD Version", "Last Updated");
     $table->add_row($headers, array(), "th");
 
+    // Don't display "no servers polled" notice when there are no servers in DB.
+    // Otherwise, assume all servers aren't polled until shown otherwise.
+    $display_notice = count($server_list) > 0 ? true : false;
     foreach($server_list as $i => $server) {
         $row = array(
             $server['name'],
@@ -58,7 +71,8 @@ function main_form($alert=null) {
             $table->update_cell($last_row, 3, array('class'=>"info"), "Not Polled");
             break;
         case SERVER_UP:
-            // Do nothing.
+            // No table cell update.
+            $display_notice = false;
             break;
         case SERVER_VENDOR_DOWN:
             $table->update_cell($last_row, 3, array('class'=>"warning"));
@@ -84,17 +98,36 @@ function main_form($alert=null) {
         break;
     }
 
+    if ($display_notice) {
+        $alert_html .= get_not_polled_notice();
+    }
+
+    // Control Panel
+    $control_panel_html = <<<HTML
+    <div id='control_panel'>
+        <button type='submit' form='server_list' name='edit_id' class='btn servers-control-panel' value='new'>New Server</button>
+        <button type='button' id='export' class='btn servers-control-panel'>Export Servers</button>
+        <button type='button' id='import' class='btn servers-control-panel'>Import Servers</button>
+        <form method="post" action="" enctype="multipart/form-data" id='upload-form' class='inline-block'>
+            <input type='file' accept='application/json' id='upload' name='server_import' class='servers-control-panel'>
+        </form>
+    </div>
+
+    HTML;
+
     // Print view.
     print_header();
 
     print <<<HTML
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="servers_admin_jquery.js"></script>
     <h1>Server Administration</h1>
     <p>You may edit an existing server's name, label, active status, or add a new server to the database.<br>
     Server names must be unique and in the form of "<code>port@domain.tld</code>".
     {$alert_html}
+    {$control_panel_html}
     <form id='server_list' action='servers_admin.php' method='POST'>
     {$table->get_html()}
-    <p><button type='submit' form='server_list' name='edit_id' class='btn' value='new'>New Server</button>
     </form>
     HTML;
 
@@ -110,7 +143,7 @@ function edit_form() {
     $err_msg = array('msg' => "Validation failed when requesting form to edit an existing server.", 'lvl' => "failure");
     switch(true) {
     case ctype_digit($id):
-        $server_details = server_details_by_getid($id);
+        $server_details = db_server_details_by_getid($id);
         $delete_button = "<button type='button' class='btn edit-form' id='delete-button'>Remove</button>";
         if ($server_details === false) {
             main_form($err_msg);
@@ -164,97 +197,43 @@ function edit_form() {
     print_footer();
 } // END function edit_form()
 
-/** DB operation to either add or edit a form, based on $_POST['id'] */
-function db_process() {
-    $id = $_POST['submit_id'];
-    $name = $_POST['name'];
-    $label = $_POST['label'];
-    // checkboxes are not included in POST when unchecked.
-    $is_active = isset($_POST['is_active']) && $_POST['is_active'] === "on" ? 1 : 0;
+function validate_uploaded_json() {
+    $tmp_name = $_FILES['server_import']['tmp_name'];
+    $type     = $_FILES['server_import']['type'];
+    $error    = $_FILES['server_import']['error'];
 
-    // Error check.  On error, stop and return error message.
     switch(false) {
-    // $id must be all numbers or the word "new"
-    case preg_match("/^\d+$|^new$/", $id):
-        return array('msg' => "Invalid server ID \"{$id}\"", 'lvl' => "failure");
-    // $name must match port@domain.tld
-    case preg_match("/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $name,):
-        return array('msg' => "Server name MUST be in form <code>port@domain.tld</code>", 'lvl' => "failure");
-    // $label cannot be blank
-    case !empty($label):
-        return array('msg' => "Server's label cannot be blank", 'lvl' => "failure");
-    }
-    // END error check
-
-    if ($id === "new") {
-        // Adding a new server
-        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`) VALUES (?, ?, ?)";
-        $params = array("ssi", $name, $label, $is_active);
-        $op = "added";
-    } else {
-        // Editing an existing server
-        $sql = "UPDATE `servers` SET `name`=?, `label`=?, `is_active`=? WHERE `ID`=?";
-        $params = array("ssii", $name, $label, $is_active, $id);
-        $op = "updated";
+    case isset($tmp_name) && is_uploaded_file($tmp_name):
+    case isset($type)     && $type  === "application/json":
+    case isset($error)    && $error === 0:
+        log_var($_FILES, 2);
+        return false;
     }
 
-    db_connect($db);
-    $query = $db->prepare($sql);
-    $query->bind_param(...$params);
-    $query->execute();
-
-    if (empty($db->error_list)) {
-        $response_msg = array('msg' => "{$name} ({$label}) successfully {$op}.", 'lvl' => "success");
-    } else {
-        $response_msg = array('msg' => "(${name}) DB Error: {$db->error}.", 'lvl' => "failure");
+    $file = file_get_contents($tmp_name);
+    if ($file === false) {
+        log_var($tmp_name, 3);
+        return false;
     }
 
-    $query->close();
-    $db->close();
-    return $response_msg;
-} // END function db_process()
-
-/**
- * Retrieve server details by server ID.
- *
- * @param int $id
- * @return array server's name, label and active status.
- */
-function server_details_by_getid($id) {
-    db_connect($db);
-    $server_details = db_get_servers($db, array("name", "label", "is_active"), array($id), "", false);
-    $db->close();
-    return !empty($server_details) ? $server_details[0] : false;
-} // END function server_details_by_getid()
-
-function db_delete_server() {
-    // validate
-    if (ctype_digit($_POST['delete_id'])) {
-        $id = $_POST['delete_id'];
-    } else {
-        return array('msg' => "Validation failed when attempting to remove a server from DB.", 'lvl' => "failure");
+    $json = json_decode($file, true);
+    if (is_null($json)) {
+        log_var($file, 4);
+        return false;
     }
 
-    $sql = "DELETE FROM `servers` WHERE `id`=?";
-    $params = array("i", intval($id));
-
-    db_connect($db);
-    $details = db_get_servers($db, array('name', 'label'), array($id), "", false)[0];
-    $name = $details['name'];
-    $label = $details['label'];
-    $query = $db->prepare($sql);
-    $query->bind_param(...$params);
-    $query->execute();
-
-    if (empty($db->error_list)) {
-        $response = array('msg' => "Successfully deleted ID {$id}: \"{$name}\" ({$label})", 'lvl' => "success");
-    } else {
-        $response = array('msg' => "ID ${id}: \"${name}\" ({$label}), DB Error: \"{$db->error}\"", 'lvl' => "failure");
+    foreach ($json as $row) {
+        switch (false) {
+        case is_array($row):
+        case array_key_exists('name', $row) && preg_match("/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $row['name']):
+        case array_key_exists('label', $row);
+        case array_key_exists('is_active', $row) && preg_match("/^[01]$/", $row['is_active']):
+            log_var($row, 5);
+            return false;
+        }
     }
 
-    $query->close();
-    $db->close();
+    return $json;
+} // END Function validate_uploaded_file()
 
-    return $response;
-} // END function db_delete_server()
 ?>
