@@ -3,9 +3,6 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/html_table.php";
 require_once __DIR__ . "/servers_admin_db.php";
 
-log_var($_POST, 0);
-log_var($_FILES, 1);
-
 switch(true) {
 case isset($_POST['submit_id']):
     $msg = db_process();
