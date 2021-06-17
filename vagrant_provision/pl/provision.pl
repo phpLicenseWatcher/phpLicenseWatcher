@@ -18,7 +18,7 @@ print STDERR "Root required.\n" and exit 1 if ($> != 0);
 
 update_ubuntu();
 prepare_cache();
-setup_flexlm();
+setup_lmservers();
 setup_mysql();
 setup_database();
 setup_logrotate();
@@ -59,16 +59,16 @@ sub prepare_cache {
     print "Created cache file directory: $dest\n";
 }
 
-# Copy Flex LM files to system.
-sub setup_flexlm {
+# Copy lmserver files to system.
+sub setup_lmservers {
     my ($source, $dest);
-    my @source_path = (@CONFIG::REPO_PATH, "vagrant_provision", "flex_lm");
-    my @dest_path   = @CONFIG::FLEXNETSERVER_PATH;
+    my @source_path = (@CONFIG::REPO_PATH, "vagrant_provision", "lmservers");
+    my @dest_path   = @CONFIG::LMTOOLS_PATH;
 
     $dest = catdir(@dest_path);
     mkdir $dest, 0701;
     print "Created directory: $dest\n";
-    foreach (@CONFIG::FLEXLM_FILES) {
+    foreach (@CONFIG::LMTOOLS_FILES) {
         $source = catfile(@source_path, $_);
         $dest = catfile(@dest_path, $_);
 
@@ -80,11 +80,11 @@ sub setup_flexlm {
             exit 1;
         }
 
-        chown $CONFIG::FLEXLM_OWNER_UID, $CONFIG::VAGRANT_GID, $dest;
-        print "$_ ownership granted to $CONFIG::FLEXLM_OWNER:$CONFIG::VAGRANT_USER\n";
+        chown $CONFIG::LMTOOLS_OWNER_UID, $CONFIG::VAGRANT_GID, $dest;
+        print "$_ ownership granted to $CONFIG::LMTOOLS_OWNER:$CONFIG::VAGRANT_USER\n";
 
-        chmod $CONFIG::FLEXLM_PERMISSIONS, $dest;
-        printf "$_ permissions set to 0%o\n", $CONFIG::FLEXLM_PERMISSIONS;
+        chmod $CONFIG::LMTOOLS_PERMISSIONS, $dest;
+        printf "$_ permissions set to 0%o\n", $CONFIG::LMTOOLS_PERMISSIONS;
     }
 }
 

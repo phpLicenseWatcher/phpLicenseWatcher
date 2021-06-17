@@ -1,9 +1,11 @@
 <?php
 // Config file for Vagrant VM
 
-// $lmutil_binary is the full path & file where lmutil is located.
-// lmutil must have execute permissions for the web server user.
-$lmutil_binary="/opt/flexnetserver/lmutil";
+// $*_binary is the full path & file where a license manager binary is located.
+// They must have execute permissions for the web server user.
+// FlexLM (lmutil) and Mathematica (masterlm) are currently supported.
+$lmutil_binary="/opt/lmtools/lmutil";
+$masterlm_binary="/opt/lmtools/masterlm";
 
 // $cache_dir specifies what directory is used to store/process cache files.
 // /tmp is not advised.  $cache_lifetime is how long a cache file is retained
