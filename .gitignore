@@ -5,13 +5,13 @@
 /nbproject/
 
 # License manager binaries (should never be committed to repo!)
-/vagrant_setup/lmtools/**
-!/vagrant_setup/lmtoools/readme.md
+/vagrant_provision/lmtools/**
+!/vagrant_provision/lmtoools/readme.md
 adskflex
 lmgrd
 lmutil
-# mathlm
-# monitorlm
+mathlm
+monitorlm
 
 # Text temp files
 **/*~

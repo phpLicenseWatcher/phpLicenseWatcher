@@ -18,7 +18,7 @@ print STDERR "Root required.\n" and exit 1 if ($> != 0);
 
 update_ubuntu();
 prepare_cache();
-setup_lmservers();
+setup_lmtools();
 setup_mysql();
 setup_database();
 setup_logrotate();
@@ -51,18 +51,21 @@ sub update_ubuntu {
     }
 }
 
-sub prepare_cache {
 # Prepare cache directory
+sub prepare_cache {
     my $dest = catdir(@CONFIG::CACHE_PATH);
+    my $uid  = $CONFIG::CACHE_OWNER_UID;
+    my $gid  = $CONFIG::CACHE_OWNER_GID;
+
     mkdir $dest, 0701;
-    chown $CONFIG::CACHE_OWNER_UID, $CONFIG::CACHE_OWNER_GID, $dest;
+    chown $uid, $gid, $dest;
     print "Created cache file directory: $dest\n";
 }
 
 # Copy lmserver files to system.
-sub setup_lmservers {
+sub setup_lmtools {
     my ($source, $dest);
-    my @source_path = (@CONFIG::REPO_PATH, "vagrant_provision", "lmservers");
+    my @source_path = (@CONFIG::REPO_PATH, "vagrant_provision", "lmtools");
     my @dest_path   = @CONFIG::LMTOOLS_PATH;
 
     $dest = catdir(@dest_path);
@@ -74,9 +77,9 @@ sub setup_lmservers {
 
         # autodie doesn't work with File::Copy
         if (copy $source, $dest) {
-            print "Copied Flex LM binary $_\n";
+            print "Copied LM binary $_\n";
         } else {
-            print STDERR "Flex LM binary $_: $!\n";
+            print STDERR "LM binary $_: $!\n";
             exit 1;
         }
 
