@@ -4,13 +4,11 @@
 use strict;
 use warnings;
 use autodie;
-use File::Basename qw(dirname fileparse);
+use File::Basename qw(fileparse);
 use File::Path qw(remove_tree);
 use File::Spec::Functions qw(catdir catfile);
-
-# permit us to use modules from same dir as this script.
-use Cwd qw(abs_path);
-use lib dirname(abs_path($0));
+use FindBin qw($RealBin);
+use lib $RealBin;
 use config;
 
 # main()
@@ -61,15 +59,18 @@ sub exec_rsync {
 
 # Remove everything from HTML directory
 sub clear_html_folder {
-    remove_tree(catdir(@CONFIG::HTML_PATH), {safe => 1, keep_root => 1});
+    my $html_path = catdir(@CONFIG::HTML_PATH);
+    remove_tree($html_path, {safe => 1, keep_root => 1});
     print "Cleared HTML directory.\n";
 }
 
 # Copy code to HTML directory
 sub rsync_code {
+    my @repo_path   = @CONFIG::REPO_PATH;
+    my $config_file = catfile(@CONFIG::CONFIG_PATH, $CONFIG::CONFIG_FILE);
+    my $dest        = catdir(@CONFIG::HTML_PATH);
+    my @file_list   = qw(*.php *.html *.css *.js);
     my ($source, $files);
-    my $dest = catdir(@CONFIG::HTML_PATH);
-    my @file_list = qw(*.php *.html *.css *.js);
 
     # Normally, we just want to rsync development code, but a full provision
     # also requires config file and composer packages.
@@ -77,11 +78,11 @@ sub rsync_code {
     if (defined $option && $option eq "full") {
         # Composer is disabled.
         # push(@file_list, catfile(@CONFIG::CONFIG_PATH, $CONFIG::CONFIG_FILE), $CONFIG::COMPOSER_PACKAGES);
-        push(@file_list, catfile(@CONFIG::CONFIG_PATH, $CONFIG::CONFIG_FILE));
+        push(@file_list, $config_file);
     }
 
     foreach (@file_list) {
-        $files = catfile(@CONFIG::REPO_PATH, $_);
+        $files = catfile(@repo_path, $_);
         foreach $source (glob($files)) {
             exec_rsync($source, $dest);
         }

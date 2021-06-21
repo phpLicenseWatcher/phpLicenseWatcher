@@ -5,8 +5,8 @@
 /nbproject/
 
 # Flex LM binaries (should never be committed to repo!)
-/vagrant_setup/flex_lm/**
-!/vagrant_setup/flex_lm/readme.md
+/vagrant_provision/lmtools/**
+!/vagrant_provision/lmtools/readme.md
 adskflex
 lmgrd
 lmutil

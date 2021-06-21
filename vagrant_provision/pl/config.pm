@@ -7,7 +7,7 @@ use File::Spec::Functions qw(rootdir);
 our @VAGRANT_HOMEPATH = (rootdir(), "home", "vagrant");
 our @REPO_PATH = (@VAGRANT_HOMEPATH, "github_phplw");
 our @CONFIG_PATH = ("vagrant_provision", "config");  # Relative to @REPO_PATH
-our @FLEXNETSERVER_PATH = (rootdir(), "opt", "flexnetserver");
+our @LMTOOLS_PATH = (rootdir(), "opt", "lmtools");
 our @HTML_PATH = (rootdir(), "var", "www", "html");
 our @LOGROTATE_PATH = (rootdir(), "etc", "logrotate.d");
 our @APACHE_PATH = (rootdir(), "etc", "apache2");
@@ -38,11 +38,11 @@ our $CACHE_OWNER_GID = getgrnam $CACHE_OWNER;
 our $CACHE_PERMISSIONS = 0700;
 
 # List of Flex LM binaries and ownership
-our @FLEXLM_FILES = ("adskflex", "lmgrd", "lmutil");
-our $FLEXLM_OWNER = "www-data";
-our $FLEXLM_OWNER_UID = getpwnam $FLEXLM_OWNER;
-our $FLEXLM_OWNER_GID = getgrnam $FLEXLM_OWNER;
-our $FLEXLM_PERMISSIONS = 0770;
+our @LMTOOLS_FILES = ("lmutil");
+our $LMTOOLS_OWNER = "www-data";
+our $LMTOOLS_OWNER_UID = getpwnam $LMTOOLS_OWNER;
+our $LMTOOLS_OWNER_GID = getgrnam $LMTOOLS_OWNER;
+our $LMTOOLS_PERMISSIONS = 0770;
 
 # DB config
 our @DB_HOSTS = ("localhost", "_gateway");

@@ -20,9 +20,13 @@ Download and install for your operating system:
 1. Install Vagrant and VirtualBox.
     * Make sure to install the vbguest plugin:  `vagrant plugin install vagrant-vbguest`
     * You do _not_ need the Virtualbox Extension Pack to run this Vagrant box.
-2. Clone this repository to your host, either with `git` command line or the Github Application.
-3. Go to the root folder of the cloned repository.
-4. On the command line: `vagrant up`
+2. Provide license manager binary for FlexLM (`lmutil`).
+    * Copy the license manager binary to `vagrant_provision/lmservers` within the cloned repository.
+    * Make sure the binaries are compiled for Linux.
+    * License manager binaries shall not be tracked in this repository.  Please do not remove their entries in `.gitignore`.
+3. Clone this repository to your host, either with `git` command line or the Github Application.
+4. Go to the root folder of the cloned repository.
+5. On the command line: `vagrant up`
     * There will be a long series of build messages printed to the console.
     * Build messages will be logged in the repository at `logs/provision.log` (not tracked by git).
     * Depending on the speed of your Internet connection and the speed of your host computer, it can take 30 minutes or more to build the VM.
