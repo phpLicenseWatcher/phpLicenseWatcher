@@ -165,6 +165,24 @@ function get_alert_html($msg, $lvl="info") {
 
 }
 
+function get_not_polled_notice() {
+    return get_alert_html(
+        "No servers have been polled. Make sure that license_util.php, licence_cache.php, and license_alert.php are setup on a cron schedule.",
+        "info"
+    );
+}
+
+/**
+ * Send response data to Ajax request.
+ *
+ * @param string $data Ajax response data
+ */
+function ajax_send_data($data, $mime='plain/text') {
+    header("Content-Type: {$mime}");
+    print $data;
+    log_var($data, 3);
+} // END function ajax_send_data()
+
 /**
  * Debug helper function to print preformatted SQL code to browser.
  *

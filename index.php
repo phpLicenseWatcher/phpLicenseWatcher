@@ -67,9 +67,7 @@ foreach ($servers as $server) {
 	$table->update_cell(($table->get_rows_count() - 1), 2, $class);
 }
 
-$cron_notice = !$display_cron_notice ? "" : <<<HTML
-<p class='text-danger'>&#10006; <strong>No servers have been polled. Make sure that license_util.php, licence_cache.php, and license_alert.php are setup on a cron schedule.</strong>
-HTML;
+$cron_notice = !$display_cron_notice ? "" : get_not_polled_notice();
 
 // Output view.
 print_header();
