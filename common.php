@@ -9,8 +9,8 @@ if (is_readable(__DIR__ . "/config.php")) {
 <h1>Missing Component</h1>
 <p>Configuration file <code>config.php</code> could not be read.  Please notify your system administrator.
 HTML;
-	  print_footer();
-	  exit;
+    print_footer();
+    exit;
 }
 
 // Constants
@@ -18,6 +18,9 @@ HTML;
 define ('SERVER_UP', "UP");
 define ('SERVER_DOWN', "DOWN");
 define ('SERVER_VENDOR_DOWN', "VENDOR DOWN");
+
+// Page size for features table
+define("ROWS_PER_PAGE", 50);
 
 // $lmutil_loc has been renamed $lmutil_binary, but master branch still has $lmutil_loc.
 if (isset($lmutil_loc) && !isset($lmutil_binary)) {
@@ -37,8 +40,10 @@ function print_footer() {
 }
 
 /** apply trim() to entirety of superglobal $_POST */
-function trim_post() {
+function clean_post() {
     $_POST = array_map('trim', $_POST);
+    // Prevent XSS
+    $_POST = array_map('htmlspecialchars', $_POST);
 }
 
 /**
@@ -63,6 +68,11 @@ function db_connect(&$db) {
     $db = new mysqli("p:{$db_hostname}", $db_username, $db_password, $db_database);
     if (!is_null($db->connect_error)) {
         die("Database Connect Error {$db->connect_errno}: {$db->connect_error}");
+    }
+
+    // ensure we are using utf8mb4 character set
+    if (!$db->set_charset("utf8mb4")) {
+        die("DB Error: Could not set client character set.");
     }
 }
 
@@ -123,6 +133,57 @@ function db_get_servers(object &$db, array $cols=array(), array $ids=array(), st
 }
 
 /**
+ * Get HTML block to display a bootstrap alert
+ *
+ * @param string $msg Alert message to display
+ * @param string $lvl Alert level ("success", "failure", or default of info alert);
+ * @return string HTML block of alert to be added to view.
+ */
+function get_alert_html($msg, $lvl="info") {
+    switch($lvl) {
+    case "success":
+        $msg = "&#10004; " . $msg;  // prepend checkmark
+        $class = "alert-success";   // bootstrap class
+        break;
+    case "failure":
+        $msg = "&#10006; " . $msg;  // prepend crossmark
+        $class = "alert-danger";    // bootstrap class
+        break;
+    default:
+        $class = "alert-info";
+        break;
+    }
+
+    return <<<HTML
+    <div class='alert {$class} alert-dismissible' role='alert'>
+        {$msg}
+        <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
+            <span aria-hidden='true'>&times;</span>
+        </button>
+    </div>
+    HTML;
+
+}
+
+function get_not_polled_notice() {
+    return get_alert_html(
+        "No servers have been polled. Make sure that license_util.php, licence_cache.php, and license_alert.php are setup on a cron schedule.",
+        "info"
+    );
+}
+
+/**
+ * Send response data to Ajax request.
+ *
+ * @param string $data Ajax response data
+ */
+function ajax_send_data($data, $mime='plain/text') {
+    header("Content-Type: {$mime}");
+    print $data;
+    log_var($data, 3);
+} // END function ajax_send_data()
+
+/**
  * Debug helper function to print preformatted SQL code to browser.
  *
  * This is extremely similar to print_var().  Possibly remove this function in the future.
@@ -150,4 +211,11 @@ function print_var ($var) {
     }
 }
 
+function log_var($var, $num=0) {
+    global $debug; // from config.php
+    if (isset($debug) && $debug == 1) {
+        $export = var_export($var, true);
+        file_put_contents("/home/vagrant/var{$num}.log", $export);
+    }
+}
 ?>

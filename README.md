@@ -32,9 +32,10 @@
 
 ## Requirements
 
-* PHP enabled web server
+
+* 64-bit PHP enabled web server
 * MySQL (MariaDB is not officially targeted, but has received community support)
-* FlexLM lmstat/lmutil/lmdiag binaries for the OS you are running the web server on.
+* FlexLM lmutil binary for the OS you are running the web server on.
 
 ## Install process
 1. Retrieve required packages for your OS/distribution:
@@ -56,7 +57,8 @@
    mysqladmin create licenses
    mysql -f licenses < phplicensewatcher.sql
    ```
-4. Update config file "./config.php" with proper values for your setup
+4. Copy "config/sample-config.php" to "./config.php" and edit it for the proper values for your setup.  Brief instructions are provided within the file as code comments.
+
 5. Setup cron to run scheduled tasks
    ```
    0 6 * * 1 php /var/www/html/license_alert.php >> /dev/null
