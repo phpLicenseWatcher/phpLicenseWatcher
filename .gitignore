@@ -6,7 +6,7 @@
 
 # License manager binaries (should never be committed to repo!)
 /vagrant_provision/lmtools/**
-!/vagrant_provision/lmtoools/readme.md
+!/vagrant_provision/lmtools/readme.md
 adskflex
 lmgrd
 lmutil
