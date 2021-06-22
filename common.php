@@ -180,7 +180,6 @@ function get_not_polled_notice() {
 function ajax_send_data($data, $mime='plain/text') {
     header("Content-Type: {$mime}");
     print $data;
-    log_var($data, 3);
 } // END function ajax_send_data()
 
 /**
@@ -211,6 +210,15 @@ function print_var ($var) {
     }
 }
 
+/**
+ * Debug helper function to send var_export() to a file.
+ *
+ * The files are written to /home/vagrant and should be something like
+ * "var0.txt", "var1.txt", etc.  If the files aren't being written, it is
+ * likely a permissions issue.  $ chmod ugo+w /home/vagrant
+ *
+ * @param mixed $var variable to be exported to browser view.
+ */
 function log_var($var, $num=0) {
     global $debug; // from config.php
     if (isset($debug) && $debug == 1) {

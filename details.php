@@ -18,7 +18,7 @@ if ( isset($_GET['multiple_servers']) ) {
 }
 
 db_connect($db);
-$servers = db_get_servers($db, array('name', 'label'), $ids);
+$servers = db_get_servers($db, array('name', 'label', 'id'), $ids);
 $db->close();
 
 $html_body = ""; // To be filled by the process function called below.
@@ -259,10 +259,50 @@ HTML;
             }
 
         } else {
+            $features = get_features_list($server['id']);
+            $table = new html_table(array('class'=>"table alt-rows-bgcolor"));
+            foreach($features as $feature) {
+                $link = "<br/><a href='monitor_detail.php?feature={$feature}'>Historical Usage</a>";
+                $rows = $table->get_rows_count() - 1;
+                $table->add_row(array($feature, $link));
+                $table->update_cell($rows, 0, null, null, "th");
+            }
+
             // color #dc143c is "crimson", which is better than "red" for contrast ratio against white background.
-            $html_body .= "<p style='color: crimson;'>No licenses are currently being used on {$server['name']} ({$server['label']})</p>";
+            $html_body .= "<p style='color: #dc143c;'>No licenses are currently being used on {$server['name']} ({$server['label']})</p>";
+            $html_body .= $table->get_html();
         }
         pclose($fp);
     } // END foreach ($servers as $server)
 } // END function list_licenses_for_use()
+
+function get_features_list($server_id) {
+    $sql = <<<SQL
+    SELECT `name` FROM `features`
+    JOIN `licenses` ON `features`.`id` = `licenses`.`feature_id`
+    WHERE `licenses`.`server_id`=?
+    SQL;
+
+    $params = array('i', $server_id);
+    $results = array();
+
+    db_connect($db);
+    $query = $db->prepare($sql);
+    $query->bind_param(...$params);
+    $query->execute();
+    $query->bind_result($feature_name);
+    while ($query->fetch()) {
+        $results[] = $feature_name;
+    }
+
+    if (!empty($db->error_list)) {
+        $err_msg = htmlspecialchars($db->error);
+        return "DB Error: {$err_msg}.";
+    }
+
+    $query->close();
+    $db->close();
+
+    return $results;
+}
 ?>
