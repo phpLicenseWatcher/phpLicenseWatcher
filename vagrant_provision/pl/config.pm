@@ -40,8 +40,8 @@ our $CACHE_PERMISSIONS = 0700;
 # List of Flex LM binaries and ownership
 our @LMTOOLS_FILES = ("lmutil", "monitorlm");
 our $LMTOOLS_OWNER = "www-data";
-our $LMTOOLS_OWNER_UID = getpwnam $FLEXLM_OWNER;
-our $LMTOOLS_OWNER_GID = getgrnam $FLEXLM_OWNER;
+our $LMTOOLS_OWNER_UID = getpwnam $LMTOOLS_OWNER;
+our $LMTOOLS_OWNER_GID = getgrnam $LMTOOLS_OWNER;
 our $LMTOOLS_PERMISSIONS = 0770;
 
 # DB config
