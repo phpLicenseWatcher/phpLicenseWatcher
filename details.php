@@ -119,7 +119,6 @@ function list_licenses_in_use($servers, &$html_body) {
     $html_body .= <<<HTML
 <p>Following is the list of licenses currently being used.
 Licenses that are currently not in use are not shown.</p>
-
 HTML;
 
     // If person is filtering for certain features
@@ -136,12 +135,13 @@ HTML;
 
     // Loop through the available servers
     foreach ($servers as $server) {
+        // Get features
+        $licenses = get_features_and_licenses($server['id']);
+
         // Execute lmutil lmstat -A -c port@server_fqdn
+        // switch -A reports only licenses in use.
         $fp = popen("{$lmutil_binary} lmstat -A -c {$server['name']}", "r");
-        $line = fgets($fp, 1024);
-
-
-        $no_licenses_in_use_warning = true;
+        $line = fgets($fp);
 
         // Loop through the output. Look for lines starting with Users. Then look for any
         // consecutive entries showing who is using it
@@ -149,174 +149,139 @@ HTML;
             // Look for features in a $line.  Example $line:
             // Users of Allegro_Viewer:  (Total of 5 licenses issued;  Total of 2 licenses in use)
             switch (1) {
-            case preg_match('/^Users of ([\w\- ]+):  \(Total of (\d+) licenses issued;  Total of (\d+)/i', $line, $matches):
-                $feature            = $matches[1];
-                $num_licenses       = $matches[2];
-                $num_licenses_used  = $matches[3];
-                $user = array(); // $user, $host, $date, $time are parallel arrays
-                $host = array();
-                $date = array();
-                $time = array();
-                $no_licenses_in_use_warning = false;
-                $license_checkout_regex = "/^([^ ]+) ([^ ]+) .+ ([0-9]{1,2}\/[0-9]{1,2}) ([0-9]{1,2}:[0-9]{2})/i";
-                $line = fgets($fp, 1024);
+            case preg_match('/^Users of ([\w\- ]+):  \(Total of (\d+) licenses* issued;  Total of (\d+)/i', $line, $matches):
+                $feature_name = $matches[1];
+                $licenses[$feature_name]['num_licenses'] = $matches[2];
+                $licenses[$feature_name]['licenses_used'] = $matches[3];
 
-                while(preg_match($license_checkout_regex, $line, $matches)) {
-                    $user[] = $match[1];
-                    $host[] = $match[2];
-                    $date[] = $match[3];
-                    $time[] = $match[4];
-                    $line = fgets($fp, 1024);
+                $licenses_used = (int) $matches[3];
+                $i = 0;
+                while ($i < $licenses_used) {
+                    $line = fgets($fp);
+                    if (preg_match("/^([^ ]+) ([^ ]+) .+ ([0-9]{1,2}\/[0-9]{1,2}) ([0-9]{1,2}:[0-9]{2})/i", $line, $matches)) {
+                        $licenses[$feature_name]['licenses_used'][$i]['user'] = $matches[1];
+                        $licenses[$feature_name]['licenses_used'][$i]['host'] = $matches[2];
+                        $licenses[$feature_name]['licenses_used'][$i]['date'] = $matches[3];
+                        $licenses[$feature_name]['licenses_used'][$i]['time'] = $matches[4];
+                        $i++;
+                    }
                 }
                 break;
-            case preg_match('/^Users of ([\w\- ]+):  \(Uncounted, node-locked/i', $line, $matches):
-                $feature           = $matches[1];
-                $num_licenses      = "uncounted";
-                $num_licenses_used = "uncounted";
-                $user = array(); // $user, $host, $date, $time are parallel arrays
-                $host = array(); // They need to be emptied/reset.
-                $date = array();
-                $time = array();
+            case preg_match('/^Users of ([\w\- ]+):  \(Uncounted/i', $line, $matches):
+                $i++;
+                $feature_name = $matches[1];
+                $licenses[$feature_name]['num_licenses'] = "uncounted";
+                $licenses[$feature_name]['licenses_used'] = "uncounted";
                 break;
             }
+
+            $line = fgets($fp);
         }
 
-        $log[]['feature'] = $feature;
-        $log[]['num_licenses'] = $num_licenses;
-        $log[]['num_licenses_used'] = $num_licenses_used;
-        $key = array_key_last($user);
-        if (is_int($key)) {
-            $log[]['user'] = $user[$key];
-            $log[]['host'] = $host[$key];
-            $log[]['date'] = $host[$key];
-            $log[]['time'] = $host[$key];
+        var_log($licenses,0);die;
+
+        // Check whether anyone is using licenses from this particular license server
+        if ( $i > -1 ) {
+            // Create a new table
+            $table = new html_table(array('class'=>"table"));
+
+            // Show a banner with the name of the serve@port plus description
+            $colHeaders = array("Server: {$server['name']} ({$server['label']})");
+            $table->add_row($colHeaders, array(), "th");
+            $table->update_cell(0, 0, array('colspan'=>"4"));
+
+            $colHeaders = array("Feature", "# Cur. Avail", "Details", "Time Checked Out");
+            $table->add_row($colHeaders, array(), "th");
+
+            // Get current UNIX time stamp
+            $now = time();
+
+            // Loop through the used features
+            for ( $j = 0 ; $j <= $i ; $j++ ) {
+                if ( ! isset($_GET['filter_feature']) || in_array($licenses[$j]['feature'], $_GET['filter_feature']) ) {
+                    $feature = $licenses[$j]['feature'] ;
+                    $graph_url = "monitor_detail.php?feature={$feature}";
+
+                    // How many licenses are currently used
+                    $licenses_available = $licenses[$j]['num_licenses'] - $licenses[$j]['licenses_used'];
+                    $license_info = "Total of {$licenses[$j]['num_licenses']} licenses, ";
+                    $license_info .= "{$licenses[$j]['licenses_used']} currently in use, ";
+                    $license_info .= "<span style='font-weight: bold'>{$licenses_available} available</span>";
+                    $license_info .= "<br/><a href='{$graph_url}'>Historical Usage</a>";
+                    $class = $j%2===0 ? array('class'=>"alt-bgcolor") : array();
+                    $table->add_row(array($licenses[$j]['feature'], $licenses_available, $license_info, ""), $class);
+
+                    // Not all used features have checkout-time data.  Skip over those that don't.
+                    if (isset($used_licenses[$server['name']][$j]) && is_countable($used_licenses[$server['name']][$j])) {
+                        foreach ($used_licenses[$server['name']][$j] as $used_license) {
+                            /* ---------------------------------------------------------------------------
+                             * I want to know how long a license has been checked out. This
+                             * helps in case some people forgot to close an application and
+                             * have licenses checked out for too long.
+                             * LMstat view will contain a line that says
+                             * jdoe machine1 /dev/pts/4 (v4.0) (licenserver/27000 444), start Thu 12/5 9:57
+                             * the date after start is when license was checked out
+                             * ---------------------------------------------------------------------------- */
+                            $line = explode(", start ", $used_license);
+                            preg_match("/(.+?) (.+?) (\d+):(\d+)/i", $line[1], $line2);
+
+                            // Convert the date and time ie 12/5 9:57 to UNIX time stamp
+                            $time_checkedout = strtotime ($line2[2] . " " . $line2[3] . ":" . $line2[4]);
+                            $time_difference = "";
+
+                            /* ---------------------------------------------------------------------------
+                             * This is what I am not very clear on but let's say a license has been
+                             * checked out on 12/31 and today is 1/2. It is unclear to me whether
+                             * strotime will handle the conversion correctly ie. 12/31 will actually
+                             * be 12/31 of previous year and not the current. Thus I will make a
+                             * little check here. Will just append the previous year if now is less
+                             * then time_checked_out
+                             * ---------------------------------------------------------------------------- */
+                            if ( $now < $time_checkedout ) {
+                                $time_checkedout = strtotime ($line2[2] . "/" . (date("Y") - 1) . " " . $line2[3]);
+                            } else {
+                                // Get the time difference
+                                $t = new timespan( $now, $time_checkedout );
+
+                                // Format the date string
+                                if ( $t->years > 0) $time_difference .= $t->years . " years(s), ";
+                                if ( $t->months > 0) $time_difference .= $t->months . " month(s), ";
+                                if ( $t->weeks > 0) $time_difference .= $t->weeks . " week(s), ";
+                                if ( $t->days > 0) $time_difference .= " " . $t->days . " day(s), ";
+                                if ( $t->hours > 0) $time_difference .= " " . $t->hours . " hour(s), ";
+                                $time_difference .= $t->minutes . " minute(s)";
+                            }
+
+                            // Output the user line
+                            $user_line = $used_license;
+                            $user_line_parts = explode( ' ', trim($user_line) );
+                            $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> ";
+                            $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> ";
+                            $table->add_row(array("", "", $user_line_formated, $time_difference), $class);
+                        }
+                    }
+                }
+            }
+
+            // Display the table
+            if ($table->get_rows_count() > 2 ) {
+                $html_body .= $table->get_html();
+            }
+
+        } else {
+            // color #dc143c is "crimson", which is better than "red" for contrast ratio against white background.
+            $html_body .= "<p style='color: #dc143c;'>No licenses are currently being used on {$server['name']} ({$server['label']})</p>";
         }
-        set_time_limit(30);
+        pclose($fp);
     } // END foreach ($servers as $server)
-    log_var($log, 0);
 } // END function list_licenses_for_use()
 
-
-
-            // Next: build HTML data row
-            // -------------------------
-
-
-        //     if ( preg_match("/, start/i", $line ) ){
-        //         $used_licenses[$server['name']][$i][] = $line;
-        //     }
-        // }
-        //
-        // // Check whether anyone is using licenses from this particular license server
-        // if ( $i > -1 ) {
-        //     // Create a new table
-        //     $table = new html_table(array('class'=>"table"));
-        //
-        //     // Show a banner with the name of the serve@port plus description
-        //     $colHeaders = array("Server: {$server['name']} ({$server['label']})");
-        //     $table->add_row($colHeaders, array(), "th");
-        //     $table->update_cell(0, 0, array('colspan'=>"4"));
-        //
-        //     $colHeaders = array("Feature", "# Cur. Avail", "Details", "Time Checked Out");
-        //     $table->add_row($colHeaders, array(), "th");
-        //
-        //     // Get current UNIX time stamp
-        //     $now = time();
-        //
-        //     // Loop through the used features
-        //     for ( $j = 0 ; $j <= $i ; $j++ ) {
-        //         if ( ! isset($_GET['filter_feature']) || in_array($licenses[$j]['feature'], $_GET['filter_feature']) ) {
-        //             $feature = $licenses[$j]['feature'] ;
-        //             $graph_url = "monitor_detail.php?feature={$feature}";
-        //
-        //             // How many licenses are currently used
-        //             $licenses_available = $licenses[$j]['num_licenses'] - $licenses[$j]['licenses_used'];
-        //             $license_info = "Total of {$licenses[$j]['num_licenses']} licenses, ";
-        //             $license_info .= "{$licenses[$j]['licenses_used']} currently in use, ";
-        //             $license_info .= "<span style='font-weight: bold'>{$licenses_available} available</span>";
-        //             $license_info .= "<br/><a href='{$graph_url}'>Historical Usage</a>";
-        //             $class = $j%2===0 ? array('class'=>"alt-bgcolor") : array();
-        //             $table->add_row(array($licenses[$j]['feature'], $licenses_available, $license_info, ""), $class);
-        //
-        //             // Not all used features have checkout-time data.  Skip over those that don't.
-        //             if (isset($used_licenses[$server['name']][$j]) && is_countable($used_licenses[$server['name']][$j])) {
-        //                 foreach ($used_licenses[$server['name']][$j] as $used_license) {
-        //                     /* ---------------------------------------------------------------------------
-        //                      * I want to know how long a license has been checked out. This
-        //                      * helps in case some people forgot to close an application and
-        //                      * have licenses checked out for too long.
-        //                      * LMstat view will contain a line that says
-        //                      * jdoe machine1 /dev/pts/4 (v4.0) (licenserver/27000 444), start Thu 12/5 9:57
-        //                      * the date after start is when license was checked out
-        //                      * ---------------------------------------------------------------------------- */
-        //                     $line = explode(", start ", $used_license);
-        //                     preg_match("/(.+?) (.+?) (\d+):(\d+)/i", $line[1], $line2);
-        //
-        //                     // Convert the date and time ie 12/5 9:57 to UNIX time stamp
-        //                     $time_checkedout = strtotime ($line2[2] . " " . $line2[3] . ":" . $line2[4]);
-        //                     $time_difference = "";
-        //
-        //                     /* ---------------------------------------------------------------------------
-        //                      * This is what I am not very clear on but let's say a license has been
-        //                      * checked out on 12/31 and today is 1/2. It is unclear to me whether
-        //                      * strotime will handle the conversion correctly ie. 12/31 will actually
-        //                      * be 12/31 of previous year and not the current. Thus I will make a
-        //                      * little check here. Will just append the previous year if now is less
-        //                      * then time_checked_out
-        //                      * ---------------------------------------------------------------------------- */
-        //                     if ( $now < $time_checkedout ) {
-        //                         $time_checkedout = strtotime ($line2[2] . "/" . (date("Y") - 1) . " " . $line2[3]);
-        //                     } else {
-        //                         // Get the time difference
-        //                         $t = new timespan( $now, $time_checkedout );
-        //
-        //                         // Format the date string
-        //                         if ( $t->years > 0) $time_difference .= $t->years . " years(s), ";
-        //                         if ( $t->months > 0) $time_difference .= $t->months . " month(s), ";
-        //                         if ( $t->weeks > 0) $time_difference .= $t->weeks . " week(s), ";
-        //                         if ( $t->days > 0) $time_difference .= " " . $t->days . " day(s), ";
-        //                         if ( $t->hours > 0) $time_difference .= " " . $t->hours . " hour(s), ";
-        //                         $time_difference .= $t->minutes . " minute(s)";
-        //                     }
-        //
-        //                     // Output the user line
-        //                     $user_line = $used_license;
-        //                     $user_line_parts = explode( ' ', trim($user_line) );
-        //                     $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> ";
-        //                     $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> ";
-        //                     $table->add_row(array("", "", $user_line_formated, $time_difference), $class);
-        //                 }
-        //             }
-        //         }
-        //     }
-        //
-        //     // Display the table
-        //     if ($table->get_rows_count() > 2 ) {
-        //         $html_body .= $table->get_html();
-        //     }
-        //
-        // } else {
-        //     $features = get_features_list($server['id']);
-        //     $table = new html_table(array('class'=>"table alt-rows-bgcolor"));
-        //     $table->add_row(array("Historical Usage"), null, "th");
-        //     foreach($features as $feature) {
-        //         $link = "<a href='monitor_detail.php?feature={$feature}'>{$feature}</a>";
-        //         $table->add_row(array($link));
-        //     }
-        //
-        //     // color #dc143c is "crimson", which is better than "red" for contrast ratio against white background.
-        //     $html_body .= "<p style='color: #dc143c;'>No licenses are currently being used on {$server['name']} ({$server['label']})</p>";
-        //     $html_body .= $table->get_html();
-        // }
-        // pclose($fp);
-//     } // END foreach ($servers as $server)
-// } // END function list_licenses_for_use()
-
-function get_features_list($server_id) {
+function get_features_and_licenses($server_id) {
     $sql = <<<SQL
-    SELECT `name` FROM `features`
-    JOIN `licenses` ON `features`.`id` = `licenses`.`feature_id`
-    WHERE `licenses`.`server_id`=?
+    SELECT `features`.`name`, `available`.`num_licenses` FROM `available`
+    JOIN `licenses` ON `available`.`license_id` = `licenses`.`feature_id`
+    JOIN `features` ON `licenses`.`feature_id` = `features`.`id`
+    WHERE `licenses`.`server_id` = ?
     SQL;
 
     $params = array('i', $server_id);
@@ -326,9 +291,9 @@ function get_features_list($server_id) {
     $query = $db->prepare($sql);
     $query->bind_param(...$params);
     $query->execute();
-    $query->bind_result($feature_name);
+    $query->bind_result($feature_name, $num_licenses);
     while ($query->fetch()) {
-        $results[] = $feature_name;
+        $results[$feature_name]['num_licenses'] = $num_licenses;
     }
 
     if (!empty($db->error_list)) {
