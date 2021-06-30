@@ -201,24 +201,26 @@ HTML;
         // Get current UNIX time stamp
         $now = time();
 
-        // Loop through the used features
-        for ( $j = 0 ; $j <= $i ; $j++ ) {
-            if ( ! isset($_GET['filter_feature']) || in_array($licenses[$j]['feature'], $_GET['filter_feature']) ) {
-                $feature = $licenses[$j]['feature'] ;
+        foreach(array_merge($used_licenses, $unused_licenses) as $i => $license) {
+            if (!isset($_GET['filter_feature']) || in_array($license['feature_name'], $_GET['filter_feature'])) {
+                $feature = $license['feature_name'];
                 $graph_url = "monitor_detail.php?feature={$feature}";
 
                 // How many licenses are currently used
-                $licenses_available = $licenses[$j]['num_licenses'] - $licenses[$j]['licenses_used'];
-                $license_info = "Total of {$licenses[$j]['num_licenses']} licenses, ";
-                $license_info .= "{$licenses[$j]['licenses_used']} currently in use, ";
-                $license_info .= "<span style='font-weight: bold'>{$licenses_available} available</span>";
-                $license_info .= "<br/><a href='{$graph_url}'>Historical Usage</a>";
-                $class = $j%2===0 ? array('class'=>"alt-bgcolor") : array();
-                $table->add_row(array($licenses[$j]['feature'], $licenses_available, $license_info, ""), $class);
+                $licenses_available = $license['num_licenses'] - $license['num_licenses_used'];
+
+                $license_info = <<<HTML
+                Total of {$license['num_licenses']} licenses, {$license['num_licenses_used']} currently in use,
+                <span style='font-weight: bold'>{$licenses_available} available</span>
+                <br/><a href='{$graph_url}'>Historical Usage</a>
+                HTML;
+
+                $class = $i % 2 === 0 ? array('class'=>"alt-bgcolor") : array();
+                $table->add_row(array($license['feature_name'], $licenses_available, $license_info, ""), $class);
 
                 // Not all used features have checkout-time data.  Skip over those that don't.
-                if (isset($used_licenses[$server['name']][$j]) && is_countable($used_licenses[$server['name']][$j])) {
-                    foreach ($used_licenses[$server['name']][$j] as $used_license) {
+                if (isset($license['checkouts']) && is_countable($license['checkouts'])) {
+                    foreach ($license['checkouts'] as $checkout) {
                         /* ---------------------------------------------------------------------------
                          * I want to know how long a license has been checked out. This
                          * helps in case some people forgot to close an application and
@@ -227,52 +229,47 @@ HTML;
                          * jdoe machine1 /dev/pts/4 (v4.0) (licenserver/27000 444), start Thu 12/5 9:57
                          * the date after start is when license was checked out
                          * ---------------------------------------------------------------------------- */
-                        $line = explode(", start ", $used_license);
-                        preg_match("/(.+?) (.+?) (\d+):(\d+)/i", $line[1], $line2);
 
-                        // Convert the date and time ie 12/5 9:57 to UNIX time stamp
-                        $time_checkedout = strtotime ($line2[2] . " " . $line2[3] . ":" . $line2[4]);
-                        $time_difference = "";
+                         // Convert the date and time ie 12/5 9:57 to UNIX time stamp
+                         $time_checkedout = strtotime("{$checkout['date']} {$checkout['time']}");
+                         $time_difference = "";
 
-                        /* ---------------------------------------------------------------------------
-                         * This is what I am not very clear on but let's say a license has been
-                         * checked out on 12/31 and today is 1/2. It is unclear to me whether
-                         * strotime will handle the conversion correctly ie. 12/31 will actually
-                         * be 12/31 of previous year and not the current. Thus I will make a
-                         * little check here. Will just append the previous year if now is less
-                         * then time_checked_out
-                         * ---------------------------------------------------------------------------- */
-                        if ( $now < $time_checkedout ) {
-                            $time_checkedout = strtotime ($line2[2] . "/" . (date("Y") - 1) . " " . $line2[3]);
-                        } else {
-                            // Get the time difference
-                            $t = new timespan( $now, $time_checkedout );
+                         /* ---------------------------------------------------------------------------
+                          * This is what I am not very clear on but let's say a license has been
+                          * checked out on 12/31 and today is 1/2. It is unclear to me whether
+                          * strotime will handle the conversion correctly ie. 12/31 will actually
+                          * be 12/31 of previous year and not the current. Thus I will make a
+                          * little check here. Will just append the previous year if now is less
+                          * then time_checked_out
+                          * ---------------------------------------------------------------------------- */
+                         if ($now < $time_checkedout) {
+                             $year = date("Y") - 1;
+                             $time_checkedout = strtotime("{$checkout['date']}/{$year} {$checkout['time']}");
+                         }
 
-                            // Format the date string
-                            if ( $t->years > 0) $time_difference .= $t->years . " years(s), ";
-                            if ( $t->months > 0) $time_difference .= $t->months . " month(s), ";
-                            if ( $t->weeks > 0) $time_difference .= $t->weeks . " week(s), ";
-                            if ( $t->days > 0) $time_difference .= " " . $t->days . " day(s), ";
-                            if ( $t->hours > 0) $time_difference .= " " . $t->hours . " hour(s), ";
-                            $time_difference .= $t->minutes . " minute(s)";
-                        }
+                         // Get the time difference
+                         $t = new timespan($now, $time_checkedout);
 
-                        // Output the user line
-                        $user_line = $used_license;
-                        $user_line_parts = explode( ' ', trim($user_line) );
-                        $user_line_formated = "<span>User: ".$user_line_parts[0]."</span> ";
-                        $user_line_formated .= "<span>Computer: ".$user_line_parts[2]."</span> ";
-                        $table->add_row(array("", "", $user_line_formated, $time_difference), $class);
-                    }
-                }
-            }
-        }
+                         // Format the date string
+                         if ($t->years > 0)  $time_difference .= "{$t->years} years(s), ";
+                         if ($t->months > 0) $time_difference .= "{$t->months} month(s), ";
+                         if ($t->weeks > 0)  $time_difference .= "{$t->weeks} week(s), ";
+                         if ($t->days > 0)   $time_difference .= " {$t->days} day(s), ";
+                         if ($t->hours > 0)  $time_difference .= " {$t->hours} hour(s), ";
+                         $time_difference .= "{$t->minutes} minute(s)";
+
+                         // Output the user line
+                         $html = "<span>User: {$checkout['user']}</span> ";
+                         $html .= "<span>Computer: {$checkout['host']}</span> ";
+                         $table->add_row(array("", "", $html, $time_difference), $class);
+                     } // END foreach ($license['checkouts'] as $checkout)
+                 } // END if (isset($license['checkouts']) && is_countable($license['checkouts']))
+             } // END if (!isset($_GET['filter_feature']) || in_array($license['feature_name'], $_GET['filter_feature']))
+         } // END foreach(array_merge($used_licenses, $unused_licenses) as $i => $license)
 
         // Display the table
-        if ($table->get_rows_count() > 2 ) {
-            $html_body .= $table->get_html();
-        }
-        pclose($fp);
+        $html_body .= $table->get_html();
+
     } // END foreach ($servers as $server)
 } // END function list_licenses_for_use()
 
@@ -296,6 +293,7 @@ function get_features_and_licenses($server_id) {
     for ($i = 0; $query->fetch(); $i++) {
         $results[$i]['feature_name'] = $feature_name;
         $results[$i]['num_licenses'] = $num_licenses;
+        $results[$i]['num_licenses_used'] = 0; // needed by function caller
     }
 
     if (!empty($db->error_list)) {
