@@ -40,6 +40,12 @@ $test_values  = $test ? "Is Executable" : "Not Executable (maybe check permissio
 $test_results = $test ? PASS_MARK : FAIL_MARK;
 $table->add_row(array($test_names, $test_values, $test_results));
 
+$test         = isset($monitorlm_binary) && is_executable($monitorlm_binary);
+$test_names   = "monitorlm binary";
+$test_values  = $test ? "Is Executable" : "Not Executable (maybe check permissions?)";
+$test_results = $test ? PASS_MARK : FAIL_MARK;
+$table->add_row(array($test_names, $test_values, $test_results));
+
 $test = call_user_func(function() {
     global $db_hostname, $db_username, $db_password, $db_database; // from config.php
 

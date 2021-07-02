@@ -2,9 +2,11 @@
 // This is a sample config file that can be copied to webroot
 // (e.g. /var/www/html) as "config.php" and adjusted as needed.
 
-// $lmutil_binary is the full path & file where lmutil is located.
-// lmutil must have execute permissions for the web server user.
+// $*_binary is the full path & file where a license manager binary is located.
+// They must have execute permissions for the web server user.
+// FlexLM (lmutil) and Mathematica (monitorlm) are currently supported.
 $lmutil_binary="/usr/local/bin/lmutil";
+$monitorlm_binary="/usr/local/bin/monitorlm";
 
 // $cache_dir specifies what directory is used to store/process cache files.
 // /tmp is not advised.  $cache_lifetime is how long a cache file is retained

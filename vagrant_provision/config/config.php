@@ -3,9 +3,9 @@
 
 // $*_binary is the full path & file where a license manager binary is located.
 // They must have execute permissions for the web server user.
-// FlexLM (lmutil) and Mathematica (masterlm) are currently supported.
+// FlexLM (lmutil) and Mathematica (monitorlm) are currently supported.
 $lmutil_binary="/opt/lmtools/lmutil";
-$masterlm_binary="/opt/lmtools/masterlm";
+$monitorlm_binary="/opt/lmtools/monitorlm";
 
 // $cache_dir specifies what directory is used to store/process cache files.
 // /tmp is not advised.  $cache_lifetime is how long a cache file is retained
