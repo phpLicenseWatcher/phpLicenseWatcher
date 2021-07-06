@@ -178,7 +178,7 @@ HTML;
 
             $line = fgets($fp);
         }
-        
+
         uasort($used_licenses, function($a, $b) {
             return strcasecmp($a['feature_name'], $b['feature_name']);
         });
@@ -282,7 +282,7 @@ function get_features_and_licenses($server_id) {
     SELECT `features`.`name`, `available`.`num_licenses` FROM `available`
     JOIN `licenses` ON `available`.`license_id` = `licenses`.`feature_id`
     JOIN `features` ON `licenses`.`feature_id` = `features`.`id`
-    WHERE `licenses`.`server_id` = ?
+    WHERE `licenses`.`server_id` = ? AND `features`.`show_in_lists` = 1
     ORDER BY `features`.`name`
     SQL;
 
