@@ -278,12 +278,16 @@ HTML;
 } // END function list_licenses_for_use()
 
 function get_features_and_licenses($server_id) {
+    // The left outer join ensures that every feature in the result is its most
+    // recent entry regardless of the current date.  Otherwise, there would be
+    // very many rows per feature (one for every date of entry)
     $sql = <<<SQL
-    SELECT `features`.`name`, `available`.`num_licenses` FROM `available`
-    JOIN `licenses` ON `available`.`license_id` = `licenses`.`feature_id`
-    JOIN `features` ON `licenses`.`feature_id` = `features`.`id`
-    WHERE `licenses`.`server_id` = ? AND `features`.`show_in_lists` = 1
-    ORDER BY `features`.`name`
+    SELECT f.`name`, a1.`num_licenses` FROM `available` a1
+    JOIN `licenses` l ON a1.`license_id` = l.`id`
+    JOIN `features` f ON l.`feature_id` = f.`id`
+    LEFT OUTER JOIN `available` a2 ON a1.`license_id` = a2.`license_id` AND a1.`date` < a2.`date`
+    WHERE a2.`license_id` IS NULL AND l.`server_id` = ?
+    ORDER BY f.`name`
     SQL;
 
     $params = array('i', $server_id);
