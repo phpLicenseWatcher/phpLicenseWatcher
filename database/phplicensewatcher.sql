@@ -35,12 +35,11 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `label` VARCHAR(100) NOT NULL,
   `is_active` TINYINT NOT NULL DEFAULT 1,
   `status` VARCHAR(25) NULL,
+  `lm_binary` VARCHAR(25) NOT NULL,
   `lmgrd_version` VARCHAR(15) NULL,
   `last_updated` DATETIME NULL DEFAULT now(),
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `name_UNIQUE` (`name` ASC),
-  CONSTRAINT `port@domain.tld`
-    CHECK (REGEXP_LIKE(`name`, '^[0-9]{1,5}@([a-z0-9\-]+\.)+[a-z\-]{2,}$', 'i')))
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC))
 ENGINE = InnoDB
 AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8mb4;

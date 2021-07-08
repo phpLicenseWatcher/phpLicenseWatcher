@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `label` VARCHAR(100) NOT NULL,
   `is_active` TINYINT NOT NULL DEFAULT 1,
   `status` VARCHAR(25) NULL,
+  `lm_binary` VARCHAR(25) NOT NULL,
   `lmgrd_version` VARCHAR(15) NULL,
   `last_updated` DATETIME NULL DEFAULT now(),
   PRIMARY KEY (`id`),
