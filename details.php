@@ -142,8 +142,6 @@ HTML;
         $used_licenses = array();
         $i = 0;
 
-        // Loop through the output. Look for lines starting with Users.
-        // Then look for any consecutive entries showing who is using it.
         while (!feof($fp)) {
             // Look for features in a $line.  Example $line:
             // Users of Allegro_Viewer:  (Total of 5 licenses issued;  Total of 2 licenses in use)
@@ -179,12 +177,12 @@ HTML;
             $line = fgets($fp);
         }
 
-        uasort($used_licenses, function($a, $b) {
+        usort($used_licenses, function($a, $b) {
             return strcasecmp($a['feature_name'], $b['feature_name']);
         });
 
         $unused_licenses = array_udiff(get_features_and_licenses($server['id']), $used_licenses, function($a, $b) {
-            return $a['feature_name'] <=> $b['feature_name'];
+            return strcasecmp($a['feature_name'], $b['feature_name']);
         });
 
         if ($no_licenses_in_use_warning) {
@@ -194,7 +192,7 @@ HTML;
         // Create a new table
         $table = new html_table(array('class'=>"table"));
 
-        // Show a banner with the name of the serve@port plus description
+        // Show a banner with the name of the port@server plus description
         $colHeaders = array("Server: {$server['name']} ({$server['label']})");
         $table->add_row($colHeaders, array(), "th");
         $table->update_cell(0, 0, array('colspan'=>"4"));
@@ -219,7 +217,14 @@ HTML;
                 <br/><a href='{$graph_url}'>Historical Usage</a>
                 HTML;
 
-                $class = $i % 2 === 0 ? array('class'=>"alt-bgcolor") : array();
+                // Checked out licenses have a blue tinted background to
+                // differentiate from licenses with no checkouts.
+                if (isset($license['checkouts']) && count($license['checkouts']) > 0) {
+                    $class = $i % 2 === 0 ? array('class'=>"alt-even-blue-bgcolor") : array('class'=>"alt-odd-blue-bgcolor");
+                } else {
+                    $class = $i % 2 === 0 ? array('class'=>"alt-bgcolor") : array();
+                }
+
                 $table->add_row(array($license['feature_name'], $licenses_available, $license_info, ""), $class);
 
                 // Not all used features have checkout-time data.  Skip over those that don't.
@@ -279,15 +284,15 @@ HTML;
 
 function get_features_and_licenses($server_id) {
     // The left outer join ensures that every feature in the result is its most
-    // recent entry regardless of the current date.  Otherwise, there would be
-    // very many rows per feature (one for every date of entry)
+    // recent entry.  Otherwise, there would be very many rows per feature.
+    // (one for every date of entry)
     $sql = <<<SQL
     SELECT f.`name`, a1.`num_licenses` FROM `available` a1
     JOIN `licenses` l ON a1.`license_id` = l.`id`
     JOIN `features` f ON l.`feature_id` = f.`id`
     LEFT OUTER JOIN `available` a2 ON a1.`license_id` = a2.`license_id` AND a1.`date` < a2.`date`
     WHERE a2.`license_id` IS NULL AND l.`server_id` = ?
-    ORDER BY f.`name`
+    ORDER BY f.`name` ASC
     SQL;
 
     $params = array('i', $server_id);
