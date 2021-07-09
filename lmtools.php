@@ -5,18 +5,24 @@ require_once __DIR__ . "/config.php";
 
 class lmtools {
 
+    public static $lmsupported = array(
+        array("flexlm", "lmutil_binary"),
+        array("mathematica", "monitorlm_binary")
+    );
+
     private $lmtools;
     private $fp;
     private $cmd;
     private $tool;
+
     public $err;
 
     public function __construct() {
-        global $lmutil_binary, $monitorlm_binary;  // from config.php
-        $this->lmtools['flexlm']      = isset($lmutil_binary)    && is_executable($lmutil_binary)    ? $lmutil_binary    : null;
-        $this->lmtools['mathematica'] = isset($monitorlm_binary) && is_executable($monitorlm_binary) ? $monitorlm_binary : null;
-        // Add more tools here when expanding.
-
+        clearstatcache();
+        foreach (self::$lmsupported as $supported) {
+            global ${$supported[1]}; // defined in config.php
+            $this->lmtools[$supported[0]] = isset(${$supported[1]}) && is_executable(${$supported[1]}) ? ${$supported[1]} : null;
+        }
         $this->err = null;
         $this->fp = null;
     }
@@ -95,17 +101,18 @@ class lmtools {
         $line = fgets($this->fp);
         switch ($this->cmd) {
         case "get_all_info":
+        }
     }
 
 
-    private tool_check($tool) {
+    private function tool_check($tool) {
         if (!isset($this->lmtools[$tool])) {
             $this->err = "LMtool {$tool} not supported.";
             return false;
         }
 
         if (is_null($this->lmtools[$tool])) {
-            $this->err = "LMtool {$tool} not executable."
+            $this->err = "LMtool {$tool} not executable.";
             return false;
         }
 
@@ -113,10 +120,9 @@ class lmtools {
         return true;
     }
 
-    private tool_close() {
+    private function tool_close() {
         $this->tool = null;
         if (is_resource($this->fp) && get_resource_type($this->fp) === "stream") pclose($this->fp);
     }
 }
-
 ?>
