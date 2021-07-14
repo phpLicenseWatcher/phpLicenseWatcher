@@ -4,6 +4,9 @@ require_once __DIR__ . "/config.php";
 // Currently supported: "flexlm", "mathematica"
 class lmtools {
 
+    private const LMBINARY = "%LMBINARY%";
+    private const LMSERVER = "%LMSERVER%";
+
     // Add more tools here when expanding
     private static $lmsupported = array(
         array('lmtool' => "flexlm",      'binary' => "lmutil_binary"),
@@ -13,12 +16,12 @@ class lmtools {
     private static $command = array(
         'license_cache' => array(
             'flexlm' => array(
-                'cli'         => "%LMBINARY% lmstat -a -c %SERVER%",
-                'regex'       => "/^Users of (.*)Total /i",
+                'cli'         => self::LMBINARY . " lmstat -a -c " . self::LMSERVER
+                'regex'       => array("/^Users of (.*)Total /i"),
                 'num_matches' => 1),
             'mathematica' => array(
-                'cli'         => "%LMBINARY% %SERVER% -localtime -template mathematica/license_cache.template",
-                'regex'       => null,  // placeholder
+                'cli'         => self::LMBINARY. " " . self::LMSERVER . " -localtime -template mathematica/license_cache.template",
+                'regex'       => array(null),  // placeholder
                 'num_matches' => null)) // placeholder
 
         // 'get_all_features' => array(
@@ -35,6 +38,7 @@ class lmtools {
     private $lmavailable;
     private $fp;
     private $cmd;
+    private $lm;
     public $err;
 
     public function __construct() {
@@ -45,16 +49,17 @@ class lmtools {
                 $this->lmavailable[$supported['lmtool']] = ${$supported['binary']};
             }
         }
-        $this->cmd = null;
-        $this->err = null;
         $this->fp = null;
+        $this->cmd = null;
+        $this->lm = null;
+        $this->err = null;
     }
 
     public function __destruct() {
-        $this->tool_close();
+        $this->cli_close();
     }
 
-    public function is_availale($tool) {
+    public function is_available(string $tool) {
         return isset($this->lmavailable[$tool]);
     }
 
@@ -62,6 +67,53 @@ class lmtools {
         $all_lmavailable = array_keys($this->lmavailable);
         sort($all_lmavailable, SORT_STRING | SORT_FLAG_CASE);
         return $all_lmavailable;
+    }
+
+    public function lm_start(string $lm, string $cmd, string $server) {
+        $tool = strtolower($tool);
+        if (!$this->lm_check($tool)) return false;
+        $this->cli_close();
+
+        $binary = $this->lmavailable[$lm];
+        $cli = self::$command[$cmd][$lm]['cli'];
+        $cli = str_replace(self::LMBINARY, $binary, $cli);
+        $cli = str_replace(self::LMSERVER, $server, $cli);
+        $this->fp = popen($cli, "r");
+
+        if ($this->fp === false) {
+            $this->err = "Cannot open \"{$cli}\"";
+            return false;
+        }
+
+        $this->cmd = $cmd;
+        $this->lm = $lm;
+        $this->err = null;
+        return true;
+    }
+
+    public function lm_nextline(int $pattern=0) {
+        if (!is_resource($this->fp) || get_resource_type($this->fp) !== "stream") {
+            $this->err = "No license manager tool is open.";
+            return false;
+        }
+
+        $line = fgets($this->fp);
+        if (feof($this->fp)) {
+            $this->cli_close();
+            $this->cmd = null;
+            $this->lm = null;
+            $this->err = "No more output from license manager.";
+            return false;
+        }
+
+        $cmd = $this->cmd;
+        $lm = $this->lm;
+        $pattern = self::$command[$cmd][$lm]['regex'][$pattern];
+        if (preg_match($pattern, $line) === 1) {
+            // TO DO: Grab data from regex matches
+        }
+
+        // TO DO: return data
     }
 
     // public function open_get_all_info(string $tool, string $server) {
@@ -137,9 +189,9 @@ class lmtools {
     //     }
     // }
 
-    private function tool_check($tool) {
+    private function lm_check($tool) {
         if (!isset($this->lmtools[$tool])) {
-            $this->err = "LMtool {$tool} not available.";
+            $this->err = "License Manager \"{$tool}\" not available.";
             return false;
         }
 
@@ -147,8 +199,17 @@ class lmtools {
         return true;
     }
 
-    private function tool_close() {
-        $this->tool = null;
+    private function cmd_check($command) {
+        if (!isset(self::$command[$command])) {
+            $this->err = "Invalid command: \"{$command}\".";
+            return false;;
+        }
+
+        $this->err = null;
+        return true;
+    }
+
+    private function cli_close() {
         if (is_resource($this->fp) && get_resource_type($this->fp) === "stream") pclose($this->fp);
     }
 }
