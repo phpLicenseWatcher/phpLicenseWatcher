@@ -3,194 +3,104 @@ require_once __DIR__ . "/config.php";
 
 // Currently supported: "flexlm", "mathematica"
 class lmtools {
-
-    private const LMBINARY = "%LMBINARY%";
-    private const LMSERVER = "%LMSERVER%";
-
     // Add more tools here when expanding
-    private static $lmsupported = array(
-        array('lmtool' => "flexlm",      'binary' => "lmutil_binary"),
-        array('lmtool' => "mathematica", 'binary' => "monitorlm_binary")
+    private const LM_SUPPORTED = array(
+        array('lm' => "flexlm",      'bin' => "lmutil_binary"),
+        array('lm' => "mathematica", 'bin' => "monitorlm_binary")
     );
 
-    private static $command = array(
-        'license_cache' => array(
-            'flexlm' => array(
-                'cli'         => self::LMBINARY . " lmstat -a -c " . self::LMSERVER
-                'regex'       => array("/^Users of (.*)Total /i"),
-                'num_matches' => 1),
-            'mathematica' => array(
-                'cli'         => self::LMBINARY. " " . self::LMSERVER . " -localtime -template mathematica/license_cache.template",
-                'regex'       => array(null),  // placeholder
-                'num_matches' => null)) // placeholder
-
-        // 'get_all_features' => array(
-        //     'flexlm'      => "%LMBINARY% lmstat -a -c %SERVER%",
-        //     'mathematica' => "%LMBINARY% %SERVER% -localtime -template mathematica/get_all_features.template"),
-        // 'get_single_feature' => array(
-        //     'flexlm'      => "%LMBINARY% lmstat -c %SERVER%",
-        //     'mathematica' => "%LMBINARY% %SERVER% -localtime -template mathematica/get_single_feature.template"),
-        // 'get_checkouts' => array(
-        //     'flexlm'      => "%LMBINARY% lmstat -A -c %SERVER",
-        //     'mathematica' => "%LMBINARY% %SERVER% -localtime -template mathematica/get_checkouts.template");
-    );
-
-    private $lmavailable;
+    private const CLI_BINARY = "%CLI_BINARY%";
+    private const CLI_SERVER = "%CLI_SERVER%";
+    private $lm_binaries;
     private $fp;
-    private $cmd;
-    private $lm;
+    private $cli;
+    private $regex;
     public $err;
 
     public function __construct() {
         clearstatcache();
-        foreach (self::$lmsupported as $supported) {
-            global ${$supported['binary']}; // expected to be defined in config.php
-            if (isset($supported['lmtool']) && isset(${$supported['binary']}) && is_executable(${$supported['binary']})) {
-                $this->lmavailable[$supported['lmtool']] = ${$supported['binary']};
+        foreach (self::LM_SUPPORTED as $supported) {
+            global ${$supported['bin']}; // expected to be defined in config.php
+            if (isset($supported['lm']) && isset(${$supported['bin']}) && is_executable(${$supported['bin']})) {
+                $this->lm_binaries[$supported['lm']] = ${$supported['bin']};
             }
         }
-        $this->fp = null;
-        $this->cmd = null;
-        $this->lm = null;
-        $this->err = null;
+
+        $this->fp    = null;
+        $this->cli   = null;
+        $this->regex = null;
+        $this->err   = null;
     }
 
     public function __destruct() {
         $this->cli_close();
     }
 
-    public function is_available(string $tool) {
-        return isset($this->lmavailable[$tool]);
+    public function is_available(string $lm) {
+        return isset($this->lm_binaries[$lm]);
     }
 
     public function list_all_available() {
-        $all_lmavailable = array_keys($this->lmavailable);
-        sort($all_lmavailable, SORT_STRING | SORT_FLAG_CASE);
-        return $all_lmavailable;
+        $all_lm_available = array_keys($this->lm_binaries);
+        sort($all_lm_available, SORT_STRING | SORT_FLAG_CASE);
+        return $all_lm_available;
     }
 
-    public function lm_start(string $lm, string $cmd, string $server) {
-        $tool = strtolower($tool);
-        if (!$this->lm_check($tool)) return false;
-        $this->cli_close();
+    public function lm_open(string $lm, string $cmd, string $server) {
+        switch (false) {
+        case $this->lm_check($lm):
+        case $this->set_command($cmd, $lm):
+            return false;
+        }
 
-        $binary = $this->lmavailable[$lm];
-        $cli = self::$command[$cmd][$lm]['cli'];
-        $cli = str_replace(self::LMBINARY, $binary, $cli);
-        $cli = str_replace(self::LMSERVER, $server, $cli);
-        $this->fp = popen($cli, "r");
+        $binary = $this->lm_binaries[$lm];
+        $this->cli = str_replace(self::CLI_BINARY, $binary, $this->cli);
+        $this->cli = str_replace(self::CLI_SERVER, $server, $this->cli);
+        $this->fp = popen($this->cli, "r");
 
         if ($this->fp === false) {
+            $this->cli = null;
+            $this->regex = null;
             $this->err = "Cannot open \"{$cli}\"";
             return false;
         }
 
-        $this->cmd = $cmd;
-        $this->lm = $lm;
         $this->err = null;
         return true;
     }
 
     public function lm_nextline(int $pattern=0) {
-        if (!is_resource($this->fp) || get_resource_type($this->fp) !== "stream") {
-            $this->err = "No license manager tool is open.";
+        switch (true) {
+        case !is_resource($this->fp) || get_resource_type($this->fp) !== "stream":
+            $this->err = "No license manager is open.";
+            return false;
+        case is_null($this->cli):
+            $this->err = "LMtool object CLI not set.";
+            return false;
+        case is_null($this->regex) || !isset($this->regex[$pattern]):
+            $this->err = "Regex pattern #{$pattern} not defined for current license manager or command.";
             return false;
         }
 
         $line = fgets($this->fp);
-        if (feof($this->fp)) {
-            $this->cli_close();
-            $this->cmd = null;
-            $this->lm = null;
-            $this->err = "No more output from license manager.";
-            return false;
-        }
+        while (true) {
+            switch (true) {
+            case preg_match($this->regex[$pattern], $line, $matches) === 1:
+                return array_filter($matches, function($key) {return is_string($key);}, ARRAY_FILTER_USE_KEY);
+            case feof($this->fp):
+                $this->cli_close();
+                $this->cli   = null;
+                $this->regex = null;
+                $this->err   = null;
+                return null;
+            }
 
-        $cmd = $this->cmd;
-        $lm = $this->lm;
-        $pattern = self::$command[$cmd][$lm]['regex'][$pattern];
-        if (preg_match($pattern, $line) === 1) {
-            // TO DO: Grab data from regex matches
+            $line = fgets($this->fp);
         }
-
-        // TO DO: return data
     }
 
-    // public function open_get_all_info(string $tool, string $server) {
-    //     $this->tool_close();
-    //     $tool = strtolower($tool);
-    //     if (!tool_check($tool)) return false;
-    //     $this->tool = $tool;
-    //
-    //     switch($tool) {
-    //     case "flexlm":
-    //         $this->fp = popen("{$this->lmtools[$tool]} lmstat -a -c {$server}", "r");
-    //         break;
-    //     case "mathematica":
-    //         break;
-    //     // Add more tools here when expanding
-    //     }
-    //
-    //     $this->cmd = "get_all_info";
-    //     return true;
-    // }
-    //
-    // public function open_get_usage_info(string $tool, string $server) {
-    //     $this->tool_close();
-    //     $tool = strtolower($tool);
-    //     if (!tool_check($tool)) return false;
-    //     $this->tool = $tool;
-    //
-    //     switch($tool) {
-    //     case "flexlm":
-    //         $this->fp = popen("{$this->lmtools[$tool]} lmstat -A -c {$server}", "r");
-    //         break;
-    //     case "mathematica":
-    //         break;
-    //     // Add more tools here when expanding
-    //     }
-    //
-    //     $this->cmd = "get_usage_info";
-    //     return true;
-    // }
-    //
-    // public function open_get_feature_info(string $tool, string $server, string $feature) {
-    //     $this->tool_close();
-    //     $tool = strtolower($tool);
-    //     if (!tool_check($tool)) return false;
-    //     $this->tool = $tool;
-    //
-    //     switch($this->tool) {
-    //     case "flexlm":
-    //         $this->fp = popen("{$this->lmtools[$this->tool]} lmstat -f {$feature} -c {$server}", "r");
-    //         break;
-    //     case "mathematica":
-    //         break;
-    //     // Add more tools here when expanding
-    //     }
-    //
-    //     $this->cmd = "get_feature_info";
-    //     return true;
-    // }
-    //
-    // public function next_line() {
-    //     switch (true) {
-    //     case !is_resource($this->fp):
-    //     case get_resource_type($this->fp) !== "stream":
-    //         return false;
-    //     case feof($this->fp):
-    //         pclose($this->fp);
-    //         return false;
-    //     }
-    //
-    //     $line = fgets($this->fp);
-    //     switch ($this->cmd) {
-    //     case "get_all_info":
-    //     }
-    // }
-
-    private function lm_check($tool) {
-        if (!isset($this->lmtools[$tool])) {
+    private function lm_check($lm) {
+        if (!isset($this->lm_binaries[$lm])) {
             $this->err = "License Manager \"{$tool}\" not available.";
             return false;
         }
@@ -199,18 +109,35 @@ class lmtools {
         return true;
     }
 
-    private function cmd_check($command) {
-        if (!isset(self::$command[$command])) {
-            $this->err = "Invalid command: \"{$command}\".";
-            return false;;
+    private function cli_close() {
+        if (is_resource($this->fp) && get_resource_type($this->fp) === "stream") pclose($this->fp);
+    }
+
+    private function set_command($cmd, $lm) {
+        $this->cli   = null;
+        $this->regex = null;
+
+        switch ($cmd) {
+        case 'license_cache':
+            switch ($lm) {
+            case 'flexlm':
+                $this->cli   = self::CLI_BINARY . " lmstat -a -c " . self::CLI_SERVER;
+                $this->regex = array("/^Users of (?<feature>[^ ]+):  \(Total of (?<num_licenses>\d+)/");
+                break;
+            case 'mathematica':
+                $this->cli   = self::CLI_BINARY. " " . self::CLI_SERVER . " -localtime -template mathematica/license_cache.template";
+                $this->regex = array("");  // placeholder
+                break;
+            }
+        }
+
+        if (is_null($this->cli) || is_null($this->regex)) {
+            $this->err = "Either license manager or command requested is unknown.";
+            return false;
         }
 
         $this->err = null;
         return true;
-    }
-
-    private function cli_close() {
-        if (is_resource($this->fp) && get_resource_type($this->fp) === "stream") pclose($this->fp);
     }
 }
 ?>
