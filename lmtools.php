@@ -12,6 +12,7 @@ class lmtools {
     private const CLI_BINARY = "%CLI_BINARY%";
     private const CLI_SERVER = "%CLI_SERVER%";
     private $lm_binaries;
+    private $stdout_cache;
     private $fp;
     private $cli;
     private $regex;
@@ -19,6 +20,8 @@ class lmtools {
 
     public function __construct() {
         clearstatcache();
+        // $this->lm_binaries[license manager] = binary_executable
+        // binary_executable is 'path/file' and found in config.php
         foreach (self::LM_SUPPORTED as $supported) {
             global ${$supported['bin']}; // expected to be defined in config.php
             if (isset($supported['lm']) && isset(${$supported['bin']}) && is_executable(${$supported['bin']})) {
@@ -26,6 +29,7 @@ class lmtools {
             }
         }
 
+        $this->stdout_cache = "";
         $this->fp    = null;
         $this->cli   = null;
         $this->regex = null;
@@ -53,6 +57,7 @@ class lmtools {
             return false;
         }
 
+        $this->stdout_cache = "";
         $binary = $this->lm_binaries[$lm];
         $this->cli = str_replace(self::CLI_BINARY, $binary, $this->cli);
         $this->cli = str_replace(self::CLI_SERVER, $server, $this->cli);
@@ -99,6 +104,26 @@ class lmtools {
         }
     }
 
+    public function regex_matched(&$regex, &$matches) {
+        // TO DO: some error checking
+        $this->new_stdout_cache();
+        foreach($this->regex as $regex=>$preg) {
+            if (preg_match($preg, $this->stdout, $matches) === 1) {
+                $matches = array_filter($matches, function($key) {return is_string($key);}, ARRAY_FILTER_USE_KEY);
+                return true;
+            }
+        }
+
+        $regex = null;
+        $matches = null;
+        return null;
+    }
+
+    private function new_stdout_cache() {
+        $this->stdout_cache = "";
+        while (!feof($this->fp)) $this->stdout_cache .= fgets($this->fp);
+    }
+
     private function lm_check($lm) {
         if (!isset($this->lm_binaries[$lm])) {
             $this->err = "License Manager \"{$tool}\" not available.";
@@ -125,7 +150,29 @@ class lmtools {
                 $this->regex = array("/^Users of (?<feature>[^ ]+):  \(Total of (?<num_licenses>\d+)/");
                 break;
             case 'mathematica':
-                $this->cli   = self::CLI_BINARY. " " . self::CLI_SERVER . " -localtime -template mathematica/license_cache.template";
+                $this->cli   = self::CLI_BINARY . " " . self::CLI_SERVER . " -localtime -template mathematica/license_cache.template";
+                $this->regex = array("");  // placeholder
+                break;
+            }
+        case 'license_util_update_servers':
+            switch ($lm) {
+            case 'flexlm':
+                $this->cli   = self::CLI_BINARY . " lmstat -c " . self::CLI_SERVER;
+                $this->regex = array(
+                    'server_up'   => "/license server UP (?:\(MASTER\) )?(?<lmgrd_version>v\d+[\d\.]*)$/i",
+                    'vendor_down' => "/vendor daemon is down/i");
+            case 'mathematica':
+                $this->cli   = self::CLI_BINARY . " " . self::CLI_SERVER . " -localtime -template mathematica/license_util_update_servers.template";
+                $this->regex = array("");  // placeholder
+                break;
+            }
+        case 'license_util_update_licenses':
+            switch ($lm) {
+            case 'flexlm':
+                $this->cli   = self::CLI_BINARY . " lmstat -a -c " . self::CLI_SERVER;
+                $this->regex = array("/^Users of (?<feature>[^ ]+):  \(Total of \d+ licenses? issued;  Total of (?<licenses_used>\d+)/");
+            case 'mathematica':
+                $this->cli   = self::CLI_BINARY . " " . self::CLI_SERVER . " -localtime -template mathematica/license_util_update_servers.template";
                 $this->regex = array("");  // placeholder
                 break;
             }
