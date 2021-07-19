@@ -1,7 +1,7 @@
 /* Do not rely on the browser for default values */
 body {
-    color: black;
-    background-color: white;
+    color: #000000; /* black */
+    background-color: #ffffff; /* white */
     font-size: 16px;
     font-family: Helvetica, Arial, sans-serif;
 }
@@ -17,12 +17,12 @@ a {
 
 /* Red (#ff0000) is too light for contrast ratio > 4.5:1 against white and #efefef. */
 .red-text {
-    color: firebrick;
+    color: #b22222; /* firebrick */
 }
 
 /* Green (#008000) is too light for contrast ratio < 4.5:1 against #efefef. */
 .green-text {
-    color: darkgreen;
+    color: #006400; /* darkgreen */
 }
 
 .float-right {
@@ -55,6 +55,14 @@ input[type=file].servers-control-panel {
 
 table.alt-rows-bgcolor tr:nth-child(even), tr.alt-bgcolor {
     background-color: #efefef;
+}
+
+table.alt-rows-blue-bgcolor tr:nth-child(odd), tr.alt-odd-blue-bgcolor {
+    background-color: #f0ffff; /* azure */
+}
+
+table.alt-rows-blue-bgcolor tr:nth-child(even), tr.alt-even-blue-bgcolor {
+    background-color: #e1efef;
 }
 
 form.edit-form {

@@ -206,19 +206,16 @@ function validate_uploaded_json() {
     case isset($tmp_name) && is_uploaded_file($tmp_name):
     case isset($type)     && $type  === "application/json":
     case isset($error)    && $error === 0:
-        log_var($_FILES, 2);
         return false;
     }
 
     $file = file_get_contents($tmp_name);
     if ($file === false) {
-        log_var($tmp_name, 3);
         return false;
     }
 
     $json = json_decode($file, true);
     if (is_null($json)) {
-        log_var($file, 4);
         return false;
     }
 
@@ -228,7 +225,6 @@ function validate_uploaded_json() {
         case array_key_exists('name', $row) && preg_match("/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $row['name']):
         case array_key_exists('label', $row);
         case array_key_exists('is_active', $row) && preg_match("/^[01]$/", $row['is_active']):
-            log_var($row, 5);
             return false;
         }
     }
