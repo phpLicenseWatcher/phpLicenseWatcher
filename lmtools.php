@@ -66,7 +66,7 @@ class lmtools {
         if ($this->fp === false) {
             $this->cli = null;
             $this->regex = null;
-            $this->err = "Cannot open \"{$cli}\"";
+            $this->err = "lmtools.php: Cannot open \"{$cli}\"";
             return false;
         }
 
@@ -77,13 +77,13 @@ class lmtools {
     public function lm_nextline(int $pattern=0) {
         switch (true) {
         case !is_resource($this->fp) || get_resource_type($this->fp) !== "stream":
-            $this->err = "No license manager is open.";
+            $this->err = "lmtools.php: No license manager is open.";
             return false;
         case is_null($this->cli):
-            $this->err = "LMtool object CLI not set.";
+            $this->err = "lmtools.php: LMtool object CLI not set.";
             return false;
         case is_null($this->regex) || !isset($this->regex[$pattern]):
-            $this->err = "Regex pattern #{$pattern} not defined for current license manager or command.";
+            $this->err = "lmtools.php: Regex pattern #{$pattern} not defined for current license manager or command.";
             return false;
         }
 
@@ -108,7 +108,7 @@ class lmtools {
         // TO DO: some error checking
         $this->new_stdout_cache();
         foreach($this->regex as $regex=>$preg) {
-            if (preg_match($preg, $this->stdout, $matches) === 1) {
+            if (preg_match($preg, $this->stdout_cache, $matches) === 1) {
                 $matches = array_filter($matches, function($key) {return is_string($key);}, ARRAY_FILTER_USE_KEY);
                 return true;
             }
@@ -126,7 +126,7 @@ class lmtools {
 
     private function lm_check($lm) {
         if (!isset($this->lm_binaries[$lm])) {
-            $this->err = "License Manager \"{$tool}\" not available.";
+            $this->err = "lmtools.php: License Manager \"{$tool}\" not available.";
             return false;
         }
 
@@ -141,45 +141,51 @@ class lmtools {
     private function set_command($cmd, $lm) {
         $this->cli   = null;
         $this->regex = null;
+        $binary = self::CLI_BINARY;
+        $server = self::CLI_SERVER;
 
         switch ($cmd) {
         case 'license_cache':
             switch ($lm) {
             case 'flexlm':
-                $this->cli   = self::CLI_BINARY . " lmstat -a -c " . self::CLI_SERVER;
+                $this->cli   = "{$binary} lmstat -a -c {$server}";
                 $this->regex = array("/^Users of (?<feature>[^ ]+):  \(Total of (?<num_licenses>\d+)/");
                 break;
             case 'mathematica':
-                $this->cli   = self::CLI_BINARY . " " . self::CLI_SERVER . " -localtime -template mathematica/license_cache.template";
+                $this->cli   = "{$binary} {$server} -localtime -template mathematica/license_cache.template";
                 $this->regex = array("");  // placeholder
                 break;
             }
+            break;
         case 'license_util_update_servers':
             switch ($lm) {
             case 'flexlm':
-                $this->cli   = self::CLI_BINARY . " lmstat -c " . self::CLI_SERVER;
+                $this->cli   = "{$binary} lmstat -c {$server}";
                 $this->regex = array(
-                    'server_up'   => "/license server UP (?:\(MASTER\) )?(?<lmgrd_version>v\d+[\d\.]*)$/i",
-                    'vendor_down' => "/vendor daemon is down/i");
+                    'server_up'   => "/license server UP (?:\(MASTER\) )?(?<server_version>v\d+[\d\.]*)$/im",
+                    'vendor_down' => "/vendor daemon is down/im");
+                break;
             case 'mathematica':
-                $this->cli   = self::CLI_BINARY . " " . self::CLI_SERVER . " -localtime -template mathematica/license_util_update_servers.template";
+                $this->cli   = "{$binary} {$server} -localtime -template mathematica/license_util_update_servers.template";
                 $this->regex = array("");  // placeholder
                 break;
             }
+            break;
         case 'license_util_update_licenses':
             switch ($lm) {
             case 'flexlm':
-                $this->cli   = self::CLI_BINARY . " lmstat -a -c " . self::CLI_SERVER;
+                $this->cli   = "{$binary} lmstat -a -c {$server}";
                 $this->regex = array("/^Users of (?<feature>[^ ]+):  \(Total of \d+ licenses? issued;  Total of (?<licenses_used>\d+)/");
+                break;
             case 'mathematica':
-                $this->cli   = self::CLI_BINARY . " " . self::CLI_SERVER . " -localtime -template mathematica/license_util_update_servers.template";
+                $this->cli   = "{$binary} {$server} -localtime -template mathematica/license_util_update_servers.template";
                 $this->regex = array("");  // placeholder
                 break;
             }
         }
 
         if (is_null($this->cli) || is_null($this->regex)) {
-            $this->err = "Either license manager or command requested is unknown.";
+            $this->err = "lmtools.php: Either license manager or command requested is unknown.";
             return false;
         }
 
