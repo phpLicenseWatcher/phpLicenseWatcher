@@ -145,6 +145,18 @@ class lmtools {
         $server = self::CLI_SERVER;
 
         switch ($cmd) {
+        case 'build_license_expiration_array':
+            switch($lm) {
+            case 'flexlm':
+                $this->cli   = "{$binary} lmcksum -c {$server}";
+                $this->regex = array("/INCREMENT|FEATURE [^ ]+ (?<vendor_daemon>[^ ]+) [^ ]+ (?<expiration_date>[^ ]+) (?<num_licenses>[^ ]+)/i")
+                break;
+            case 'mathematica':
+                $this->cli   = "{$binary} {$server} -localtime -template mathematica/build_license_expiration_array.template";
+                $this->regex = array("");  // placeholder
+                break;
+            }
+            break;
         case 'license_cache':
             switch ($lm) {
             case 'flexlm':
