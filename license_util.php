@@ -52,15 +52,17 @@ function update_servers(&$db, &$servers) {
     }
 
     // Server statuses DB update
-    $db->query("LOCK TABLES `servers` WRITE;");
     $query = $db->prepare("UPDATE `servers` SET `status`=?, `lmgrd_version`=?, `last_updated`=NOW() WHERE `name`=?;");
+    $db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
     foreach($name as $index => $_n) {
         $query->bind_param("sss", $status[$index], $server_version[$index], $name[$index]);
-        $query->execute();
+        if ($query->execute() === false) {
+            $db->rollback();
+            print_error_and_die("MySQL: {$query->error}");
+        }
     }
-
+    $db->commit();
     $query->close();
-    $db->query("UNLOCK TABLES;");
 } // END function update_servers()
 
 /**
@@ -71,15 +73,13 @@ function update_servers(&$db, &$servers) {
  */
 function update_licenses(&$db, $servers) {
     // Setup DB queries
-    // $queries, $data, $type are parallel arrays.  $data is defined later.
-    // $type refers to number of "s"trings being prepared for each query.
+
     // Populate feature, if needed.
     // ? = $lmdata['feature']
     $sql = <<<SQL
     INSERT IGNORE INTO `features` (`name`, `show_in_lists`, `is_tracked`) VALUES (?, 1, 1);
     SQL;
-    $queries[0] = $db->prepare($sql);
-    $type[0] = "s"; // one string to bind to mysqli_stmt::bind_param()
+    $query_features = $db->prepare($sql);
 
     // Populate server/feature to licenses, if needed.
     // ?, ? = $server['name'], $lmdata['feature']
@@ -88,8 +88,7 @@ function update_licenses(&$db, $servers) {
     SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id` FROM `servers`, `features`
     WHERE `servers`.`name` = ? AND `features`.`name` = ?;
     SQL;
-    $queries[1] = $db->prepare($sql);
-    $type[1] = "ss"; // two strings to bind to mysqli_stmt::bind_param()
+    $query_licenses = $db->prepare($sql);
 
     // Insert license usage.  Needs feature and license populated, first.
     // ?, ?, ? = $lmdata['licenses_used'], $server['name'], $lmdata['feature']
@@ -100,71 +99,77 @@ function update_licenses(&$db, $servers) {
     JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
     WHERE `servers`.`name`=? AND `features`.`name`=? AND `features`.`is_tracked`=1;
     SQL;
-    $queries[2] = $db->prepare($sql);
-    $type[2] = "sss"; // three strings to bind to mysqli_stmt::bind_param()
+    $query_usage = $db->prepare($sql);
     // END setup DB queries.
 
     $lmtools = new lmtools();
+    $db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
     foreach ($servers as $server) {
         $licenses = array();
-        $lmtools->lm_open('flexlm', 'license_util_update_licenses', $server['name']);
+        if ($lmtools->lm_open('flexlm', 'license_util_update_licenses', $server['name']) === false) {
+            $db->rollback();
+            print_error_and_die($lmtools->err);
+        }
         $lmdata = $lmtools->lm_nextline();
         if ($lmdata === false) {
-            fprintf (STDERR, "%s\n", $lmtools->err);
-            $queries[2]->close();
-            $queries[1]->close();
-            $queries[0]->close();
-            $db->close();
-            exit(1);
+            $db->rollback();
+            print_error_and_die($lmtools->err);
         }
 
         // INSERT license data to DB
-        $db->query("LOCK TABLES `features`, `licenses`, `usage` WRITE");
-        $db->query("BEGIN");
         while (!is_null($lmdata)) {
             // bind data to prepared queries.
-            $data = array();
-            $data[0] = array($lmdata['feature']);
-            $data[1] = array($server['name'], $lmdata['feature']);
-            $data[2] = array($lmdata['licenses_used'], $server['name'], $lmdata['feature']);
-
-            // bind data to each query.
-            // q.v. https://www.php.net/functions.arguments#functions.variable-arg-list for '...' token
-            $queries[0]->bind_param($type[0], ...$data[0]);
-            $queries[1]->bind_param($type[1], ...$data[1]);
-            $queries[2]->bind_param($type[2], ...$data[2]);
+            $query_features->bind_param("s", $lmdata['feature']);
+            $query_licenses->bind_param("ss", $server['name'], $lmdata['feature']);
+            $query_usage->bind_param("sss", $lmdata['licenses_used'], $server['name'], $lmdata['feature']);
 
             // Attempt to INSERT license usage...
-            $queries[2]->execute();
+            if ($query_usage->execute() === false) {
+                $db->rollback();
+                print_error_and_die("MySQL: {$query_usage->error}");
+            }
 
             // when affectedRows < 1, feature and license first needs to be
             // populated and then license usage query re-run.
             if ($db->affected_rows < 1) {
-                $queries[0]->execute();
-                $queries[1]->execute();
-                $queries[2]->execute();
+                switch (false) {
+                case $query_features->execute():
+                    $db->rollback();
+                    print_error_and_die("MySQL: {$query_features->error}");
+                case $query_licenses->execute():
+                    $db->rollback();
+                    print_error_and_die("MySQL: {$query_licenses->error}");
+                case $query_usage->execute():
+                    $db->rollback();
+                    print_error_and_die("MySQL: {$query_usage->error}");
+                }
             }
 
             // Get another data set from license manager.
+            $lmdata = $lmtools->lm_nextline();
             if ($lmdata === false) {
-                fprintf (STDERR, "%s\n", $lmtools->err);
-                $db->query("ROLLBACK");
-                $db->query("UNLOCK TABLES");
-                $queries[2]->close();
-                $queries[1]->close();
-                $queries[0]->close();
-                $db->close();
-                exit(1);
+                $db->rollback();
+                print_error_and_die($lmtools->err);
             }
         } // END while(!is_null($lmdata())
-
-        // Cleanup
-        $db->query("COMMIT");
-        $db->query("UNLOCK TABLES");
-        $queries[2]->close();
-        $queries[1]->close();
-        $queries[0]->close();
     } // END foreach($servers as $server)
+
+    // Complete and cleanup
+    $db->commit();
+    $query_usage->close();
+    $query_licenses->close();
+    $query_features->close();
 } // END function update_licenses()
 
+/**
+ * Print error to STDERR and exit 1.
+ *
+ * die() is insufficient because it prints to STDOUT and exits 0.
+ *
+ * @param $msg error message
+ */
+function print_error_and_die($msg) {
+    fprintf(STDERR, "%s\n", $msg);
+    exit(1);
+}
 ?>

@@ -3,8 +3,17 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
-$servers = db_get_servers($db, array('name'));
 
+$sql = <<<SQL
+INSERT IGNORE INTO `available` (`license_id`, `date`, `num_licenses`)
+SELECT `licenses`.`id`, NOW(), ? FROM `licenses`
+JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
+JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+WHERE `servers`.`name`=? AND `features`.`name`=?;
+SQL;
+$query = $db->prepare($sql);
+
+$servers = db_get_servers($db, array('name'));
 $lmtools = new lmtools();
 
 foreach ($servers as $server) {
@@ -20,20 +29,10 @@ foreach ($servers as $server) {
     }
 
     while (!is_null($lmdata)) {
-        $feature = $lmdata['feature'];
-        $num_licenses = $lmdata['num_licenses'];
-
-        $sql = <<<SQL
-        INSERT IGNORE INTO `available` (`license_id`, `date`, `num_licenses`)
-        SELECT `licenses`.`id`, NOW(), {$num_licenses} FROM `licenses`
-        JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
-        JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-        WHERE `servers`.`name`='{$server["name"]}' AND `features`.`name`='{$feature}';
-        SQL;
-
-        $result = $db->query($sql);
-        if (!$result) {
-            die ($db->error);
+        $query->bind_param("iss", $lmdata['num_licenses'], $server['name'], $lmdata['feature']);
+        if ($query->execute() === false) {
+            fprintf(STDERR, "MySQL: %s\n", $query->error);
+            exit(1);
         }
 
         $lmdata = $lmtools->lm_nextline();
@@ -45,5 +44,4 @@ foreach ($servers as $server) {
 }
 
 $db->close();
-
 ?>
