@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . "/lmtools.php";
+
 /**
  * @param string $server Server name being queried.  "{port}@{domain}.{tld}".
  * @param array &$expiration_array
@@ -7,58 +9,58 @@
 function build_license_expiration_array($server, &$expiration_array) {
     global $lmutil_binary; // from config.php
 
-    $file = popen("{$lmutil_binary} lmcksum -c {$server}", "r");
-    $today = time();
+
     // Expirations (in days) longer than 10 years are assumed to be permanent.
     $permanent_threshold = 4000; // Nice round number greater than 10 years (in days)
+    $today = time();
+
+    $lmtools = new lmtools();
+    $lmtools->lm_open('flexlm', 'build_license_expiration_array', $server);
+    $lmdata = $lmtools->lm_nextline();
 
     // Let's read in the file line by line
-    while (!feof ($file)) {
-        $line = fgets ($file, 1024);
-        if ( preg_match("/INCREMENT .*/i", $line, $out ) || preg_match("/FEATURE .*/i", $line, $out ) ) {
-            $license = explode(" ", $out[0]);
-            if ($license[4]) {
-                $license[4] = strtolower($license[4]);
-                switch(true) {
-                // Indicators that license is perpetual/permanent
-                case preg_match("/-0000$/", $license[4]) === 1:
-                case preg_match("/-9999$/", $license[4]) === 1:
-                case preg_match("/-2099$/", $license[4]) === 1:
-                case preg_match("/-2242$/", $license[4]) === 1:
-                case preg_match("/-00$/", $license[4]) === 1:
-                case preg_match("/-0$/", $license[4]) === 1:
-                case $license[4] === "permanent":
-                    $days_to_expiration = PHP_INT_MAX;
-                    $license[4] = "permanent";
-                    break;
-                // License not indicated as permanent.  Calculate days remaining.
-                // We are assuming 64-bit Unix time.
-                default:
-                    $days_to_expiration = ceil((1 + strtotime($license[4]) - $today) / 86400);
-                    // Although licenses more than 10 years old are still considered permanent.
-                    if ($days_to_expiration > $permanent_threshold) {
-                        $days_to_expiration = PHP_INT_MAX;
-                        $license[4] = "permanent";
-                    }
-                    break;
-                }
-            } else {
-                // We didn't find an expiration date, so assume license is permanent.
+    while (!is_null($lmdata)) {
+        if ($lmdata['expiration_date'] !== "") {
+            $lmdata['expiration_date'] = strtolower($lmdata['expiration_date']);
+            switch(true) {
+            // Indicators that license is perpetual/permanent
+            case preg_match("/-0000$/", $lmdata['expiration_date']) === 1:
+            case preg_match("/-9999$/", $lmdata['expiration_date']) === 1:
+            case preg_match("/-2099$/", $lmdata['expiration_date']) === 1:
+            case preg_match("/-2242$/", $lmdata['expiration_date']) === 1:
+            case preg_match("/-00$/",   $lmdata['expiration_date']) === 1:
+            case preg_match("/-0$/",    $lmdata['expiration_date']) === 1:
+            case $lmdata['expiration_date'] === "permanent":
                 $days_to_expiration = PHP_INT_MAX;
-                $license[4] = "permanent";
+                $lmdata['expiration_date'] = "permanent";
+                break;
+            // License not indicated as permanent.  Calculate days remaining.
+            // We are assuming 64-bit Unix time.
+            default:
+                $days_to_expiration = ceil((1 + strtotime($lmdata['expiration_date']) - $today) / 86400);
+                // Although licenses more than 10 years old are still considered permanent.
+                if ($days_to_expiration > $permanent_threshold) {
+                    $days_to_expiration = PHP_INT_MAX;
+                    $lmdata['expiration_date'] = "permanent";
+                }
+                break;
             }
-
-            // Add to the expiration array
-            $expiration_array[$license[1]][] = array (
-                "vendor_daemon"      => $license[2],
-                "expiration_date"    => $license[4],
-                "num_licenses"       => $license[5],
-                "days_to_expiration" => (int) $days_to_expiration
-            );
+        } else {
+            // We didn't find an expiration date, so assume license is permanent.
+            $days_to_expiration = PHP_INT_MAX;
+            $lmdata['expiration_date'] = "permanent";
         }
-    }
 
-    pclose($file);
+        // Add to the expiration array
+        $expiration_array[$lmdata['name']][] = array (
+            "vendor_daemon"      => $lmdata['vendor_daemon'],
+            "expiration_date"    => $lmdata['expiration_date'],
+            "num_licenses"       => $lmdata['num_licenses'],
+            "days_to_expiration" => (int) $days_to_expiration
+        );
+
+        $lmdata = $lmtools->lm_nextline();
+    }
 } // END function build_license_expiration_array()
 
 /**
@@ -93,7 +95,7 @@ function convert_from_mysql_date($date) {
  * Convert a US date ie. 05/20/2001 to the MySQL date format ie. 2001-05-20
  *
  * @param $date US Date
- * @return string MySQl date
+ * @return string MySQL date
  */
 function convert_to_mysql_date($date) {
     $stringArray = explode("/", $date);

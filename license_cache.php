@@ -16,14 +16,17 @@ $query = $db->prepare($sql);
 $servers = db_get_servers($db, array('name'));
 $lmtools = new lmtools();
 
+$db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
 foreach ($servers as $server) {
     if ($lmtools->lm_open('flexlm', 'license_cache', $server['name']) === false) {
+        $db->rollback();
         fprintf(STDERR, "%s\n", $lmtools->err);
         exit(1);
     }
 
     $lmdata = $lmtools->lm_nextline();
     if ($lmdata === false) {
+        $db->rollback();
         fprintf(STDERR, "%s\n", $lmtools->err);
         exit(1);
     }
@@ -31,17 +34,20 @@ foreach ($servers as $server) {
     while (!is_null($lmdata)) {
         $query->bind_param("iss", $lmdata['num_licenses'], $server['name'], $lmdata['feature']);
         if ($query->execute() === false) {
+            $db->rollback();
             fprintf(STDERR, "MySQL: %s\n", $query->error);
             exit(1);
         }
 
         $lmdata = $lmtools->lm_nextline();
         if ($lmdata === false) {
+            $db->rollback();
             fprintf(STDERR, "%s\n", $lmtools->err);
             exit(1);
         }
     }
 }
 
+$db->commit();
 $db->close();
 ?>
