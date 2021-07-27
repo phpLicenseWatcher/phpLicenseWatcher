@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . "/tools.php";
 require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/lmtools.php";
+require_once __DIR__ . "/classes/lmtools.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name'));
@@ -26,7 +26,7 @@ function update_servers(&$db, &$servers) {
     $lmtools = new lmtools();
     foreach ($servers as $index => $server) {
         // Retrieve server details via lmstat.
-        $lmtools->lm_open('flexlm', 'license_util_update_servers', $server['name']);
+        $lmtools->lm_open('flexlm', 'license_util__update_servers', $server['name']);
         $lmtools->regex_matched($pattern, $matches);
 
         // DB update data as parralel arrays, using server's $index
@@ -106,7 +106,7 @@ function update_licenses(&$db, $servers) {
     $db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
     foreach ($servers as $server) {
         $licenses = array();
-        if ($lmtools->lm_open('flexlm', 'license_util_update_licenses', $server['name']) === false) {
+        if ($lmtools->lm_open('flexlm', 'license_util__update_licenses', $server['name']) === false) {
             $db->rollback();
             print_error_and_die($lmtools->err);
         }

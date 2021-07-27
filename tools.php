@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . "/lmtools.php";
+require_once __DIR__ . "/classes/lmtools.php";
 
 /**
  * @param string $server Server name being queried.  "{port}@{domain}.{tld}".
@@ -15,7 +15,7 @@ function build_license_expiration_array($server, &$expiration_array) {
     $today = time();
 
     $lmtools = new lmtools();
-    $lmtools->lm_open('flexlm', 'build_license_expiration_array', $server);
+    $lmtools->lm_open('flexlm', 'tools__build_license_expiration_array', $server);
     $lmdata = $lmtools->lm_nextline();
 
     // Let's read in the file line by line
