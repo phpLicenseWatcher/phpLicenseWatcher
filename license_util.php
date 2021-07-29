@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . "/tools.php";
 require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/classes/lmtools.php";
+require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name'));
@@ -25,9 +25,9 @@ function update_servers(&$db, &$servers) {
     $update_data = array();
     $lmtools = new lmtools();
     foreach ($servers as $index => $server) {
-        // Retrieve server details via lmstat.
+        // Retrieve server details from lmtools.php object.
         $lmtools->lm_open('flexlm', 'license_util__update_servers', $server['name']);
-        $lmtools->regex_matched($pattern, $matches);
+        $lmtools->lm_regex_matches($pattern, $matches);
 
         // DB update data as parralel arrays, using server's $index
         $status[$index] = SERVER_DOWN; // assume server is down unless determined otherwise.
@@ -41,7 +41,7 @@ function update_servers(&$db, &$servers) {
         }
 
         // This can override $status[$index] is UP.
-        if ($pattern === "vendor_down") {
+        if ($pattern === "server_vendor_down") {
             $status[$index] = SERVER_VENDOR_DOWN;
         }
 

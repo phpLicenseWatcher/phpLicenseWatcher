@@ -3,6 +3,7 @@
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/tools.php";
 require_once __DIR__ . "/html_table.php";
+require_once __DIR__ . "/lmtools.php";
 
 if (isset($_GET['refresh']) && $_GET['refresh'] > 0 && ! $disable_autorefresh) {
     echo('<meta http-equiv="refresh" content="' . intval($_GET['refresh']) . '"/>');
@@ -131,50 +132,58 @@ HTML;
         $html_body .= ("</span></p>");
     }
 
+    $lmtools = new lmtools();
     // Loop through the available servers
     foreach ($servers as $server) {
-        // Execute lmutil lmstat -A -c port@server_fqdn
-        // switch -A reports only licenses in use.
-        $fp = popen("{$lmutil_binary} lmstat -A -c {$server['name']}", "r");
-        $line = fgets($fp);
-
         $no_licenses_in_use_warning = true;
         $used_licenses = array();
-        $i = 0;
 
-        while (!feof($fp)) {
+        if ($lmtools->lm_open('flexlm', 'details__list_licenses_in_use', $server['name']) === false) {
+            print_var($lmtools->err);
+            exit(1);
+        }
+
+        $lmdata = $lmtools->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
+        if ($lmdata === false) {
+            print_var($lmtools->err);
+            exit(1);
+        }
+
+        $i = -1;
+        while (!is_null($lmdata)) {
             // Look for features in a $line.  Example $line:
             // Users of Allegro_Viewer:  (Total of 5 licenses issued;  Total of 2 licenses in use)
-            switch (1) {
-            case preg_match('/^Users of ([\w\- ]+):  \(Total of (\d+) licenses? issued;  Total of (\d+)/i', $line, $matches):
-                $used_licenses[$i]['feature_name'] = $matches[1];
-                $used_licenses[$i]['num_licenses'] = $matches[2];
-                $used_licenses[$i]['num_licenses_used'] = $matches[3];
-                $num_licenses_used = (int) $matches[3];
-
-                $no_licenses_in_use_warning = false;
-                $j = 0;
-                while ($j < $num_licenses_used && !feof($fp)) {
-                    $line = fgets($fp);
-                    if (preg_match("/^ *([^ ]+) ([^ ]+) .+, start \w{3} ([0-9]{1,2}\/[0-9]{1,2}) ([0-9]{1,2}:[0-9]{2})/i", $line, $matches) === 1) {
-                        $used_licenses[$i]['checkouts'][$j]['user'] = $matches[1];
-                        $used_licenses[$i]['checkouts'][$j]['host'] = $matches[2];
-                        $used_licenses[$i]['checkouts'][$j]['date'] = $matches[3];
-                        $used_licenses[$i]['checkouts'][$j]['time'] = $matches[4];
-                        $j++;
-                    }
-                }
+            switch (true) {
+            case $lmdata['_matched_pattern'] === "users_counted":
                 $i++;
+                $j = 0;
+                $used_licenses[$i]['feature_name'] = $lmdata['feature'];
+                $used_licenses[$i]['num_licenses'] = $lmdata['total_licenses'];
+                $used_licenses[$i]['num_licenses_used'] = $lmdata['used_licenses'];
+                $num_licenses_used = (int) $lmdata['used_licenses'];
+                $no_licenses_in_use_warning = false;
                 break;
-            case preg_match('/^Users of ([\w\- ]+):  \(Uncounted/i', $line, $matches):
-                $used_licenses[$i]['feature_name'] = $matches[1];
+            case $lmdata['_matched_pattern'] === "details":
+                $used_licenses[$i]['checkouts'][$j]['user'] = $lmdata['user'];
+                $used_licenses[$i]['checkouts'][$j]['host'] = $lmdata['host'];
+                $used_licenses[$i]['checkouts'][$j]['date'] = $lmdata['date'];
+                $used_licenses[$i]['checkouts'][$j]['time'] = $lmdata['time'];
+                $j++;
+                break;
+            case $lmdata['_matched_pattern'] === "users_uncounted":
+                $i++;
+                $j = 0;
+                $used_licenses[$i]['feature_name'] = $lmdata['feature'];
                 $used_licenses[$i]['num_licenses'] = "uncounted";
                 $used_licenses[$i]['num_licenses_used'] = "uncounted";
-                $i++;
                 break;
             }
 
-            $line = fgets($fp);
+            $lmdata = $lmtools->lm_nextline(array('users_counted', 'details', 'users_uncounted', ));
+            if ($lmdata === false) {
+                print_var($lmtools->err);
+                exit(1);
+            }
         }
 
         usort($used_licenses, function($a, $b) {

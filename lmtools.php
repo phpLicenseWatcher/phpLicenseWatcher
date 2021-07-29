@@ -1,6 +1,7 @@
 <?php
-require_once __DIR__ . "/../config.php";
-require_once __DIR__ . "lmtools_commands.php";
+require_once __DIR__ . "/config.php";
+require_once __DIR__ . "/lmtools_commands.php";
+require_once __DIR__ . "/common.php";
 
 // Currently supported: "flexlm", "mathematica"
 class lmtools {
@@ -52,7 +53,7 @@ class lmtools {
         return $all_lm_available;
     }
 
-    public function lm_open(string $lm, string $cmd, string $server, string $feature=null) {
+    public function lm_open(string $lm, string $cmd, string $server, string $feature="") {
         switch (false) {
         case $this->lm_check($lm):
         case $this->set_command($cmd, $lm):
@@ -63,7 +64,7 @@ class lmtools {
         $binary = $this->lm_binaries[$lm];
         $this->cli = str_replace(self::CLI_BINARY, $binary, $this->cli);
         $this->cli = str_replace(self::CLI_SERVER, $server, $this->cli);
-        $this->clu = str_replace(self::CLI_FEATURE, $feature, $this->cli);
+        $this->cli = str_replace(self::CLI_FEATURE, $feature, $this->cli);
 
         $this->fp = popen($this->cli, "r");
 
@@ -78,7 +79,8 @@ class lmtools {
         return true;
     }
 
-    public function lm_nextline(int $pattern=0) {
+    public function lm_nextline($patterns=0) {
+        if (is_scalar($patterns)) $patterns = array($patterns);
         switch (true) {
         case !is_resource($this->fp) || get_resource_type($this->fp) !== "stream":
             $this->err = "lmtools.php: No license manager is open.";
@@ -86,29 +88,33 @@ class lmtools {
         case is_null($this->cli):
             $this->err = "lmtools.php: LMtool object CLI not set.";
             return false;
-        case is_null($this->regex) || !isset($this->regex[$pattern]):
-            $this->err = "lmtools.php: Regex pattern #{$pattern} not defined for current license manager or command.";
+        case is_null($this->regex) || count(array_intersect_key(array_flip($patterns), $this->regex)) !== count($patterns):
+            // ensure all requested regex patterns exist.
+            $this->err = "lmtools.php: Unknown regex pattern {$pattern} for current license manager or command.";
             return false;
         }
 
+
         $line = fgets($this->fp);
-        while (true) {
-            switch (true) {
-            case preg_match($this->regex[$pattern], $line, $matches) === 1:
-                return array_filter($matches, function($key) {return is_string($key);}, ARRAY_FILTER_USE_KEY);
-            case feof($this->fp):
-                $this->cli_close();
-                $this->cli   = null;
-                $this->regex = null;
-                $this->err   = null;
-                return null;
+        while (!feof($this->fp)) {
+            foreach ($patterns as $pattern) {
+                if (preg_match($this->regex[$pattern], $line, $matches) === 1) {
+                    $matches = array_filter($matches, function($key) {return is_string($key);}, ARRAY_FILTER_USE_KEY);
+                    return array_merge($matches, array('_matched_pattern' => $pattern));
+                }
             }
 
             $line = fgets($this->fp);
         }
+
+        $this->cli_close();
+        $this->cli   = null;
+        $this->regex = null;
+        $this->err   = null;
+        return null;
     }
 
-    public function regex_matched(&$regex, &$matches) {
+    public function lm_regex_matches(&$regex, &$matches) {
         // TO DO: some error checking
         $this->new_stdout_cache();
         foreach($this->regex as $regex=>$preg) {
@@ -118,6 +124,7 @@ class lmtools {
             }
         }
 
+        // No regex matches found in stdout cache
         $regex = null;
         $matches = null;
         return null;
@@ -130,7 +137,7 @@ class lmtools {
 
     private function lm_check($lm) {
         if (!isset($this->lm_binaries[$lm])) {
-            $this->err = "lmtools.php: License Manager \"{$tool}\" not available.";
+            $this->err = "lmtools.php: License Manager \"{$lm}\" not available.";
             return false;
         }
 
@@ -147,7 +154,7 @@ class lmtools {
             $this->cli   = lmtools_cmd::${$cmd}[$lm]['cli'];
             $this->regex = lmtools_cmd::${$cmd}[$lm]['regex'];
         } catch (Exception $e) {
-            $this->err = "Unknown command or license manager.":
+            $this->err = "Unknown command or license manager.";
             return false;
         }
 

@@ -1,6 +1,5 @@
 <?php
-
-require_once __DIR__ . "/classes/lmtools.php";
+require_once __DIR__ . "/lmtools.php";
 
 /**
  * @param string $server Server name being queried.  "{port}@{domain}.{tld}".
@@ -137,6 +136,9 @@ function build_select_box ($options, $name, $checked_value="") {
 /**
  * Get the number of available licenses for a particular feature.
  *
+ * TO DO: popen()/fgets() converted to lmtools::lm_open()/lmtools::lm_nextline()
+ *        Not currently used by system.
+ *
  * @param string $myFeature
  * @return string number of licenses available as string
  */
@@ -172,7 +174,8 @@ function num_licenses_available($feature) {
 /**
  * Get the number of used licenses for a particular feature.
  *
- * ** Is this function used?  Remove from codebase if it is not used. **
+ * TO DO: popen()/fgets() converted to lmtools::lm_open()/lmtools::lm_nextline()
+ *        Not currently used by system.
  *
  * @param string $myfeature
  * @return integer number of licenses
@@ -209,6 +212,9 @@ function num_licenses_used($feature) {
 
 /**
  * Run cli command.  Use disk cache.
+ *
+ * TO DO: Disk cache isn't currently used.  This should be moved to lmtools.php
+ *        class
  *
  * @param string $command  path and exectuable of cli command to run.
  * @return string Output from $command, possibly from disk cache.
