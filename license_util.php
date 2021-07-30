@@ -105,7 +105,6 @@ function update_licenses(&$db, $servers) {
     $lmtools = new lmtools();
     $db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
     foreach ($servers as $server) {
-        $licenses = array();
         if ($lmtools->lm_open('flexlm', 'license_util__update_licenses', $server['name']) === false) {
             $db->rollback();
             print_error_and_die($lmtools->err);
@@ -118,10 +117,14 @@ function update_licenses(&$db, $servers) {
 
         // INSERT license data to DB
         while (!is_null($lmdata)) {
+            // $lmdata['licenses_used'] will be missing when the feature has no license count ("uncounted").
+            // But `usage`.`num_users` in the DB can't be null, so we'll fill in '0'.
+            if (!isset($lmdata['licenses_used'])) $lmdata['licenses_used'] = 0;
+
             // bind data to prepared queries.
             $query_features->bind_param("s", $lmdata['feature']);
             $query_licenses->bind_param("ss", $server['name'], $lmdata['feature']);
-            $query_usage->bind_param("sss", $lmdata['licenses_used'], $server['name'], $lmdata['feature']);
+            $query_usage->bind_param("iss", $lmdata['licenses_used'], $server['name'], $lmdata['feature']);
 
             // Attempt to INSERT license usage...
             if ($query_usage->execute() === false) {

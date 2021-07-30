@@ -79,7 +79,7 @@ class lmtools {
         return true;
     }
 
-    public function lm_nextline($patterns=0) {
+    public function lm_nextline($patterns=array(0)) {
         if (is_scalar($patterns)) $patterns = array($patterns);
         switch (true) {
         case !is_resource($this->fp) || get_resource_type($this->fp) !== "stream":
@@ -88,12 +88,10 @@ class lmtools {
         case is_null($this->cli):
             $this->err = "lmtools.php: LMtool object CLI not set.";
             return false;
-        case is_null($this->regex) || count(array_intersect_key(array_flip($patterns), $this->regex)) !== count($patterns):
-            // ensure all requested regex patterns exist.
-            $this->err = "lmtools.php: Unknown regex pattern {$pattern} for current license manager or command.";
+        case is_null($this->regex) || count(array_intersect_key(array_flip($patterns), $this->regex)) !== count($patterns):  // ensure all requested regex patterns exist.
+            $this->err = "lmtools.php: Unknown regex patterns for current license manager or command.";
             return false;
         }
-
 
         $line = fgets($this->fp);
         while (!feof($this->fp)) {

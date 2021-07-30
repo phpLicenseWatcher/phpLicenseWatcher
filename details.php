@@ -117,10 +117,7 @@ HTML;
 function list_licenses_in_use($servers, &$html_body) {
     global $lmutil_binary; // from config.php
 
-    $html_body .= <<<HTML
-<p>Following is the list of licenses currently being used.
-Licenses that are currently not in use are not shown.</p>
-HTML;
+    $html_body .= "<p>Following is the list of licenses currently being used."
 
     // If person is filtering for certain features
     if ( isset($_GET['filter_feature']) ) {
@@ -129,7 +126,7 @@ HTML;
             $html_body .= "(" . str_replace(":","", $key) . ") ";
         }
 
-        $html_body .= ("</span></p>");
+        $html_body .= "</span>";
     }
 
     $lmtools = new lmtools();
@@ -164,10 +161,11 @@ HTML;
                 $no_licenses_in_use_warning = false;
                 break;
             case $lmdata['_matched_pattern'] === "details":
-                $used_licenses[$i]['checkouts'][$j]['user'] = $lmdata['user'];
-                $used_licenses[$i]['checkouts'][$j]['host'] = $lmdata['host'];
-                $used_licenses[$i]['checkouts'][$j]['date'] = $lmdata['date'];
-                $used_licenses[$i]['checkouts'][$j]['time'] = $lmdata['time'];
+                $used_licenses[$i]['checkouts'][$j]['user']         = $lmdata['user'];
+                $used_licenses[$i]['checkouts'][$j]['host']         = $lmdata['host'];
+                $used_licenses[$i]['checkouts'][$j]['date']         = $lmdata['date'];
+                $used_licenses[$i]['checkouts'][$j]['time']         = $lmdata['time'];
+                $used_licenses[$i]['checkouts'][$j]['num_licenses'] = $lmdata['num_licenses'];
                 $j++;
                 break;
             case $lmdata['_matched_pattern'] === "users_uncounted":
@@ -179,7 +177,7 @@ HTML;
                 break;
             }
 
-            $lmdata = $lmtools->lm_nextline(array('users_counted', 'details', 'users_uncounted', ));
+            $lmdata = $lmtools->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
             if ($lmdata === false) {
                 print_var($lmtools->err);
                 exit(1);
@@ -277,8 +275,9 @@ HTML;
                          $time_difference .= "{$t->minutes} minute(s)";
 
                          // Output the user line
-                         $html = "<span>User: {$checkout['user']}</span> ";
-                         $html .= "<span>Computer: {$checkout['host']}</span> ";
+                         $html = "User: {$checkout['user']}";
+                         $html .= "<br>Computer: {$checkout['host']}";
+                         if (!is_null($checkout['num_licenses'])) $html .= "<br>Licenses: {$checkout['num_licenses']}";
                          $table->add_row(array("", "", $html, $time_difference), $class);
                      } // END foreach ($license['checkouts'] as $checkout)
                  } // END if (isset($license['checkouts']) && is_countable($license['checkouts']))
