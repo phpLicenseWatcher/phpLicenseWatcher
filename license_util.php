@@ -52,7 +52,7 @@ function update_servers(&$db, &$servers) {
     }
 
     // Server statuses DB update
-    $query = $db->prepare("UPDATE `servers` SET `status`=?, `lmgrd_version`=?, `last_updated`=NOW() WHERE `name`=?;");
+    $query = $db->prepare("UPDATE `servers` SET `status`=?, `version`=?, `last_updated`=NOW() WHERE `name`=?;");
     $db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
     foreach($name as $index => $_n) {
         $query->bind_param("sss", $status[$index], $server_version[$index], $name[$index]);

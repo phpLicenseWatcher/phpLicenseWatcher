@@ -58,7 +58,7 @@ function main_form($alert=null) {
             $server['label'],
             $server['is_active'] ? "True" : "False",
             $server['status'],
-            $server['lmgrd_version'],
+            $server['version'],
             date_format(date_create($server['last_updated']), "m/d/Y h:ia"),
             "<button type='submit' form='server_list' name='edit_id' class='btn btn-link' value='{$server['id']}' aria-label='edit {$server['name']}'>EDIT</button>"
         );

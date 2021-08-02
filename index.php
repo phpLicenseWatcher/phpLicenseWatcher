@@ -56,7 +56,7 @@ foreach ($servers as $server) {
         $server['status'],
         $detail_link,
         $listing_expiration_link,
-        $server['lmgrd_version'],
+        $server['version'],
         date_format(date_create($server['last_updated']), "m/d/Y h:ia")
     ));
 

@@ -50,10 +50,9 @@ function list_features_and_expirations($servers, &$html_body) {
     unset ($servers);
 
     $html_body .= <<<HTML
-<p>This is a list of licenses (features) available on this particular license server.
-If there are multiple entries under "Expiration dates" it means there are different entries for the same license.
-If expiration is in red it means expiration is within {$lead_time} days.</p>
-
+    <p>This is a list of licenses (features) available on this particular license server.
+    If there are multiple entries under "Expiration dates" it means there are different entries for the same license.
+    If expiration is in yellow, it means expiration is within {$lead_time} days.  Red indicates expired licenses.</p>
 HTML;
 
     $today = mktime(0,0,0,date("m"),date("d"),date("Y"));
@@ -85,18 +84,23 @@ HTML;
             if ($feature_array[$p]['expiration_date'] === "permanent") {
                 $license_msg = "{$feature_array[$p]['num_licenses']} license(s) are permanent.";
             } else {
+                $license_msg = <<<MSG
+                {$feature_array[$p]['num_licenses']} license(s) expire(s) in {$feature_array[$p]['days_to_expiration']} day(s).
+                Date of expiration: {$feature_array[$p]['expiration_date']}.
+                MSG;
+
                 // Set row class if license is close to the expiration date.
                 $dte = $feature_array[$p]["days_to_expiration"];
                 if ($dte <= $lead_time && $dte >= 0) {
                     $row_attributes['class'] = "warning"; //bootstrap class
                 } else if ($dte < 0) {
                     $row_attributes['class'] = "danger"; //bootstrap class
+                    $days_expired = abs($feature_array[$p]['days_to_expiration']);
+                    $license_msg = <<<MSG
+                    {$feature_array[$p]['num_licenses']} license(s) have expired {$days_expired} day(s) ago.
+                    Date of expiration: {$feature_array[$p]['expiration_date']}.
+                    MSG;
                 }
-
-                $license_msg = <<<MSG
-                {$feature_array[$p]['num_licenses']} license(s) expire(s) in {$feature_array[$p]['days_to_expiration']} day(s).
-                Date of expiration: {$feature_array[$p]['expiration_date']}
-                MSG;
             }
         }
 
@@ -117,7 +121,7 @@ HTML;
 function list_licenses_in_use($servers, &$html_body) {
     global $lmutil_binary; // from config.php
 
-    $html_body .= "<p>Following is the list of licenses currently being used."
+    $html_body .= "<p>Following is the list of licenses currently being used.";
 
     // If person is filtering for certain features
     if ( isset($_GET['filter_feature']) ) {
