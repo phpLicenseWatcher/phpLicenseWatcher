@@ -103,31 +103,28 @@ function convert_to_mysql_date($date) {
 }
 
 /**
- * Takes a result set, with the first column being the "id" or value and the
- * second column being the text you want displayed
+ * Build an html selectbox with given arguments.
  *
- * ** Is this function used?  Remove from codebase if it is not used. **
+ * Needed by server admin edit form, but available anywhere.
  *
  * @param $options Options for selectbox.
- * @param $name Name you want assigned to this form element
+ * @param $properties Properties for the selectbox.  e.g. name, class, id
  * @param $checked_value Value of the item that should be checked (optional)
  * @return string HTML code for selectbox.
  */
-function build_select_box ($options, $name, $checked_value="") {
-    $name = strtolower($name);
+function build_select_box (array $options, array $properties=array(), string $checked_value="") {
     $checked_value = strtolower($checked_value);
+    $html_properties = "";
+    array_walk($properties, function($val, $key) use (&$html_properties) {
+        $html_properties .= " {$key}='{$val}'";
+    });
 
-    $html = "<select onChange='this.form.submit();' name='{$name}'>\n";
+    $html = "<select{$html_properties}>\n";
     foreach ($options as $option) {
         $option_value = strtolower($option);
         $option_selectable = ucwords($option);
-
-        $html .= "<option value='{$option_value}'";
-        if ($option_value === $checked_value) {
-            $html .= " selected";
-        }
-
-        $html .= ">{$option}</option>\n";
+        $is_selected = ($option_value === $checked_value) ? " selected" : "";
+        $html .= "<option value='{$option_value}'{$is_selected}>{$option_selectable}</option>\n";
     }
     $html .= "</select>\n";
     return $html;

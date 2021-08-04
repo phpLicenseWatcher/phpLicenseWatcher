@@ -1,15 +1,10 @@
 <?php
 require_once __DIR__ . "/config.php";
-require_once __DIR__ . "/lmtools_commands.php";
+require_once __DIR__ . "/lmtools_lib.php";
 require_once __DIR__ . "/common.php";
 
 // Currently supported: "flexlm", "mathematica"
-class lmtools {
-    // Add more tools here when expanding
-    private const LM_SUPPORTED = array(
-        array('lm' => "flexlm",      'bin' => "lmutil_binary"),
-        array('lm' => "mathematica", 'bin' => "monitorlm_binary")
-    );
+class lmtools extends lmtools_lib {
 
     private const CLI_BINARY  = "%CLI_BINARY%";
     private const CLI_SERVER  = "%CLI_SERVER%";
@@ -21,11 +16,21 @@ class lmtools {
     private $regex;
     public $err;
 
+    static public function validate_servername($name, $lm) {
+        $pattern = lmtools_lib::$_namecheck_regex[$lm]['pattern'];
+        $form    = lmtools_lib::$_namecheck_regex[$lm]['form'];
+
+        return array(
+            'is_valid' => preg_match($pattern, $name),
+            'form'     => $form
+        );
+    }
+
     public function __construct() {
         clearstatcache();
         // $this->lm_binaries[license manager] = binary_executable
         // binary_executable is 'path/file' and found in config.php
-        foreach (self::LM_SUPPORTED as $supported) {
+        foreach (lmtools_lib::LM_SUPPORTED as $supported) {
             global ${$supported['bin']}; // expected to be defined in config.php
             if (isset($supported['lm']) && isset(${$supported['bin']}) && is_executable(${$supported['bin']})) {
                 $this->lm_binaries[$supported['lm']] = ${$supported['bin']};
@@ -149,8 +154,8 @@ class lmtools {
 
     private function set_command($cmd, $lm) {
         try {
-            $this->cli   = lmtools_cmd::${$cmd}[$lm]['cli'];
-            $this->regex = lmtools_cmd::${$cmd}[$lm]['regex'];
+            $this->cli   = lmtools_lib::${$cmd}[$lm]['cli'];
+            $this->regex = lmtools_lib::${$cmd}[$lm]['regex'];
         } catch (Exception $e) {
             $this->err = "Unknown command or license manager.";
             return false;

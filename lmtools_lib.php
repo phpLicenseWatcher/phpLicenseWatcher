@@ -1,14 +1,22 @@
 <?php
+class lmtools_lib {
+    // Add more tools here when expanding
+    protected const LM_SUPPORTED = array(
+        array('lm' => "flexlm",      'bin' => "lmutil_binary"),
+        array('lm' => "mathematica", 'bin' => "monitorlm_binary")
+    );
+
 /* --------------------------------------------------------------------------- *
-STRUCTURE
+lmtools_lib command lookup structure
+------------------------------------
 static public $command (array)
                   |---- license_manager (array)
-                               |---- cli (string)
-                               |---- regex (array)
-                                       |---- pattern_0 (string)
-                                       |---- pattern_1 (string)
-                                       |---- pattern_2 (string)
-                                       |---- pattern_n (string)
+                               |---- 'cli' (string)
+                               |---- 'regex' (array)
+                                        |---- pattern_0 (string)
+                                        |---- pattern_1 (string)
+                                        |---- pattern_2 (string)
+                                        |---- pattern_n (string)
 
 lmtools.php will lookup the command and license_manager to discover what
 cli string and regex patterns to use to retrieve data from a licensing server.
@@ -24,8 +32,7 @@ STRING CONSTANTS
 %CLI_FEATURE% = feature being read via license_manager_binary.
 * --------------------------------------------------------------------------- */
 
-class lmtools_cmd {
-    static public $tools__build_license_expiration_array = [
+    static protected $tools__build_license_expiration_array = [
         'flexlm' => [
             'cli'   => "%CLI_BINARY% lmcksum -c %CLI_SERVER%",
             'regex' => ["/(?:INCREMENT|FEATURE) (?<name>[^ ]+) (?<vendor_daemon>[^ ]+) [^ ]+ (?<expiration_date>[^ ]+) (?<num_licenses>[^ ]+)/i"]],
@@ -33,7 +40,7 @@ class lmtools_cmd {
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template mathematica/tools__build_license_expiration_array.template",
             'regex' => [""]]]; // placeholder
 
-    static public $license_cache = [
+    static protected $license_cache = [
         'flexlm' => [
             'cli'   => "%CLI_BINARY% lmstat -a -c %CLI_SERVER%",
             'regex' => ["/^Users of (?<feature>[^ ]+):  \(Total of (?<num_licenses>\d+)/"]],
@@ -41,19 +48,18 @@ class lmtools_cmd {
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template mathematica/license_cache.template",
             'regex' => [""]]]; // placeholder
 
-    static public $license_util__update_servers = [
+    static protected $license_util__update_servers = [
         'flexlm' => [
             'cli'   => "%CLI_BINARY% lmstat -c %CLI_SERVER%",
             'regex' => [
-                'server_up'          => "/license server UP (?:\(MASTER\) )?(?<server_version>v\d+[\d\.]*)$/im",
+                'server_up'          => "/license server UP (?:\(MASTER\) )?(?<server_version>v\d+(?:\.\d+)+)$/im",
                 'server_vendor_down' => "/vendor daemon is down/im"]],
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template mathematica/license_util__update_servers.template",
             'regex' => [
-                'server_up'          => "",  // placeholders
-                'server_vendor_down' => ""]]];
+                'server_up' => "/^(?<server_version>v\d+(?:\.\d+)+)$/"]]];  // placeholders
 
-    static public $license_util__update_licenses = [
+    static protected $license_util__update_licenses = [
         'flexlm' => [
             'cli'   => "%CLI_BINARY% lmstat -a -c %CLI_SERVER%",
             'regex' => ["/^Users of (?<feature>[^ ]+):  (?:\(Total of \d+ licenses? issued;  Total of (?<licenses_used>\d+)|(?:\(Uncounted))/"]],
@@ -61,7 +67,7 @@ class lmtools_cmd {
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template mathematica/license_util__update_servers.template",
             'regex' => [""]]]; // placeholder
 
-    static public $details__list_licenses_in_use = [
+    static protected $details__list_licenses_in_use = [
         'flexlm' => [
             'cli'   => "%CLI_BINARY% lmstat -A -c %CLI_SERVER%",
             'regex' => [
@@ -74,6 +80,25 @@ class lmtools_cmd {
                 'users_counted'   => "",  // placeholders
                 'details'         => "",
                 'users_uncounted' => ""]]];
+
+
+/* --------------------------------------------------------------------------- *
+lmtools_lib::$_namecheck_regex
+------------------------------
+This is to lookup what regex pattern to use to validate an appropriate server
+name string for a license manager.  e.g. Flexlm requires a port number, while
+mathematica does not.
+
+The pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/" should well represent most FQDNs.
+* --------------------------------------------------------------------------- */
+
+    static protected $_namecheck_regex = [
+        'flexlm' => [
+            'form'    => "port@doman.tld",
+            'pattern' => "/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"],
+        'mathematica' => [
+            'form'    => "domain.tld",
+            'pattern' => "/^(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"]];
 }
 
 ?>

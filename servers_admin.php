@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . "/common.php";
+require_once __DIR__ . "/tools.php";
 require_once __DIR__ . "/html_table.php";
+require_once __DIR__ . "/lmtools.php";
 require_once __DIR__ . "/servers_admin_db.php";
 
 switch(true) {
@@ -46,7 +48,7 @@ function main_form($alert=null) {
     $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
-    $headers = array("Name", "Label", "Is Active", "Status", "LMGRD Version", "Last Updated");
+    $headers = array("Name", "Label", "Licensing", "Is Active", "Status", "Server Version", "Last Updated");
     $table->add_row($headers, array(), "th");
 
     // Don't display "no servers polled" notice when there are no servers in DB.
@@ -56,6 +58,7 @@ function main_form($alert=null) {
         $row = array(
             $server['name'],
             $server['label'],
+            ucwords($server['license_manager']),
             $server['is_active'] ? "True" : "False",
             $server['status'],
             $server['version'],
@@ -68,18 +71,18 @@ function main_form($alert=null) {
         $table->update_cell($last_row, 0, null, null, "th");
         switch($server['status']) {
         case null:
-            $table->update_cell($last_row, 3, array('class'=>"info"), "Not Polled");
+            $table->update_cell($last_row, 4, array('class'=>"info"), "Not Polled");
             break;
         case SERVER_UP:
             // No table cell update.
             $display_notice = false;
             break;
         case SERVER_VENDOR_DOWN:
-            $table->update_cell($last_row, 3, array('class'=>"warning"));
+            $table->update_cell($last_row, 4, array('class'=>"warning"));
             break;
         case SERVER_DOWN:
         default:
-            $table->update_cell($last_row, 3, array('class'=>"danger"));
+            $table->update_cell($last_row, 4, array('class'=>"danger"));
             break;
         }
     }
@@ -123,7 +126,7 @@ function main_form($alert=null) {
     <script src="servers_admin_jquery.js"></script>
     <h1>Server Administration</h1>
     <p>You may edit an existing server's name, label, active status, or add a new server to the database.<br>
-    Server names must be unique and in the form of "<code>port@domain.tld</code>".
+    Server names must be unique and in the form of "<code>port@domain.tld</code>", port optional.
     {$alert_html}
     {$control_panel_html}
     <form id='server_list' action='servers_admin.php' method='POST'>
@@ -159,19 +162,27 @@ function edit_form() {
         return null;
     }
 
+    // get supported license managers
+    $lmtools = new lmtools();
+    $lm_supported = $lmtools->list_all_available();
+
     // print view
     $is_checked = $server_details['is_active'] === '1' ? " CHECKED" : "";
+    $server_select_box = build_select_box($lm_supported, array('name' => "license_manager", 'id' => "license_manager"));
     print_header();
 
     print <<<HTML
     <h1>Server Details</h1>
     <form action='servers_admin.php' method='post' class='edit-form'>
         <div class='edit-form block'>
-            <label for='name'>Name (format: <code>port@domain.tld</code>)</label><br>
+            <label for='name'>Name</label><br>
             <input type='text' name='name' id='name' class='edit-form' value='{$server_details['name']}'>
         </div><div class='edit-form block'>
             <label for='label'>Label</label><br>
             <input type='text' name='label' id='label' class='edit-form' value='{$server_details['label']}'>
+        </div><div class='edit-form block'>
+            <label for='license_manager'>Server Type:</label>
+            {$server_select_box}
         </div><div class='edit-form inline-block'>
             <label for='is_active'>Is Active?</label>
             <input type='checkbox' name='is_active' id='is_active' class='edit-form'{$is_checked}>
@@ -220,10 +231,15 @@ function validate_uploaded_json() {
     }
 
     foreach ($json as $row) {
+        $chk = lmtools::validate_servername($row['name'], $row['license_manager']);
+        $is_valid_servername = $chk['is_valid'];
+        $servername_form     = $chk['form'];
+
         switch (false) {
         case is_array($row):
-        case array_key_exists('name', $row) && preg_match("/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $row['name']):
-        case array_key_exists('label', $row);
+        case array_key_exists('license_manager', $row):
+        case array_key_exists('name', $row) && $is_valid_servername):
+        case array_key_exists('label', $row):
         case array_key_exists('is_active', $row) && preg_match("/^[01]$/", $row['is_active']):
             return false;
         }
