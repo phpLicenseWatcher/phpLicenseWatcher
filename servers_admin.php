@@ -175,7 +175,7 @@ function edit_form() {
     <h1>Server Details</h1>
     <form action='servers_admin.php' method='post' class='edit-form'>
         <div class='edit-form block'>
-            <label for='name'>Name</label><br>
+            <label for='name'>Name (format: <code>port@domain.tld</code>, port optional)</label><br>
             <input type='text' name='name' id='name' class='edit-form' value='{$server_details['name']}'>
         </div><div class='edit-form block'>
             <label for='label'>Label</label><br>
@@ -231,14 +231,10 @@ function validate_uploaded_json() {
     }
 
     foreach ($json as $row) {
-        $chk = lmtools::validate_servername($row['name'], $row['license_manager']);
-        $is_valid_servername = $chk['is_valid'];
-        $servername_form     = $chk['form'];
-
         switch (false) {
         case is_array($row):
         case array_key_exists('license_manager', $row):
-        case array_key_exists('name', $row) && $is_valid_servername):
+        case array_key_exists('name', $row) && preg_match("/^(?:\d{1,5}@)?(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $row['name']):
         case array_key_exists('label', $row):
         case array_key_exists('is_active', $row) && preg_match("/^[01]$/", $row['is_active']):
             return false;

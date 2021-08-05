@@ -1,0 +1,6 @@
+# report total licenses authorized.
+%TEXT
+Mathematica:     %CONST_TOTAL_FE_AUTHORIZED
+MathKernel:      %CONST_TOTAL_KE_AUTHORIZED
+Sub Mathematica: %CONST_TOTAL_SUB_FE_AUTHORIZED
+Sub MathKernel:  %CONST_TOTAL_SUB_KE_AUTHORIZED

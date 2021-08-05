@@ -16,14 +16,10 @@ class lmtools extends lmtools_lib {
     private $regex;
     public $err;
 
-    static public function validate_servername($name, $lm) {
-        $pattern = lmtools_lib::$_namecheck_regex[$lm]['pattern'];
-        $form    = lmtools_lib::$_namecheck_regex[$lm]['form'];
-
-        return array(
-            'is_valid' => preg_match($pattern, $name),
-            'form'     => $form
-        );
+    static public function validate_servername($name, $lm, &$is_valid, &$format) {
+        $pattern  = lmtools_lib::$_namecheck_regex[$lm]['pattern'];
+        $is_valid = preg_match($pattern, $name);
+        $format   = lmtools_lib::$_namecheck_regex[$lm]['format'];
     }
 
     public function __construct() {

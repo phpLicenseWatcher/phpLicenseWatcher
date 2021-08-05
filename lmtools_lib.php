@@ -38,7 +38,7 @@ STRING CONSTANTS
             'regex' => ["/(?:INCREMENT|FEATURE) (?<name>[^ ]+) (?<vendor_daemon>[^ ]+) [^ ]+ (?<expiration_date>[^ ]+) (?<num_licenses>[^ ]+)/i"]],
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template mathematica/tools__build_license_expiration_array.template",
-            'regex' => [""]]]; // placeholder
+            'regex' => ["/(?<name>[^ ]+) (?<vendor_daemon>[^ ]+) (?<expiration_date>[^ ]+) (?<num_licenses>[^ ]+)/i"]]];
 
     static protected $license_cache = [
         'flexlm' => [
@@ -46,7 +46,7 @@ STRING CONSTANTS
             'regex' => ["/^Users of (?<feature>[^ ]+):  \(Total of (?<num_licenses>\d+)/"]],
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template mathematica/license_cache.template",
-            'regex' => [""]]]; // placeholder
+            'regex' => ["/^(?<name>[^:]+):\s+(?<num_licenses>\d+)$/"]]]; // placeholder
 
     static protected $license_util__update_servers = [
         'flexlm' => [
@@ -65,7 +65,7 @@ STRING CONSTANTS
             'regex' => ["/^Users of (?<feature>[^ ]+):  (?:\(Total of \d+ licenses? issued;  Total of (?<licenses_used>\d+)|(?:\(Uncounted))/"]],
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template mathematica/license_util__update_servers.template",
-            'regex' => [""]]]; // placeholder
+            'regex' => ["/^(?<feature>[^:]+):\s+(?<licenses_used>\d+)$/"]]]; // placeholder
 
     static protected $details__list_licenses_in_use = [
         'flexlm' => [
@@ -77,9 +77,9 @@ STRING CONSTANTS
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template mathematica/details__list_licenses_in_use.template",
             'regex' => [
-                'users_counted'   => "",  // placeholders
-                'details'         => "",
-                'users_uncounted' => ""]]];
+                'users_counted'   => "/^COUNT (?<feature>[^:]+):\s+(?<used_licenses>\d+)\s+(?<total_licenses>\d+)$/",  // placeholders
+                'details'         => "/^DETAILS (?<feature>[^:]+): (?<user>[^~]+)~(?<host>[^~]+)~(?<duration>\d+(?::\d+)+)$/"]]];
+
 
 
 /* --------------------------------------------------------------------------- *
@@ -94,10 +94,10 @@ The pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/" should well represent most FQDNs.
 
     static protected $_namecheck_regex = [
         'flexlm' => [
-            'form'    => "port@doman.tld",
+            'format'  => "port@doman.tld",
             'pattern' => "/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"],
         'mathematica' => [
-            'form'    => "domain.tld",
+            'format'  => "domain.tld",
             'pattern' => "/^(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"]];
 }
 

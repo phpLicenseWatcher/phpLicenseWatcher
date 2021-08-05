@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . "/lmtools.php";
 
 /** DB operation to either add or edit a form, based on $_POST['id'] */
 function db_process() {
@@ -16,7 +15,7 @@ function db_process() {
     case preg_match("/^\d+$|^new$/", $id):
         return array('msg' => "Invalid server ID \"{$id}\"", 'lvl' => "failure");
     // $name must be valid (depends on license manager)
-    case lmtools::validate_servername($name, $license_manager):
+    case preg_match("/^(?:\d{1,5}@)?(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $name);
         return array('msg' => "Server name MUST be in form <code>port@domain.tld</code>, port optional", 'lvl' => "failure");
     // $label cannot be blank
     case !empty($label):
