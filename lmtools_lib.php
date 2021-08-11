@@ -100,7 +100,7 @@ The pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/" should well represent most FQDNs.
             'format'  => "domain.tld",
             'pattern' => "/^(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"]];
 
-    static protected function $_get_timespan($date = null, $time = null, $duration = null) {
+    static protected function _get_dateinterval($date = null, $time = null, $duration = null) {
         // First, create DateInterval based on either $date/$time or $duration.
         // q.v. https://www.php.net/manual/en/class.dateinterval.php
         switch (true) {
@@ -113,7 +113,7 @@ The pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/" should well represent most FQDNs.
             // $dti->d and $dti->h are unchanged when hours < 24.
             $dti->d = intdiv($dti->h, 24);
             $dti->h = $dti->h % 24;
-            break;
+            return $dti;
 
         case !is_null($date) && !is_null($time) && is_null($duration):
             // Expected: $date will be 'month/date', $time will be 'hour:minutes'.
@@ -129,27 +129,11 @@ The pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/" should well represent most FQDNs.
 
             // DateInterval difference between now and license checkout.
             $dti = $dt_now->diff($dt);
-            break;
+            return $dti;
 
         default:
             return false;
         }
-
-        // Break days into weeks.
-        // As of PHP 8.0, DateInterval does not have a weeks property.
-        // ($w is 0 and $dti->d is unchanged when days < 7)
-        $w = intdiv($dti->d, 7);
-        $dti->d = $dti->d % 7;
-
-        // Build readable duration string
-        $timespan = array();
-        $vals = array($dti->y, $dti->m, $w, $dti->d, $dti->h, $dti->i);
-        $units = array('years', 'months', 'weeks', 'days', 'hours', 'minutes');
-        foreach ($vals as $i => $val) {
-            if ($val > 0) $timespan[] = "{$val} {$units[$i]}";
-        }
-        $timespan = implode(", ", $timespan);
-        return $timespan;
     }
 }
 

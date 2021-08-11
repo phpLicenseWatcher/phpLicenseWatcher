@@ -170,10 +170,8 @@ class lmtools extends lmtools_lib {
             }
 
             $i = -1;
-            $used_licenses = array('no_uses_warning' = true);
+            $used_licenses = array('no_uses_warning' => true);
             while (!is_null($lmdata)) {
-                // Look for features in a $line.  Example $line:
-                // Users of Allegro_Viewer:  (Total of 5 licenses issued;  Total of 2 licenses in use)
                 switch (true) {
                 case $lmdata['_matched_pattern'] === "users_counted":
                     $i++;
@@ -187,9 +185,9 @@ class lmtools extends lmtools_lib {
                 case $lmdata['_matched_pattern'] === "details":
                     $used_licenses[$i]['checkouts'][$j]['user']         = $lmdata['user'];
                     $used_licenses[$i]['checkouts'][$j]['host']         = $lmdata['host'];
-                    $used_licenses[$i]['checkouts'][$j]['date']         = $lmdata['date'];
-                    $used_licenses[$i]['checkouts'][$j]['time']         = $lmdata['time'];
                     $used_licenses[$i]['checkouts'][$j]['num_licenses'] = $lmdata['num_licenses'];
+                    $used_licenses[$i]['checkouts'][$j]['timespan']     = lmtools_lib::_get_dateinterval($lmdata['date'], $lmdata['time'], null);
+                    $used_licenses[$i]['checkouts'][$j]['date']         = $lmdata['date'];
                     $j++;
                     break;
                 case $lmdata['_matched_pattern'] === "users_uncounted":
