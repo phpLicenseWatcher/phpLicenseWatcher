@@ -144,49 +144,18 @@ function list_licenses_in_use($servers, &$html_body) {
             exit(1);
         }
 
-        $lmdata = $lmtools->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
-        if ($lmdata === false) {
-            print_var($lmtools->err);
-            exit(1);
-        }
-
-        $i = -1;
-        while (!is_null($lmdata)) {
-            // Look for features in a $line.  Example $line:
-            // Users of Allegro_Viewer:  (Total of 5 licenses issued;  Total of 2 licenses in use)
-            switch (true) {
-            case $lmdata['_matched_pattern'] === "users_counted":
-                $i++;
-                $j = 0;
-                $used_licenses[$i]['feature_name'] = $lmdata['feature'];
-                $used_licenses[$i]['num_licenses'] = $lmdata['total_licenses'];
-                $used_licenses[$i]['num_licenses_used'] = $lmdata['used_licenses'];
-                $num_licenses_used = (int) $lmdata['used_licenses'];
-                $no_licenses_in_use_warning = false;
-                break;
-            case $lmdata['_matched_pattern'] === "details":
-                $used_licenses[$i]['checkouts'][$j]['user']         = $lmdata['user'];
-                $used_licenses[$i]['checkouts'][$j]['host']         = $lmdata['host'];
-                $used_licenses[$i]['checkouts'][$j]['date']         = $lmdata['date'];
-                $used_licenses[$i]['checkouts'][$j]['time']         = $lmdata['time'];
-                $used_licenses[$i]['checkouts'][$j]['num_licenses'] = $lmdata['num_licenses'];
-                $j++;
-                break;
-            case $lmdata['_matched_pattern'] === "users_uncounted":
-                $i++;
-                $j = 0;
-                $used_licenses[$i]['feature_name'] = $lmdata['feature'];
-                $used_licenses[$i]['num_licenses'] = "uncounted";
-                $used_licenses[$i]['num_licenses_used'] = "uncounted";
-                break;
-            }
-
-            $lmdata = $lmtools->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
-            if ($lmdata === false) {
-                print_var($lmtools->err);
-                exit(1);
-            }
-        }
+        /* Collect $used_licenses
+           [$i]
+            |--['feature_name']
+            |--['num_total_licenses']
+            |--['num_used_licenses']
+            |--['checkouts']
+                     |--[$j]
+                         |--['user']
+                         |--['host']
+                         |--['date']
+                         |--['time']
+                         |--['num_licenses'] */
 
         usort($used_licenses, function($a, $b) {
             return strcasecmp($a['feature_name'], $b['feature_name']);

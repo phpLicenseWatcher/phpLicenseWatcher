@@ -67,7 +67,7 @@ STRING CONSTANTS
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template mathematica/license_util__update_servers.template",
             'regex' => ["/^(?<feature>[^:]+):\s+(?<licenses_used>\d+)$/"]]]; // placeholder
 
-    static protected $details__list_licenses_in_use = [
+    static protected $self__get_license_usage_array = [
         'flexlm' => [
             'cli'   => "%CLI_BINARY% lmstat -A -c %CLI_SERVER%",
             'regex' => [
@@ -99,6 +99,58 @@ The pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/" should well represent most FQDNs.
         'mathematica' => [
             'format'  => "domain.tld",
             'pattern' => "/^(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"]];
+
+    static protected function $_get_timespan($date = null, $time = null, $duration = null) {
+        // First, create DateInterval based on either $date/$time or $duration.
+        // q.v. https://www.php.net/manual/en/class.dateinterval.php
+        switch (true) {
+        case is_null($date) && is_null($time) && !is_null($duration):
+            // Expected: $duration will be 'hours:minutes:seconds'
+            $duration = explode(":", $duration);
+            $dti = new DateInterval("PT{$duration[0]}H{$duration[1]}M{$duration[2]}S");
+
+            // Unlikely, but in case hours >= 24 we'll convert 24 hour blocks into days.
+            // $dti->d and $dti->h are unchanged when hours < 24.
+            $dti->d = intdiv($dti->h, 24);
+            $dti->h = $dti->h % 24;
+            break;
+
+        case !is_null($date) && !is_null($time) && is_null($duration):
+            // Expected: $date will be 'month/date', $time will be 'hour:minutes'.
+            $now = new DateTime("now");
+            $dt = DateTime::createFromFormat("n/j G:i", "{$date} {$time}");
+
+            // Year is not in the date string, and therefore API assumes it to
+            // be "this year".  But at around Jan 1, it is possible that a
+            // license was checked out last year (Dec 31 or earlier), in which
+            // case the year needs to be rolled back by 1 for proper timespan
+            // calculation.
+            if ($dt->getTimestamp() > $now->getTimeStamp()) $dt->sub(new DateInterval("P1Y"));
+
+            // DateInterval difference between now and license checkout.
+            $dti = $dt_now->diff($dt);
+            break;
+
+        default:
+            return false;
+        }
+
+        // Break days into weeks.
+        // As of PHP 8.0, DateInterval does not have a weeks property.
+        // ($w is 0 and $dti->d is unchanged when days < 7)
+        $w = intdiv($dti->d, 7);
+        $dti->d = $dti->d % 7;
+
+        // Build readable duration string
+        $timespan = array();
+        $vals = array($dti->y, $dti->m, $w, $dti->d, $dti->h, $dti->i);
+        $units = array('years', 'months', 'weeks', 'days', 'hours', 'minutes');
+        foreach ($vals as $i => $val) {
+            if ($val > 0) $timespan[] = "{$val} {$units[$i]}";
+        }
+        $timespan = implode(", ", $timespan);
+        return $timespan;
+    }
 }
 
 ?>

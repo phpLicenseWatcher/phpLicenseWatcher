@@ -273,130 +273,34 @@ function cache_store($command, $data) {
     file_put_contents($cacheFile, $data);
 }
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                                             #
-# B00zy's timespan script v1.2                                                #
-#                                                                             #
-# timespan -- get the exact time span between any two moments in time.        #
-#                                                                             #
-# Description:                                                                #
-#                                                                             #
-#        class timespan, function calc ( int timestamp1, int timestamp2)      #
-#                                                                             #
-#        The purpose of this script is to be able to return the time span     #
-#        between any two specific moments in time AFTER the Unix Epoch        #
-#        (January 1 1970) in a human-readable format. You could, for example, #
-#        determine your age, how long you have been married, or the last time #
-#        you... you know. ;)                                                  #
-#                                                                             #
-#        The class, "timespan", will produce variables within the class       #
-#        respectively titled years, months, weeks, days, hours, minutes,      #
-#        seconds.                                                             #
-#                                                                             #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                                             #
-# Example 1. B00zy's age.                                                     #
-#                                                                             #
-#        $t = new timespan( time(), mktime(0,13,0,8,28,1982));                #
-#        print "B00zy is $t->years years, $t->months months, ".               #
-#                "$t->days days, $t->hours hours, $t->minutes minutes, ".     #
-#                "and $t->seconds seconds old.\n";                            #
-#                                                                             #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+/**
+ * Interpret a DateInterval object into words.
+ *
+ * DateInterval's format fnuction doesn't give us the power to exclude a
+ * zero value.  e.g. $dti->format("%y year(s), %m month(s), %d day(s).") will
+ * always include out years, months, and days even when they are zero.  Same
+ * goes for hours, minutes, seconds.  This function will exclude zero values.
+ * e.g. years = 1, months = 0, days = 5 is interpeted as "1 year(s), 5 day(s)"
+ *
+ * @param DateInterval $dti
+ * @return string Readable sentence describing DateInterval object.
+ */
+function get_readable_timespan(DateInterval $dti) {
+    // Break days into weeks.  As of PHP 8.0, DateInterval does not have a
+    // weeks property, so we'll record weeks as $w.  Note that when
+    // $dti->d (represents days) < 7, $w is 0 and $dti->d is unchanged.
+    $w = intdiv($dti->d, 7);
+    $dti->d = $dti->d % 7;
 
-// Code updates from PHP4 by Peter Bailie (RPI DotCIO Research Computing).
-define('day', 60*60*24 );
-define('hour', 60*60 );
-define('minute', 60 );
-
-class timespan
-{
-    public $years;
-    public $months;
-    public $weeks;
-    public $days;
-    public $hours;
-    public $minutes;
-    public $seconds;
-
-    public function __construct ($after, $before) {
-        // Set variables to zero, instead of null.
-        $this->years = 0;
-        $this->months = 0;
-        $this->weeks = 0;
-        $this->days = 0;
-        $this->hours = 0;
-        $this->minutes = 0;
-        $this->seconds = 0;
-
-        $duration = $after - $before;
-
-        // 1. Number of years
-        $dec = $after;
-        $year = $this->leap($dec);
-
-        while (floor($duration / $year) >= 1) {
-            // We don't need this VV
-            //print date("F j, Y\n",$dec);
-            $this->years += 1;
-            $duration -= (int)$year;
-            $dec -= (int)$year;
-            $year = $this->leap($dec);
-        }
-
-        // 2. Number of months
-        $dec = $after;
-        $m = date('n',$after);
-        $d = date('j',$after);
-
-        while (($duration - day) >= 0) {
-            $duration -= day;
-            $dec -= day;
-            $this->days += 1;
-
-            if ( (date('n',$dec) != $m) and (date('j',$dec) <= $d) ) {
-                $m = date('n',$dec);
-                $d = date('j',$dec);
-
-                $this->months += 1;
-                $this->days = 0;
-            }
-        }
-
-        // 3. Number of weeks.
-        $this->weeks = floor($this->days / 7);
-        $this->days %= 7;
-
-        // 4. Number of hours, minutes, and seconds.
-        $this->hours = floor($duration / (60*60));
-        $duration %= (60*60);
-
-        $this->minutes = floor($duration / 60);
-        $duration %= 60;
-
-        $this->seconds = $duration;
+    // Build readable duration string
+    $readable = array();
+    $vals = array($dti->y, $dti->m, $w, $dti->d, $dti->h, $dti->i);
+    $units = array('years', 'months', 'weeks', 'days', 'hours', 'minutes');
+    foreach ($vals as $i => $val) {
+        if ($val > 0) $readable[] = "{$val} {$units[$i]}";
     }
-
-    private function leap($time) {
-        if (date('L',$time) and (date('z',$time) > 58))
-            return (double)(60*60*24*366);
-        else {
-            $de = getdate($time);
-            $mkt = mktime(0,0,0,$de['mon'],$de['mday'],($de['year'] - 1));
-            if ((date('z',$time) <= 58) and date('L',$mkt))
-                return (double)(60*60*24*366);
-            else
-                return (double)(60*60*24*365);
-        }
-    }
-
-    public function readable() {
-        $values = array('years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds');
-        foreach ($values as $k => $v)
-            if ($this->{$v})
-                $fmt .= ($fmt ? ', ' : '') . $this->{$v} . " $v";
-        return $fmt . ($fmt ? '.' : '') ;
-    }
+    $readable = implode(", ", $readable);
+    return $readable;
 }
 
 ?>
