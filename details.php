@@ -133,41 +133,21 @@ function list_licenses_in_use($servers, &$html_body) {
         $html_body .= "</span>";
     }
 
-    $lmtools = new lmtools();
     // Loop through the available servers
     foreach ($servers as $server) {
-        $no_licenses_in_use_warning = true;
-        $used_licenses = array();
-
-        if ($lmtools->lm_open('flexlm', 'details__list_licenses_in_use', $server['name']) === false) {
-            print_var($lmtools->err);
-            exit(1);
+        $used_licenses = lmtools::get_license_usage_array('flexlm', $server['name']);
+        if (empty($used_licenses)) {
+            // when empty, no licenses are in use (boolean true)
+            $html_body .= get_alert_html("No licenses are currently being used on {$server['name']} ({$server['label']})", "info");
+        } else {
+            usort($used_licenses, function($a, $b) {
+                return strcasecmp($a['feature_name'], $b['feature_name']);
+            });
         }
-
-        /* Collect $used_licenses
-           [$i]
-            |--['feature_name']
-            |--['num_total_licenses']
-            |--['num_used_licenses']
-            |--['checkouts']
-                     |--[$j]
-                         |--['user']
-                         |--['host']
-                         |--['date']
-                         |--['time']
-                         |--['num_licenses'] */
-
-        usort($used_licenses, function($a, $b) {
-            return strcasecmp($a['feature_name'], $b['feature_name']);
-        });
 
         $unused_licenses = array_udiff(get_features_and_licenses($server['id']), $used_licenses, function($a, $b) {
             return strcasecmp($a['feature_name'], $b['feature_name']);
         });
-
-        if ($no_licenses_in_use_warning) {
-            $html_body .= get_alert_html("No licenses are currently being used on {$server['name']} ({$server['label']})", "info");
-        }
 
         // Create a new table
         $table = new html_table(array('class'=>"table"));
@@ -179,9 +159,6 @@ function list_licenses_in_use($servers, &$html_body) {
 
         $colHeaders = array("Feature", "# Cur. Avail", "Details", "Time Checked Out");
         $table->add_row($colHeaders, array(), "th");
-
-        // Get current UNIX time stamp
-        $now = time();
 
         foreach(array_merge($used_licenses, $unused_licenses) as $i => $license) {
             if (!isset($_GET['filter_feature']) || in_array($license['feature_name'], $_GET['filter_feature'])) {
@@ -197,9 +174,9 @@ function list_licenses_in_use($servers, &$html_body) {
                 <br/><a href='{$graph_url}'>Historical Usage</a>
                 HTML;
 
-                // Checked out licenses have a blue tinted background to
-                // differentiate from licenses with no checkouts.
-                if (isset($license['checkouts']) && count($license['checkouts']) > 0) {
+                // Used licenses have a blue tinted background to differentiate
+                // from unused licenses.
+                if ((int) $license['num_licenses_used'] > 0) {
                     $class = $i % 2 === 0 ? array('class'=>"alt-even-blue-bgcolor") : array('class'=>"alt-odd-blue-bgcolor");
                 } else {
                     $class = $i % 2 === 0 ? array('class'=>"alt-bgcolor") : array();
@@ -207,45 +184,15 @@ function list_licenses_in_use($servers, &$html_body) {
 
                 $table->add_row(array($license['feature_name'], $licenses_available, $license_info, ""), $class);
 
-                // Not all used features have checkout-time data.  Skip over those that don't.
-                if (isset($license['checkouts']) && is_countable($license['checkouts'])) {
+                // Not all used features have checkout data.  Skip over those that don't.
+                if (array_key_exists('checkouts', $license) && is_countable($license['checkouts'])) {
                     foreach ($license['checkouts'] as $checkout) {
                         /* ---------------------------------------------------------------------------
                          * I want to know how long a license has been checked out. This
                          * helps in case some people forgot to close an application and
                          * have licenses checked out for too long.
-                         * LMstat view will contain a line that says
-                         * jdoe machine1 /dev/pts/4 (v4.0) (licenserver/27000 444), start Thu 12/5 9:57
-                         * the date after start is when license was checked out
                          * ---------------------------------------------------------------------------- */
-
-                         // Convert the date and time ie 12/5 9:57 to UNIX time stamp
-                         $time_checkedout = strtotime("{$checkout['date']} {$checkout['time']}");
-                         $time_difference = "";
-
-                         /* ---------------------------------------------------------------------------
-                          * This is what I am not very clear on but let's say a license has been
-                          * checked out on 12/31 and today is 1/2. It is unclear to me whether
-                          * strotime will handle the conversion correctly ie. 12/31 will actually
-                          * be 12/31 of previous year and not the current. Thus I will make a
-                          * little check here. Will just append the previous year if now is less
-                          * then time_checked_out
-                          * ---------------------------------------------------------------------------- */
-                         if ($now < $time_checkedout) {
-                             $year = date("Y") - 1;
-                             $time_checkedout = strtotime("{$checkout['date']}/{$year} {$checkout['time']}");
-                         }
-
-                         // Get the time difference
-                         $t = new timespan($now, $time_checkedout);
-
-                         // Format the date string
-                         if ($t->years > 0)  $time_difference .= "{$t->years} years(s), ";
-                         if ($t->months > 0) $time_difference .= "{$t->months} month(s), ";
-                         if ($t->weeks > 0)  $time_difference .= "{$t->weeks} week(s), ";
-                         if ($t->days > 0)   $time_difference .= " {$t->days} day(s), ";
-                         if ($t->hours > 0)  $time_difference .= " {$t->hours} hour(s), ";
-                         $time_difference .= "{$t->minutes} minute(s)";
+                         $time_difference = get_readable_timespan($checkout['timespan']);
 
                          // Output the user line
                          $html = "User: {$checkout['user']}";

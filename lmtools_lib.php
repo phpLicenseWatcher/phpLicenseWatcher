@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/common.php";
 class lmtools_lib {
     // Add more tools here when expanding
     protected const LM_SUPPORTED = array(
@@ -100,8 +101,8 @@ The pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/" should well represent most FQDNs.
             'format'  => "domain.tld",
             'pattern' => "/^(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"]];
 
-    static protected function _get_dateinterval($date = null, $time = null, $duration = null) {
-        // First, create DateInterval based on either $date/$time or $duration.
+    static protected function get_dateinterval($date = null, $time = null, $duration = null) {
+        // Create DateInterval based on either $date/$time or $duration.
         // q.v. https://www.php.net/manual/en/class.dateinterval.php
         switch (true) {
         case is_null($date) && is_null($time) && !is_null($duration):
@@ -128,7 +129,7 @@ The pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/" should well represent most FQDNs.
             if ($dt->getTimestamp() > $now->getTimeStamp()) $dt->sub(new DateInterval("P1Y"));
 
             // DateInterval difference between now and license checkout.
-            $dti = $dt_now->diff($dt);
+            $dti = $dt->diff($now);
             return $dti;
 
         default:

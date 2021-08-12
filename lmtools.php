@@ -161,45 +161,56 @@ class lmtools extends lmtools_lib {
         return true;
     }
 
-    private function get_license_usage_array($lm, $server) {
+    static public function get_license_usage_array(string $lm, string $server) {
+        /* Returned array structure
+
+           [$i] int index
+            |-- ['feature_name']       string
+            |-- ['num_total_licenses'] string
+            |-- ['num_used_licenses']  string
+            |-- ['checkouts']
+                     |-- [$j] int index
+                          |-- ['user']         string
+                          |-- ['host']         string
+                          |-- ['num_licenses'] string
+                          |-- ['timespan']     DateInterval object
+        */
+        $obj = new lmtools();
         if ($lm === "flexlm") {
-            $this->open_cli($lm, "self__build_license_usage_array", $server);
-            $lmdata = $this->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
+            $obj->lm_open($lm, "self__get_license_usage_array", $server);
+            $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
             if ($lmdata === false) {
                 return false;
             }
 
             $i = -1;
-            $used_licenses = array('no_uses_warning' => true);
+            $used_licenses = array();
             while (!is_null($lmdata)) {
                 switch (true) {
                 case $lmdata['_matched_pattern'] === "users_counted":
                     $i++;
                     $j = 0;
-                    $used_licenses[$i]['feature_name'] = $lmdata['feature'];
-                    $used_licenses[$i]['num_licenses'] = $lmdata['total_licenses'];
+                    $used_licenses[$i]['feature_name']      = $lmdata['feature'];
+                    $used_licenses[$i]['num_licenses']      = $lmdata['total_licenses'];
                     $used_licenses[$i]['num_licenses_used'] = $lmdata['used_licenses'];
-                    $num_licenses_used = (int) $lmdata['used_licenses'];
-                    $used_licenses['no_uses_warning'] = false;
+                    break;
+                case $lmdata['_matched_pattern'] === "users_uncounted":
+                    $i++;
+                    $j = 0;
+                    $used_licenses[$i]['feature_name']      = $lmdata['feature'];
+                    $used_licenses[$i]['num_licenses']      = "uncounted";
+                    $used_licenses[$i]['num_licenses_used'] = "uncounted";
                     break;
                 case $lmdata['_matched_pattern'] === "details":
                     $used_licenses[$i]['checkouts'][$j]['user']         = $lmdata['user'];
                     $used_licenses[$i]['checkouts'][$j]['host']         = $lmdata['host'];
                     $used_licenses[$i]['checkouts'][$j]['num_licenses'] = $lmdata['num_licenses'];
-                    $used_licenses[$i]['checkouts'][$j]['timespan']     = lmtools_lib::_get_dateinterval($lmdata['date'], $lmdata['time'], null);
-                    $used_licenses[$i]['checkouts'][$j]['date']         = $lmdata['date'];
+                    $used_licenses[$i]['checkouts'][$j]['timespan']     = lmtools_lib::get_dateinterval($lmdata['date'], $lmdata['time'], null);
                     $j++;
-                    break;
-                case $lmdata['_matched_pattern'] === "users_uncounted":
-                    $i++;
-                    $j = 0;
-                    $used_licenses[$i]['feature_name'] = $lmdata['feature'];
-                    $used_licenses[$i]['num_licenses'] = "uncounted";
-                    $used_licenses[$i]['num_licenses_used'] = "uncounted";
                     break;
                 }
 
-                $lmdata = $this->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
+                $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
                 if ($lmdata === false) {
                     return false;
                 }
