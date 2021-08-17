@@ -13,12 +13,12 @@ WHERE `servers`.`name`=? AND `features`.`name`=?;
 SQL;
 $query = $db->prepare($sql);
 
-$servers = db_get_servers($db, array('name'));
+$servers = db_get_servers($db, array('name', 'license_manager'));
 $lmtools = new lmtools();
 
 $db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
 foreach ($servers as $server) {
-    if ($lmtools->lm_open('flexlm', 'license_cache', $server['name']) === false) {
+    if ($lmtools->lm_open($server['license_manager'], 'license_cache', $server['name']) === false) {
         $db->rollback();
         fprintf(STDERR, "%s\n", $lmtools->err);
         exit(1);
@@ -31,6 +31,7 @@ foreach ($servers as $server) {
         exit(1);
     }
 
+    var_dump($server, $lmdata);
     while (!is_null($lmdata)) {
         $query->bind_param("iss", $lmdata['num_licenses'], $server['name'], $lmdata['feature']);
         if ($query->execute() === false) {

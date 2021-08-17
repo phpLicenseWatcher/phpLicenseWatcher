@@ -4,8 +4,8 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
-$servers = db_get_servers($db, array('name'));
-update_servers($db, $servers);
+$servers = db_get_servers($db, array('name', 'license_manager'));
+//update_servers($db, $servers);
 update_licenses($db, $servers);
 $db->close();
 exit;
@@ -17,16 +17,16 @@ exit;
  * are not up get culled from the list as their license info is inaccessible.
  *
  * @param &$db DB connection object.
- * @param &$servers active servers list array.
+ * @param $servers active servers list array.
  */
-function update_servers(&$db, &$servers) {
+function update_servers(&$db, $servers) {
     global $lmutil_binary;
 
     $update_data = array();
     $lmtools = new lmtools();
     foreach ($servers as $index => $server) {
         // Retrieve server details from lmtools.php object.
-        $lmtools->lm_open('flexlm', 'license_util__update_servers', $server['name']);
+        $lmtools->lm_open($server['license_manager'], 'license_util__update_servers', $server['name']);
         $lmtools->lm_regex_matches($pattern, $matches);
 
         // DB update data as parralel arrays, using server's $index
@@ -105,7 +105,9 @@ function update_licenses(&$db, $servers) {
     $lmtools = new lmtools();
     $db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
     foreach ($servers as $server) {
-        if ($lmtools->lm_open('flexlm', 'license_util__update_licenses', $server['name']) === false) {
+        print "NEXT SERVER\n";
+        var_dump($server);
+        if ($lmtools->lm_open($server['license_manager'], 'license_util__update_licenses', $server['name']) === false) {
             $db->rollback();
             print_error_and_die($lmtools->err);
         }
@@ -114,7 +116,7 @@ function update_licenses(&$db, $servers) {
             $db->rollback();
             print_error_and_die($lmtools->err);
         }
-
+        var_dump($lmdata);
         // INSERT license data to DB
         while (!is_null($lmdata)) {
             // $lmdata['licenses_used'] will be missing when the feature has no license count ("uncounted").
