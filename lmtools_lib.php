@@ -38,8 +38,8 @@ STRING CONSTANTS
             'cli'   => "%CLI_BINARY% lmcksum -c %CLI_SERVER%",
             'regex' => ["/(?:INCREMENT|FEATURE) (?<name>[^ ]+) (?<vendor_daemon>[^ ]+) [^ ]+ (?<expiration_date>[^ ]+) (?<num_licenses>[^ ]+)/i"]],
         'mathematica' => [
-            'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template " . __DIR__ . "/mathematica/tools__build_license_expiration_array.template",
-            'regex' => ["/(?<name>[^ ]+) (?<vendor_daemon>[^ ]+) (?<expiration_date>[^ ]+) (?<num_licenses>[^ ]+)/i"]]];
+            'cli'   => "%CLI_BINARY% %CLI_SERVER% -template " . __DIR__ . "/mathematica/tools__build_license_expiration_array.template",
+            'regex' => ["/^(?<name>[^:]+):\s+(?<vendor_daemon>[^ ]+) (?<expiration_date>[^ ]+) (?<num_licenses>[^ ]+)$/i"]]];
 
     static protected $license_cache = [
         'flexlm' => [

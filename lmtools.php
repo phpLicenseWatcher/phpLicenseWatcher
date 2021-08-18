@@ -99,7 +99,9 @@ class lmtools extends lmtools_lib {
             foreach ($patterns as $pattern) {
                 if (preg_match($this->regex[$pattern], $line, $matches) === 1) {
                     $matches = array_filter($matches, function($key) {return is_string($key);}, ARRAY_FILTER_USE_KEY);
-                    return array_merge($matches, array('_matched_pattern' => $pattern));
+                    array_walk($matches, function(&$val, $key) {$val = trim($val);});
+                    $matches['_matched_pattern'] = $pattern;
+                    return $matches;
                 }
             }
 

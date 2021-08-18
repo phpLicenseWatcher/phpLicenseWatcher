@@ -13,7 +13,7 @@ require_once __DIR__ . "/tools.php";
 require_once __DIR__ . "/html_table.php";
 
 db_connect($db);
-$servers = db_get_servers($db, array('name', 'label'));
+$servers = db_get_servers($db, array('name', 'label', 'license_manager'));
 $db->close();
 
 // Date when the licenses will expire
@@ -21,8 +21,9 @@ $expire_date = mktime(0, 0, 0, date("m"), date("d") + $lead_time, date("Y"));
 $today = mktime (0, 0, 0, date("m"), date("d"), date("Y"));
 
 foreach ($servers as $i => $server) {
-    build_license_expiration_array($server['name'], $expiration_array[$i]);
+    build_license_expiration_array($server, $expiration_array[$i]);
 }
+
 
 $table = new html_table(array('class'=>"table alt-rows-bgcolor"));
 
@@ -37,24 +38,31 @@ for ($i = 0; $i < count($expiration_array); $i++) {
         foreach ($expiration_array[$i] as $key => $myarray) {
             for ($j = 0; $j < sizeof($myarray); $j++) {
                 $bgcolor_class = "";
-                if ((strcmp($myarray[$j]["days_to_expiration"], "permanent") != 0) && ($myarray[$j]["days_to_expiration"] <= $lead_time)) {
-                    if ($myarray[$j]["days_to_expiration"] < 0) {
-                        $myarray[$j]["days_to_expiration"] = "<span class='bold-text'>Already expired</span>";
-                        $bgcolor_class = " bg-danger"; // change cell background to light red via bootstrap
-                    }
-                    $table->add_row(array(
-                        $servers[$i]['name'],
-                        $servers[$i]['label'],
-                        $key,
-                        $myarray[$j]["expiration_date"],
-                        $myarray[$j]["days_to_expiration"],
-                        $myarray[$j]["num_licenses"]
-                    ));
-                    $table->update_cell(($table->get_rows_count()-1), 1, array('class'=>"center-text"));
-                    $table->update_cell(($table->get_rows_count()-1), 3, array('class'=>"center-text"));
-                    $table->update_cell(($table->get_rows_count()-1), 4, array('class'=>"center-text{$bgcolor_class}"));
-                    $table->update_cell(($table->get_rows_count()-1), 5, array('class'=>"center-text"));
+                switch (true) {
+                case $myarray[$j]["days_to_expiration"] === "permanent":
+                case $myarray[$j]["days_to_expiration"] === "N/A":
+                case $myarray[$j]["days_to_expiration"] > $lead_time:
+                    continue 2;
                 }
+
+                if ($myarray[$j]["days_to_expiration"] < 0) {
+                    $myarray[$j]["days_to_expiration"] = "<span class='bold-text'>Already expired</span>";
+                    $bgcolor_class = " bg-danger"; // change cell background to light red via bootstrap
+                }
+
+                $table->add_row(array(
+                    $servers[$i]['name'],
+                    $servers[$i]['label'],
+                    $key,
+                    $myarray[$j]['expiration_date'],
+                    $myarray[$j]['days_to_expiration'],
+                    $myarray[$j]['num_licenses']
+                ));
+
+                $table->update_cell(($table->get_rows_count()-1), 1, array('class'=>"center-text"));
+                $table->update_cell(($table->get_rows_count()-1), 3, array('class'=>"center-text"));
+                $table->update_cell(($table->get_rows_count()-1), 4, array('class'=>"center-text{$bgcolor_class}"));
+                $table->update_cell(($table->get_rows_count()-1), 5, array('class'=>"center-text"));
             }
         }
     }
