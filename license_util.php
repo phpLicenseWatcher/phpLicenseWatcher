@@ -105,8 +105,6 @@ function update_licenses(&$db, $servers) {
     $lmtools = new lmtools();
     $db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
     foreach ($servers as $server) {
-        print "NEXT SERVER\n";
-        var_dump($server);
         if ($lmtools->lm_open($server['license_manager'], 'license_util__update_licenses', $server['name']) === false) {
             $db->rollback();
             print_error_and_die($lmtools->err);
@@ -116,7 +114,6 @@ function update_licenses(&$db, $servers) {
             $db->rollback();
             print_error_and_die($lmtools->err);
         }
-        var_dump($lmdata);
         // INSERT license data to DB
         while (!is_null($lmdata)) {
             // $lmdata['licenses_used'] will be missing when the feature has no license count ("uncounted").

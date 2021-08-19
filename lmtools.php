@@ -178,15 +178,14 @@ class lmtools extends lmtools_lib {
                           |-- ['timespan']     DateInterval object
         */
         $obj = new lmtools();
-        if ($lm === "flexlm") {
-            $obj->lm_open($lm, "self__get_license_usage_array", $server);
-            $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
-            if ($lmdata === false) {
-                return false;
-            }
+        $obj->lm_open($lm, "self__get_license_usage_array", $server);
+        $used_licenses = array();
 
+        if ($lm === "flexlm") {
             $i = -1;
-            $used_licenses = array();
+
+            $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
+            if ($lmdata === false) return false;
             while (!is_null($lmdata)) {
                 switch (true) {
                 case $lmdata['_matched_pattern'] === "users_counted":
@@ -204,23 +203,49 @@ class lmtools extends lmtools_lib {
                     $used_licenses[$i]['num_licenses_used'] = "uncounted";
                     break;
                 case $lmdata['_matched_pattern'] === "details":
-                    $used_licenses[$i]['checkouts'][$j]['user']         = $lmdata['user'];
-                    $used_licenses[$i]['checkouts'][$j]['host']         = $lmdata['host'];
-                    $used_licenses[$i]['checkouts'][$j]['num_licenses'] = $lmdata['num_licenses'];
-                    $used_licenses[$i]['checkouts'][$j]['timespan']     = lmtools_lib::get_dateinterval($lmdata['date'], $lmdata['time'], null);
+                    $used_licenses[$i]['checkouts'][$j]['user']     = $lmdata['user'];
+                    $used_licenses[$i]['checkouts'][$j]['host']     = $lmdata['host'];
+                    $used_licenses[$i]['checkouts'][$j]['timespan'] = lmtools_lib::get_dateinterval($lmdata['date'], $lmdata['time'], null);
+                    if (array_key_exists('num_licenses', $lmdata)) $used_licenses[$i]['checkouts'][$j]['num_licenses'] = $lmdata['num_licenses'];
                     $j++;
                     break;
                 }
 
                 $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
-                if ($lmdata === false) {
-                    return false;
-                }
+                if ($lmdata === false) return false;
             }
 
             return $used_licenses;
         } else if ($lm === "mathematica") {
+            // 'users_counted'   => "/^COUNT (?<feature>[^:]+):\s+(?<used_licenses>\d+)\s+(?<total_licenses>\d+)$/",  // placeholders
+            // 'details'         => "/^DETAILS (?<feature>[^:]+): (?<user>[^~]+)~(?<host>[^~]+)~(?<duration>\d+(?::\d+)+)$/"]]];
+            $lmdata = $obj->lm_nextline(array('users_counted', 'details'));
+            if ($lmdata === false) return false;
+            while (!is_null($lmdata)) {
+                switch (true) {
+                case $lmdata['_matched_pattern'] === "users_counted":
+                    $used_licenses[] = array(
+                        'feature_name'      => $lmdata['feature'],
+                        'num_licenses'      => $lmdata['total_licenses'],
+                        'num_licenses_used' => $lmdata['used_licenses']
+                    );
+                    break;
+                case $lmdata['_matched_pattern'] === "details":
+                    $i = array_search($lmdata['feature'], array_column($used_licenses, 'feature_name'), true);
+                    $used_licenses[$i]['checkouts'][] = array(
+                        'user'         => $lmdata['user'],
+                        'host'         => $lmdata['host'],
+                        'timespan'     => lmtools_lib::get_dateinterval(null, null, $lmdata['duration'])
+                    );
+                    break;
+                }
 
+                $lmdata = $obj->lm_nextline(array('users_counted', 'details'));
+                if ($lmdata === false) return false;
+            }
+
+            log_var($used_licenses, 99);
+            return $used_licenses;
         }
 
         $this->err = "Unknown license manager.";

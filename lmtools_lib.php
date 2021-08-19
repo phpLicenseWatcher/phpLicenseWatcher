@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . "/common.php";
 class lmtools_lib {
     // Add more tools here when expanding
     protected const LM_SUPPORTED = array(
@@ -22,7 +21,7 @@ static public $command (array)
 lmtools.php will lookup the command and license_manager to discover what
 cli string and regex patterns to use to retrieve data from a licensing server.
 
-Command naming convention is $"{$code_file}__{function called from}"
+Command naming convention is $"{code_file}__{calling_function}"
 e.g. static public $tools__build_license_expiration_array
   Called from "tools.php", called from function build_license_expiration_array()
 
@@ -39,7 +38,7 @@ STRING CONSTANTS
             'regex' => ["/(?:INCREMENT|FEATURE) (?<name>[^ ]+) (?<vendor_daemon>[^ ]+) [^ ]+ (?<expiration_date>[^ ]+) (?<num_licenses>[^ ]+)/i"]],
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -template " . __DIR__ . "/mathematica/tools__build_license_expiration_array.template",
-            'regex' => ["/^(?<name>[^:]+):\s+(?<vendor_daemon>[^ ]+) (?<expiration_date>[^ ]+) (?<num_licenses>[^ ]+)$/i"]]];
+            'regex' => ["/^(?<name>[^:]+):\s+(?<vendor_daemon>[^ ]+)\s+(?<expiration_date>[^ ]+)\s+(?<num_licenses>[^ ]+)$/i"]]];
 
     static protected $license_cache = [
         'flexlm' => [
@@ -78,9 +77,8 @@ STRING CONSTANTS
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template " . __DIR__ . "/mathematica/details__list_licenses_in_use.template",
             'regex' => [
-                'users_counted'   => "/^COUNT (?<feature>[^:]+):\s+(?<used_licenses>\d+)\s+(?<total_licenses>\d+)$/",  // placeholders
+                'users_counted'   => "/^COUNTS (?<feature>[^:]+):\s+(?<used_licenses>\d+)\s+(?<total_licenses>\d+)$/",  // placeholders
                 'details'         => "/^DETAILS (?<feature>[^:]+): (?<user>[^~]+)~(?<host>[^~]+)~(?<duration>\d+(?::\d+)+)$/"]]];
-
 
 
 /* --------------------------------------------------------------------------- *
@@ -90,7 +88,9 @@ This is to lookup what regex pattern to use to validate an appropriate server
 name string for a license manager.  e.g. Flexlm requires a port number, while
 mathematica does not.
 
-The pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/" should well represent most FQDNs.
+Regex pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/i" should well represent most FQDNs.
+
+***This has not yet been implemented elsewhere in phplw.
 * --------------------------------------------------------------------------- */
 
     static protected $_namecheck_regex = [
@@ -108,7 +108,9 @@ The pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/" should well represent most FQDNs.
         case is_null($date) && is_null($time) && !is_null($duration):
             // Expected: $duration will be 'hours:minutes:seconds'
             $duration = explode(":", $duration);
-            $dti = new DateInterval("PT{$duration[0]}H{$duration[1]}M{$duration[2]}S");
+            $dti = count($duration) < 3 ?
+                new DateInterval("PT{$duration[0]}M{$duration[1]}S") :
+                new DateInterval("PT{$duration[0]}H{$duration[1]}M{$duration[2]}S");
 
             // Unlikely, but in case hours >= 24 we'll convert 24 hour blocks into days.
             // $dti->d and $dti->h are unchanged when hours < 24.

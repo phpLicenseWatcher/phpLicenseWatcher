@@ -19,7 +19,7 @@ if ( isset($_GET['multiple_servers']) ) {
 }
 
 db_connect($db);
-$servers = db_get_servers($db, array('name', 'label', 'id'), $ids);
+$servers = db_get_servers($db, array('name', 'label', 'id', 'license_manager'), $ids);
 $db->close();
 
 $html_body = ""; // To be filled by the process function called below.
@@ -65,7 +65,7 @@ HTML;
     $table->add_row($colHeaders, array(), "th");
     $table->update_cell(0, 0, array('colspan'=>"4"));
 
-    build_license_expiration_array($server['name'], $expiration_array);
+    build_license_expiration_array($server, $expiration_array);
 
     // Define a table header
     $colHeaders = array("Feature", "Vendor Daemon", "Total licenses", "Number licenses, Days to expiration, Date of expiration");
@@ -79,7 +79,7 @@ HTML;
         for ($p = 0; $p < count($feature_array); $p++) {
             // Keep track of total number of licenses for a particular feature
             // this is since you can have licenses with different expiration
-            $total_licenses += intval($feature_array[$p]["num_licenses"]);
+            $total_licenses += (int) ($feature_array[$p]["num_licenses"]);
             $row_attributes = array();
             if ($feature_array[$p]['expiration_date'] === "permanent") {
                 $license_msg = "{$feature_array[$p]['num_licenses']} license(s) are permanent.";
@@ -91,9 +91,9 @@ HTML;
 
                 // Set row class if license is close to the expiration date.
                 $dte = $feature_array[$p]["days_to_expiration"];
-                if ($dte <= $lead_time && $dte >= 0) {
+                if (is_numeric($dte) && $dte <= $lead_time && $dte >= 0) {
                     $row_attributes['class'] = "warning"; //bootstrap class
-                } else if ($dte < 0) {
+                } else if (is_numeric($dte) && $dte < 0) {
                     $row_attributes['class'] = "danger"; //bootstrap class
                     $days_expired = abs($feature_array[$p]['days_to_expiration']);
                     $license_msg = <<<MSG
@@ -135,7 +135,7 @@ function list_licenses_in_use($servers, &$html_body) {
 
     // Loop through the available servers
     foreach ($servers as $server) {
-        $used_licenses = lmtools::get_license_usage_array('flexlm', $server['name']);
+        $used_licenses = lmtools::get_license_usage_array($server['license_manager'], $server['name']);
         if (empty($used_licenses)) {
             // when empty, no licenses are in use (boolean true)
             $html_body .= get_alert_html("No licenses are currently being used on {$server['name']} ({$server['label']})", "info");
