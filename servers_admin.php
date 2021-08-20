@@ -168,7 +168,7 @@ function edit_form() {
 
     // print view
     $is_checked = $server_details['is_active'] === '1' ? " CHECKED" : "";
-    $server_select_box = build_select_box($lm_supported, array('name' => "license_manager", 'id' => "license_manager"));
+    $server_select_box = build_select_box($lm_supported, array('name' => "license_manager", 'id' => "license_manager"), $server_details['license_manager']);
     print_header();
 
     print <<<HTML
