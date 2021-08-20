@@ -31,7 +31,6 @@ foreach ($servers as $server) {
         exit(1);
     }
 
-    var_dump($server, $lmdata);
     while (!is_null($lmdata)) {
         $query->bind_param("iss", $lmdata['num_licenses'], $server['name'], $lmdata['feature']);
         if ($query->execute() === false) {
