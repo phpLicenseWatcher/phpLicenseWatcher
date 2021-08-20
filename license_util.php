@@ -5,7 +5,7 @@ require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name', 'license_manager'));
-//update_servers($db, $servers);
+update_servers($db, $servers);
 update_licenses($db, $servers);
 $db->close();
 exit;
