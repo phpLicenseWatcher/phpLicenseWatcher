@@ -13,7 +13,7 @@ $db->close();
 $table = new html_table(array('class'=>"table alt-rows-bgcolor"));
 
 // Define the table header
-$col_headers = array("Description", "License port@server", "Status", "Current Usage", "Available features/license", "lmgrd version","Last Update");
+$col_headers = array("Description", "License port@server", "Status", "Current Usage", "Available features/license", "Server Version", "Last Update");
 $table->add_row($col_headers, array(), "th");
 
 // Whether or not to display notice about setting up cron jobs.

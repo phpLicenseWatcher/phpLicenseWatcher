@@ -14,6 +14,7 @@ our @APACHE_PATH = (rootdir(), "etc", "apache2");
 our @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 
 # Relevant files
+our @CODE_FILES = qw(*.php *.html *.js *.css *.template mathematica);
 our $CONFIG_FILE = "config.php";
 our $SQL_FILE = "phplicensewatcher.sql";
 our $LOGROTATE_CONF_FILE = "phplw.conf";
