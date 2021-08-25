@@ -33,7 +33,7 @@ foreach ($servers as $server) {
         $display_cron_notice = false;
         $class = array(); // no color
         $detail_link="<a href='details.php?listing=0&amp;server={$server['id']}' aria-label='usage details for {$server['label']})'>Usage Details</a>";
-        $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}' aria-label='listing and expiration dates for {$server['label']})'>Listing/Expiration dates</a>";
+        $listing_expiration_link="<a href='details.php?listing=1&amp;server={$server['id']}' aria-label='listing and expiration dates for {$server['label']})'>Listing/Expiration Dates</a>";
         break;
     case SERVER_VENDOR_DOWN:
         $display_cron_notice = false;
@@ -72,10 +72,9 @@ $cron_notice = !$display_cron_notice ? "" : get_not_polled_notice();
 // Output view.
 print_header();
 print <<< HTML
-<h1>License Server Status</h1>
+<h1>License Management Server Status</h1>
 <hr />
-<h2>Flexlm Servers</h2>
-<p>To get current usage for an individual server please click on the "Details" link next to the server. If you would like to get current usage for multiple servers on the same page use checkbox on the right of the server then click on the "Get current usage for multiple servers on one page".</p>
+<p>To get current usage for an individual server please click on the "Usage Details" link next to the server.  The "Listings/Expiration Dates" link will provide time-to expiration for a server's features.</p>
 {$cron_notice}
 {$table->get_html()}
 HTML;

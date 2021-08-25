@@ -6,7 +6,7 @@ use File::Spec::Functions qw(rootdir);
 # Paths (as arrays of directories)
 our @VAGRANT_HOMEPATH = (rootdir(), "home", "vagrant");
 our @REPO_PATH = (@VAGRANT_HOMEPATH, "github_phplw");
-our @CONFIG_PATH = ("vagrant_provision", "config");  # Relative to @REPO_PATH
+our @CONFIG_PATH = (@REPO_PATH, "vagrant_provision", "config");
 our @LMTOOLS_PATH = (rootdir(), "opt", "lmtools");
 our @HTML_PATH = (rootdir(), "var", "www", "html");
 our @LOGROTATE_PATH = (rootdir(), "etc", "logrotate.d");

@@ -110,8 +110,8 @@ function convert_to_mysql_date($date) {
  * @param $checked_value Value of the item that should be checked (optional)
  * @return string HTML code for selectbox.
  */
-function build_select_box (array $options, array $properties=array(), string $checked_value="") {
-    $checked_value = strtolower($checked_value);
+function build_select_box (array $options, array $properties=array(), $checked_value=null) {
+    $checked_value = is_string($checked_value) ? strtolower($checked_value) : "";
     $html_properties = "";
     array_walk($properties, function($val, $key) use (&$html_properties) {
         $html_properties .= " {$key}='{$val}'";
@@ -276,7 +276,7 @@ function cache_store($command, $data) {
  *
  * DateInterval's format fnuction doesn't give us the power to exclude a
  * zero value.  e.g. $dti->format("%y year(s), %m month(s), %d day(s).") will
- * always include out years, months, and days even when they are zero.  Same
+ * always include years, months, and days even when they are zero.  Same
  * goes for hours, minutes, seconds.  This function will exclude zero values.
  * e.g. years = 1, months = 0, days = 5 is interpeted as "1 year(s), 5 day(s)"
  *

@@ -18,35 +18,34 @@ print "Root required.\n" and exit 1 if ($> != 0);
 
 # CLI arg = full:  remove/reinstall all code and dependencies to HTML directory
 # CLI arg = update-composer:  Run update only on composer dependencies
-# No CLI arg:  (default) rsync latest development code to HTML directory
-if (defined $ARGV[0]) {
-    if ($ARGV[0] eq "full") {
-        # composer("install"); # Composer is disabled.
-        clear_html_folder();
-        rsync_code("full");
-    } elsif ($ARGV[0] eq "update-composer") {
-        # composer("update"); # Composer is disabled.
-    }
-} else {
-    my $source = catdir(@CONFIG::REPO_PATH);
-    my $dest   = catdir(@CONFIG::HTML_PATH);
-    my @files  = build_file_list($source);
+# No CLI arg:  (default) copy latest development code to HTML directory
+my ($source, $dest, @files);
+if (defined $ARGV[0] && $ARGV[0] eq "full") {
+    # composer("install"); # Composer is disabled.
+    clear_html_folder();
+    $source = catdir(@CONFIG::REPO_PATH);
+    $dest   = catdir(@CONFIG::HTML_PATH);
+    @files  = build_file_list($source);
+    print "Install development code.\n";
     copy_code($source, $dest, @files);
-    print "Copied code files.\n";
+
+    $source = catdir(@CONFIG::CONFIG_PATH);
+    $dest   = catdir(@CONFIG::HTML_PATH);
+    @files  = ($CONFIG::CONFIG_FILE);
+    print "Install vagrant config file.\n";
+    copy_code($source, $dest, @files);
+} elsif (defined $ARGV[0] && $ARGV[0] eq "update-composer") {
+    # composer("update"); # Composer is disabled.
+} else {
+    $source = catdir(@CONFIG::REPO_PATH);
+    $dest   = catdir(@CONFIG::HTML_PATH);
+    @files  = build_file_list($source);
+    print "Update development code.\n";
+    copy_code($source, $dest, @files);
 }
 
 # All done!
 exit 0;
-
-# # rsync provides easy recursive copy, but is not part of Perl core libraries.
-# sub exec_rsync {
-#     my ($source, $dest) = @_;
-#
-#     if ((system "rsync -a $source $dest") != 0) {
-#         print STDERR "rsync exited ", $? >> 8, "\n";
-#         exit 1;
-#     }
-# }
 
 # Run composer to either install or update packages.
 # Composer is disabled.
@@ -69,12 +68,13 @@ sub clear_html_folder {
     print "Cleared HTML directory.\n";
 }
 
-# Optional params: $sub_path  Default: $sub_path = ""
+# Expected param: $root_path (path to start gathering filenames for code copying)
+# Optional param: $sub_path  Additional dirs off of $root_path.  Default: $sub_path = ""
 sub build_file_list {
     my $root_path = shift;
     my ($sub_path, $search_path, $path, $file, @file_list);
 
-    # Get 2nd parameter, if 2nd argument was passed in.
+    # Get $sub_path, if param exists.
     $sub_path = scalar @_ > 0 ? shift : "";
 
     foreach (@CONFIG::CODE_FILES) {
@@ -116,6 +116,8 @@ sub copy_code {
         copy_file ($source, $dest);
         chmod 0644, $dest;
     }
+
+    print "Files copy/update done.\n";
 }
 
 # Copy a single file.
@@ -130,30 +132,3 @@ sub copy_file {
         exit 1;
     }
 }
-
-# # Copy code to HTML directory
-# sub rsync_code {
-#     my @repo_path   = @CONFIG::REPO_PATH;
-#     my $config_file = catfile(@CONFIG::CONFIG_PATH, $CONFIG::CONFIG_FILE);
-#     my $dest        = catdir(@CONFIG::HTML_PATH);
-#     my @file_list   = qw(*.php *.html *.css *.js);
-#     my ($source, $files);
-#
-#     # Normally, we just want to rsync development code, but a full provision
-#     # also requires config file and composer packages.
-#     my $option = shift if (@_);
-#     if (defined $option && $option eq "full") {
-#         # Composer is disabled.
-#         # push(@file_list, catfile(@CONFIG::CONFIG_PATH, $CONFIG::CONFIG_FILE), $CONFIG::COMPOSER_PACKAGES);
-#         push(@file_list, $config_file);
-#     }
-#
-#     foreach (@file_list) {
-#         $files = catfile(@repo_path, $_);
-#         foreach $source (glob($files)) {
-#             exec_rsync($source, $dest);
-#         }
-#     }
-#
-#     print "Installed/Updated development code.\n";
-# }

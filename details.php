@@ -36,7 +36,7 @@ default:
 
 // Show view.
 print_header();
-print "<h1>Flexlm Licenses in Detail</h1><hr>";
+print "<h1>Licenses in Detail</h1><hr>";
 print $html_body;
 print_footer();
 exit;
