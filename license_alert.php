@@ -61,7 +61,7 @@ for ($i = 0; $i < count($expiration_array); $i++) {
 // Dump the table HTML into a variable
 $table_html = $table->get_html();
 
-// View
+// View body
 $message = <<<HTML
 These licenses will expire within {$lead_time} days.
 Licenses will expire at 23:59 on the day of expiration.
@@ -72,8 +72,8 @@ HTML;
 // If the table has more than one row (header row will be one) there are
 // expiring licenses alerts to be emailed.
 if ($table->get_rows_count() > 1) {
-    if ($notify_address && $do_not_reply_address && !isset($_GET['nomail'])) {
-        $message .= "Emailing to {$notify_address}<p>\n";
+    if (isset($notify_address) && isset($do_not_reply_address) && !isset($_GET['nomail'])) {
+        $message .= "Emailing to {$notify_address}\n";
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-type: text/html; charset=iso-8859-1';
         $headers[] = "From: {$do_not_reply_address}";
