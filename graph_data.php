@@ -4,83 +4,80 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/tools.php";
 
 $feature = preg_replace("/[^a-zA-Z0-9_|]+/", "", htmlspecialchars($_GET['feature'])) ;
-$days = intval($_GET['days']);
-
-$crit = "";
-if ($feature === "all") {
-    $crit = " TRUE ";
-} else if ($feature !== "") {
-    $features = array() ;
-    foreach(explode('|', $feature ) as $i) {
-        $features[] = "'{$i}'";
-    }
-
-    $crit = " `features`.`name` IN ( " . implode(',', $features) . " ) ";
+if (preg_match("/^(\d+|all)$)/", $_GET['days'], $matches) === 1) {
+    $days = $matches[1];
 } else {
-    $crit = " show_in_lists=1 ";
+    // Days default to 1 week if URL param isn't properly formed.
+    $days = "7";
 }
 
-if ($days <= 0) {
-    $days = 7;
+$types = "";
+$params = array();
+if ($feature === "all") {
+    $where_features = "TRUE";
+} else if ($feature !== "") {
+    $params = explode("|", $feature);
+    // Every $param is datatype "s" in a mysqli prepared statement.
+    $types = str_repeat("s", count($params));
+    // Creates a string like "?,?,?" as used in "`features`.`name` IN (?,?,?)", but matching the number of $params.
+    $placeholders = implode(",", array_fill(0, count($params), "?"));
+    $where_features = "`features`.`name` IN ({$placeholders})";
+} else {
+    $where_features = "WHERE `features`.`show_in_lists`=1";
 }
 
-db_connect($db);
-
-$result = array("cols"=>array(), "rows"=>array() );
-$result["cols"][] = array("id" => "", "label" => "Date", "pattern" => "", "type" => "string");
-$table = array();
-$products = array();
+if ($days === "all") {
+    $where_days = "TRUE";
+} else {
+    // $days will be an integer for a mysqli prepared statement.
+    $types .= "i";
+    $params[] = $days;
+    $where_days = "DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)"
+}
 
 $sql = <<<SQL
 SELECT `features`.`name`, `time`, SUM(`num_users`)
 FROM `usage`
 JOIN `licenses` ON `usage`.`license_id`=`licenses`.`id`
 JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-WHERE {$crit} AND DATE_SUB(NOW(), INTERVAL $days DAY) <= DATE(`time`)
+WHERE {$where_features} AND {$where_days}
 GROUP BY `features`.`name`, `time`
 ORDER BY `time` ASC;
 SQL;
 
-$recordset = $db->query($sql, MYSQLI_STORE_RESULT);
-if (!$recordset) {
-    die ($db->error);
-}
+$result = array("cols"=>array(), "rows"=>array() );
+$result["cols"][] = array("id" => "", "label" => "Date", "pattern" => "", "type" => "string");
+$table = array();
+$products = array();
 
-// $row[0] = feature name (aka product).
-// $row[1] = date
-// $row[2] = SUM(num_users)
-while ($row = $recordset->fetch_row()){
-    $date = $row[1];
+db_connect($db);
+$query = $db->prepare($sql);
+$query->bind_param($types, ...$params);
+$query->execute();
+$query->bind_result($row_name, $row_time, $row_sum);
 
-    if ($days == 1) {
-        $date = date('H:i', strtotime($date));
-    } else if ($days <= 7) {
-        $date = date('Y-m-d H', strtotime($date));
-    } else {
-        $date = date('Y-m-d', strtotime($date));
-    }
+while ($query->fetch_row()){
+    $date = $row_date;
+    if      (is_numeric($days) && (int) $days === 1) $date = date('H:i', strtotime($date));
+    else if (is_numeric($days) && (int) $days <= 7)  $date = date('Y-m-d H', strtotime($date));
+    else                                             $date = date('Y-m-d', strtotime($date));
 
-    if (!array_key_exists($row[0], $products)) {
-        $products[$row[0]] = $row[0];
-    }
-
-    if (!array_key_exists($date, $table)) {
-        $table[$date] = array();
-    }
+    if (!array_key_exists($row_name, $products)) $products[$row_name] = $row_name;
+    if (!array_key_exists($date, $table))        $table[$date]        = array();
 
     // SUM(num_users) has multiple data points throughout a single day.
     // This ensures the largest SUM(num_users) is set each day within $table[date][product]
-    if (isset($table[$date][$row[0]])) {
+    if (isset($table[$date][$row_name])) {
 		//make sure to select the largest value if we are reducing the data by changing the date key
-        if ($row[2] > $table[$date][$row[0]]) {
-            $table[$date][$row[0]] = $row[2];
+        if ($row_sum > $table[$date][$row_name]) {
+            $table[$date][$row_name] = $row_sum;
         }
     } else {
-        $table[$date][$row[0]] = $row[2];
+        $table[$date][$row_name] = $row_sum;
     }
 }
 
-$recordset->free();
+$query->close();
 $db->close();
 
 foreach (array_keys($products) as $product) {

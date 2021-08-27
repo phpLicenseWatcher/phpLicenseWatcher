@@ -53,7 +53,8 @@ print <<<HTML
             "1"  : "day",
             "7"  : "week",
             "30" : "month",
-            "365": "year"
+            "365": "year",
+            "all": "all"
         };
 
         $.each(charts, function(key, value) {
@@ -86,6 +87,8 @@ print <<<HTML
 <div id="chart_div_month"></div>
 <h2>Past Year</h2>
 <div id="chart_div_year"></div>
+<h2>All History</h2>
+<div id="chart_div_all"></div>
 HTML;
 
 print_footer();
