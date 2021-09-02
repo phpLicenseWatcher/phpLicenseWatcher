@@ -3,12 +3,12 @@
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/tools.php";
 
-$feature = preg_replace("/[^a-zA-Z0-9_|]+/", "", htmlspecialchars($_GET['feature'])) ;
-if (preg_match("/^(\d+|all)$)/", $_GET['days'], $matches) === 1) {
-    $days = $matches[1];
+$feature = preg_replace("/[^a-zA-Z0-9_|]+/", "", htmlspecialchars($_GET['feature']));
+if (preg_match("/^(\d+|all)$/", $_GET['days'], $matches) === 1) {
+     $days = $matches[1];
 } else {
-    // Days default to 1 week if URL param isn't properly formed.
-    $days = "7";
+    // No processing when days doesn't match regex pattern.
+    exit;
 }
 
 $types = "";
@@ -32,7 +32,7 @@ if ($days === "all") {
     // $days will be an integer for a mysqli prepared statement.
     $types .= "i";
     $params[] = $days;
-    $where_days = "DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)"
+    $where_days = "DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)";
 }
 
 $sql = <<<SQL
@@ -56,11 +56,15 @@ $query->bind_param($types, ...$params);
 $query->execute();
 $query->bind_result($row_name, $row_time, $row_sum);
 
-while ($query->fetch_row()){
-    $date = $row_date;
-    if      (is_numeric($days) && (int) $days === 1) $date = date('H:i', strtotime($date));
-    else if (is_numeric($days) && (int) $days <= 7)  $date = date('Y-m-d H', strtotime($date));
-    else                                             $date = date('Y-m-d', strtotime($date));
+while ($query->fetch()){
+    $date = $row_time;
+    if (is_numeric($days) && (int) $days === 1) {
+        $date = date('H:i', strtotime($date));
+    } else if (is_numeric($days) && (int) $days <= 7) {
+        $date = date('Y-m-d H', strtotime($date));
+    } else {
+        $date = date('Y-m-d', strtotime($date));
+    }
 
     if (!array_key_exists($row_name, $products)) $products[$row_name] = $row_name;
     if (!array_key_exists($date, $table))        $table[$date]        = array();
@@ -96,5 +100,4 @@ foreach (array_keys($table) as $date){
 
 header('Content-Type: application/json');
 echo json_encode($result);
-
 ?>
