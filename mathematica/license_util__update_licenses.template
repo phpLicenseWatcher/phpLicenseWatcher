@@ -1,0 +1,6 @@
+# Report license checkouts
+%TEXT
+Mathematica:    %CONST_TOTAL_FE_OUT
+MathKernel:     %CONST_TOTAL_KE_OUT
+SubMathematica: %CONST_TOTAL_SUB_FE_OUT
+SubMathKernel:  %CONST_TOTAL_SUB_KE_OUT

@@ -1,9 +1,10 @@
 <?php
 require_once __DIR__ . "/tools.php";
 require_once __DIR__ . "/common.php";
+require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
-$servers = db_get_servers($db, array('name'));
+$servers = db_get_servers($db, array('name', 'license_manager'));
 update_servers($db, $servers);
 update_licenses($db, $servers);
 $db->close();
@@ -16,35 +17,31 @@ exit;
  * are not up get culled from the list as their license info is inaccessible.
  *
  * @param &$db DB connection object.
- * @param &$servers active servers list array.
+ * @param $servers active servers list array.
  */
-function update_servers(&$db, &$servers) {
+function update_servers(&$db, $servers) {
     global $lmutil_binary;
 
     $update_data = array();
+    $lmtools = new lmtools();
     foreach ($servers as $index => $server) {
-        // Retrieve server details via lmstat.
-        $fp=popen("{$lmutil_binary} lmstat -c {$server['name']}", "r");
-
-        $stdout = "";
-        while (!feof($fp)) {
-            $stdout .= fgets($fp);
-        }
-        pclose($fp);
+        // Retrieve server details from lmtools.php object.
+        $lmtools->lm_open($server['license_manager'], 'license_util__update_servers', $server['name']);
+        $lmtools->lm_regex_matches($pattern, $matches);
 
         // DB update data as parralel arrays, using server's $index
         $status[$index] = SERVER_DOWN; // assume server is down unless determined otherwise.
-        $lmgrd_version[$index] = "";
+        $server_version[$index] = "";
         $name[$index] = $server['name'];
 
         // If server is up, also read its lmgrd version.
-        if (preg_match("/license server UP (?:\(MASTER\) )?(v\d+[\d\.]*)$/im", $stdout, $matches)) {
+        if ($pattern === "server_up") {
             $status[$index] = SERVER_UP;
-            $lmgrd_version[$index] = $matches[1];
+            $server_version[$index] = $matches['server_version'];
         }
 
         // This can override $status[$index] is UP.
-        if (preg_match("/vendor daemon is down/im", $stdout)) {
+        if ($pattern === "server_vendor_down") {
             $status[$index] = SERVER_VENDOR_DOWN;
         }
 
@@ -55,15 +52,17 @@ function update_servers(&$db, &$servers) {
     }
 
     // Server statuses DB update
-    $db->query("LOCK TABLES `servers` WRITE;");
-    $query = $db->prepare("UPDATE `servers` SET `status`=?, `lmgrd_version`=?, `last_updated`=NOW() WHERE `name`=?;");
+    $query = $db->prepare("UPDATE `servers` SET `status`=?, `version`=?, `last_updated`=NOW() WHERE `name`=?;");
+    $db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
     foreach($name as $index => $_n) {
-        $query->bind_param("sss", $status[$index], $lmgrd_version[$index], $name[$index]);
-        $query->execute();
+        $query->bind_param("sss", $status[$index], $server_version[$index], $name[$index]);
+        if ($query->execute() === false) {
+            $db->rollback();
+            print_error_and_die("MySQL: {$query->error}");
+        }
     }
-
+    $db->commit();
     $query->close();
-    $db->query("UNLOCK TABLES;");
 } // END function update_servers()
 
 /**
@@ -73,95 +72,106 @@ function update_servers(&$db, &$servers) {
  * @param $servers active/up server list array.
  */
 function update_licenses(&$db, $servers) {
-    global $lmutil_binary;
+    // Setup DB queries
 
-    $db->query("LOCK TABLES `features`, `licenses`, `usage` WRITE");
-    foreach ($servers as $server) {
-        $fp=popen("{$lmutil_binary} lmstat -a -c {$server['name']}", "r");
+    // Populate feature, if needed.
+    // ? = $lmdata['feature']
+    $sql = <<<SQL
+    INSERT IGNORE INTO `features` (`name`, `show_in_lists`, `is_tracked`) VALUES (?, 1, 1);
+    SQL;
+    $query_features = $db->prepare($sql);
 
-        $licenses = array();
-        while ( !feof ($fp) ) {
-            $stdout = fgets ($fp, 1024);
-
-        	// Look for features and licenses used in stdout.  Example of stdout:
-        	// "Users of Allegro_Viewer: (Total of 5 licenses issued;  Total of 1 license in use)\n"
-            // Features is "Allegro_Viewer" and licenses used is 1.
-            if (preg_match("/^Users of (?<feature>.*):  \(Total of \d* license[s]? issued;  Total of (?<licenses_used>\d*) license[s]? in use\)$/", $stdout, $matches)) {
-                $licenses[] = array(
-                    'feature' => $matches['feature'],
-                    'licenses_used' => $matches['licenses_used']
-                );
-            }
-        }
-
-        pclose($fp);
-
-        // INSERT licence data to DB
-        foreach ($licenses as $license) {
-            $sql = array();
-            $data = array();
-            $queries = array();
-
-            // Populate feature, if needed.
-            // ? = $license['feature']
-            $data[0] = array($license['feature']);
-            $type[0] = "s"; // needed for mysqli_stmt::bind_param()
-            $sql[0] = <<<SQL
-INSERT IGNORE INTO `features` (`name`, `show_in_lists`, `is_tracked`)
-    VALUES (?, 1, 1);
-SQL;
-
-            // Populate server/feature to licenses, if needed.
-            // ?, ? = $server['name'], $license['feature']
-            $data[1] = array($server['name'], $license['feature']);
-            $type[1] = "ss"; // needed for mysqli_stmt::bind_param()
-            $sql[1] = <<<SQL
-INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
-    SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id`
-    FROM `servers`, `features`
+    // Populate server/feature to licenses, if needed.
+    // ?, ? = $server['name'], $lmdata['feature']
+    $sql = <<<SQL
+    INSERT IGNORE INTO `licenses` (`server_id`, `feature_id`)
+    SELECT DISTINCT `servers`.`id` AS `server_id`, `features`.`id` AS `feature_id` FROM `servers`, `features`
     WHERE `servers`.`name` = ? AND `features`.`name` = ?;
-SQL;
+    SQL;
+    $query_licenses = $db->prepare($sql);
 
-            // Insert license usage.  Needs feature and license populated, first.
-            // ?, ?, ? = $license['licenses_used'], $server['name'], $license['feature']
-            $data[2] = array($license['licenses_used'], $server['name'], $license['feature']);
-            $type[2] = "sss"; // needed for mysqli_stmt::bind_param()
-            $sql[2] = <<<SQL
-INSERT IGNORE INTO `usage` (`license_id`, `time`, `num_users`)
-    SELECT `licenses`.`id`, NOW(), ?
-    FROM `licenses`
+    // Insert license usage.  Needs feature and license populated, first.
+    // ?, ?, ? = $lmdata['licenses_used'], $server['name'], $lmdata['feature']
+    $sql = <<<SQL
+    INSERT IGNORE INTO `usage` (`license_id`, `time`, `num_users`)
+    SELECT `licenses`.`id`, NOW(), ? FROM `licenses`
     JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
     JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
     WHERE `servers`.`name`=? AND `features`.`name`=? AND `features`.`is_tracked`=1;
-SQL;
+    SQL;
+    $query_usage = $db->prepare($sql);
+    // END setup DB queries.
 
-            // Prepare each query and bind parameter data
-            foreach($sql as $i => $query) {
-                $queries[$i] = $db->prepare($query);
-                // q.v. https://www.php.net/functions.arguments#functions.variable-arg-list for '...' token
-                $queries[$i]->bind_param($type[$i], ...$data[$i]);
-            }
+    $lmtools = new lmtools();
+    $db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
+    foreach ($servers as $server) {
+        if ($lmtools->lm_open($server['license_manager'], 'license_util__update_licenses', $server['name']) === false) {
+            $db->rollback();
+            print_error_and_die($lmtools->err);
+        }
+        $lmdata = $lmtools->lm_nextline();
+        if ($lmdata === false) {
+            $db->rollback();
+            print_error_and_die($lmtools->err);
+        }
+        // INSERT license data to DB
+        while (!is_null($lmdata)) {
+            // $lmdata['licenses_used'] will be missing when the feature has no license count ("uncounted").
+            // But `usage`.`num_users` in the DB can't be null, so we'll fill in '0'.
+            if (!isset($lmdata['licenses_used'])) $lmdata['licenses_used'] = 0;
+
+            // bind data to prepared queries.
+            $query_features->bind_param("s", $lmdata['feature']);
+            $query_licenses->bind_param("ss", $server['name'], $lmdata['feature']);
+            $query_usage->bind_param("iss", $lmdata['licenses_used'], $server['name'], $lmdata['feature']);
 
             // Attempt to INSERT license usage...
-            $queries[2]->execute();
+            if ($query_usage->execute() === false) {
+                $db->rollback();
+                print_error_and_die("MySQL: {$query_usage->error}");
+            }
 
             // when affectedRows < 1, feature and license first needs to be
             // populated and then license usage query re-run.
             if ($db->affected_rows < 1) {
-                foreach ($queries as $query) {
-                    $query->execute();
+                switch (false) {
+                case $query_features->execute():
+                    $db->rollback();
+                    print_error_and_die("MySQL: {$query_features->error}");
+                case $query_licenses->execute():
+                    $db->rollback();
+                    print_error_and_die("MySQL: {$query_licenses->error}");
+                case $query_usage->execute():
+                    $db->rollback();
+                    print_error_and_die("MySQL: {$query_usage->error}");
                 }
             }
 
-            // Release each prepared query.
-            foreach ($queries as &$query) {
-                $query->close();
+            // Get another data set from license manager.
+            $lmdata = $lmtools->lm_nextline();
+            if ($lmdata === false) {
+                $db->rollback();
+                print_error_and_die($lmtools->err);
             }
-            unset($query);
-        } // END foreach($licenses as $license)
+        } // END while(!is_null($lmdata())
     } // END foreach($servers as $server)
 
-    $db->query("UNLOCK TABLES;");
+    // Complete and cleanup
+    $db->commit();
+    $query_usage->close();
+    $query_licenses->close();
+    $query_features->close();
 } // END function update_licenses()
 
+/**
+ * Print error to STDERR and exit 1.
+ *
+ * die() is insufficient because it prints to STDOUT and exits 0.
+ *
+ * @param $msg error message
+ */
+function print_error_and_die($msg) {
+    fprintf(STDERR, "%s\n", $msg);
+    exit(1);
+}
 ?>

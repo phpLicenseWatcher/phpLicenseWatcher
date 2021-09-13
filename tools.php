@@ -1,64 +1,63 @@
 <?php
+require_once __DIR__ . "/lmtools.php";
 
 /**
- * @param string $server Server name being queried.  "{port}@{domain}.{tld}".
+ * @param array $server Server's 'name' and 'license_manager' being queried.
  * @param array &$expiration_array
  */
-function build_license_expiration_array($server, &$expiration_array) {
-    global $lmutil_binary; // from config.php
-
-    $file = popen("{$lmutil_binary} lmcksum -c {$server}", "r");
-    $today = time();
+function build_license_expiration_array(array $server, &$expiration_array) {
     // Expirations (in days) longer than 10 years are assumed to be permanent.
     $permanent_threshold = 4000; // Nice round number greater than 10 years (in days)
+    $today = time();
+
+    $lmtools = new lmtools();
+    $lmtools->lm_open($server['license_manager'], 'tools__build_license_expiration_array', $server['name']);
+    $lmdata = $lmtools->lm_nextline();
 
     // Let's read in the file line by line
-    while (!feof ($file)) {
-        $line = fgets ($file, 1024);
-        if ( preg_match("/INCREMENT .*/i", $line, $out ) || preg_match("/FEATURE .*/i", $line, $out ) ) {
-            $license = explode(" ", $out[0]);
-            if ($license[4]) {
-                $license[4] = strtolower($license[4]);
-                switch(true) {
-                // Indicators that license is perpetual/permanent
-                case preg_match("/-0000$/", $license[4]) === 1:
-                case preg_match("/-9999$/", $license[4]) === 1:
-                case preg_match("/-2099$/", $license[4]) === 1:
-                case preg_match("/-2242$/", $license[4]) === 1:
-                case preg_match("/-00$/", $license[4]) === 1:
-                case preg_match("/-0$/", $license[4]) === 1:
-                case $license[4] === "permanent":
-                    $days_to_expiration = PHP_INT_MAX;
-                    $license[4] = "permanent";
-                    break;
-                // License not indicated as permanent.  Calculate days remaining.
-                // We are assuming 64-bit Unix time.
-                default:
-                    $days_to_expiration = ceil((1 + strtotime($license[4]) - $today) / 86400);
-                    // Although licenses more than 10 years old are still considered permanent.
-                    if ($days_to_expiration > $permanent_threshold) {
-                        $days_to_expiration = PHP_INT_MAX;
-                        $license[4] = "permanent";
-                    }
-                    break;
-                }
-            } else {
-                // We didn't find an expiration date, so assume license is permanent.
+    while (!is_null($lmdata)) {
+        if ($lmdata['expiration_date'] !== "") {
+            switch(true) {
+            // Indicators that license is perpetual/permanent
+            case preg_match("/-0000$/", $lmdata['expiration_date']) === 1:
+            case preg_match("/-9999$/", $lmdata['expiration_date']) === 1:
+            case preg_match("/-2099$/", $lmdata['expiration_date']) === 1:
+            case preg_match("/-2242$/", $lmdata['expiration_date']) === 1:
+            case preg_match("/-00$/",   $lmdata['expiration_date']) === 1:
+            case preg_match("/-0$/",    $lmdata['expiration_date']) === 1:
+            case strtolower($lmdata['expiration_date']) === "permanent":
                 $days_to_expiration = PHP_INT_MAX;
-                $license[4] = "permanent";
+                $lmdata['expiration_date'] = "permanent";
+                break;
+            // License not indicated as permanent.  Calculate days remaining.
+            // We are assuming 64-bit Unix time.
+            default:
+                $days_to_expiration = strtotime($lmdata['expiration_date']) !== false  ?
+                    ceil((1 + strtotime($lmdata['expiration_date']) - $today) / 86400) :
+                    "N/A";
+                // Although licenses more than 10 years old are still considered permanent.
+                if ($days_to_expiration > $permanent_threshold) {
+                    $days_to_expiration = PHP_INT_MAX;
+                    $lmdata['expiration_date'] = "permanent";
+                }
+                break;
             }
-
-            // Add to the expiration array
-            $expiration_array[$license[1]][] = array (
-                "vendor_daemon"      => $license[2],
-                "expiration_date"    => $license[4],
-                "num_licenses"       => $license[5],
-                "days_to_expiration" => (int) $days_to_expiration
-            );
+        } else {
+            // We didn't find an expiration date, so assume license is permanent.
+            $days_to_expiration = PHP_INT_MAX;
+            $lmdata['expiration_date'] = "permanent";
         }
-    }
 
-    pclose($file);
+        // Add to the expiration array
+        $expiration_array[$lmdata['name']][] = array (
+            "vendor_daemon"      => $lmdata['vendor_daemon'],
+            "expiration_date"    => $lmdata['expiration_date'],
+            "num_licenses"       => $lmdata['num_licenses'],
+            "days_to_expiration" => $days_to_expiration
+        );
+
+        $lmdata = $lmtools->lm_nextline();
+    }
 } // END function build_license_expiration_array()
 
 /**
@@ -93,7 +92,7 @@ function convert_from_mysql_date($date) {
  * Convert a US date ie. 05/20/2001 to the MySQL date format ie. 2001-05-20
  *
  * @param $date US Date
- * @return string MySQl date
+ * @return string MySQL date
  */
 function convert_to_mysql_date($date) {
     $stringArray = explode("/", $date);
@@ -102,31 +101,28 @@ function convert_to_mysql_date($date) {
 }
 
 /**
- * Takes a result set, with the first column being the "id" or value and the
- * second column being the text you want displayed
+ * Build an html selectbox with given arguments.
  *
- * ** Is this function used?  Remove from codebase if it is not used. **
+ * Needed by server admin edit form, but available anywhere.
  *
  * @param $options Options for selectbox.
- * @param $name Name you want assigned to this form element
+ * @param $properties Properties for the selectbox.  e.g. name, class, id
  * @param $checked_value Value of the item that should be checked (optional)
  * @return string HTML code for selectbox.
  */
-function build_select_box ($options, $name, $checked_value="") {
-    $name = strtolower($name);
-    $checked_value = strtolower($checked_value);
+function build_select_box (array $options, array $properties=array(), $checked_value=null) {
+    $checked_value = is_string($checked_value) ? strtolower($checked_value) : "";
+    $html_properties = "";
+    array_walk($properties, function($val, $key) use (&$html_properties) {
+        $html_properties .= " {$key}='{$val}'";
+    });
 
-    $html = "<select onChange='this.form.submit();' name='{$name}'>\n";
+    $html = "<select{$html_properties}>\n";
     foreach ($options as $option) {
         $option_value = strtolower($option);
         $option_selectable = ucwords($option);
-
-        $html .= "<option value='{$option_value}'";
-        if ($option_value === $checked_value) {
-            $html .= " selected";
-        }
-
-        $html .= ">{$option}</option>\n";
+        $is_selected = ($option_value === $checked_value) ? " selected" : "";
+        $html .= "<option value='{$option_value}'{$is_selected}>{$option_selectable}</option>\n";
     }
     $html .= "</select>\n";
     return $html;
@@ -134,6 +130,9 @@ function build_select_box ($options, $name, $checked_value="") {
 
 /**
  * Get the number of available licenses for a particular feature.
+ *
+ * TO DO: popen()/fgets() converted to lmtools::lm_open()/lmtools::lm_nextline()
+ *        Not currently used by system.
  *
  * @param string $myFeature
  * @return string number of licenses available as string
@@ -170,7 +169,8 @@ function num_licenses_available($feature) {
 /**
  * Get the number of used licenses for a particular feature.
  *
- * ** Is this function used?  Remove from codebase if it is not used. **
+ * TO DO: popen()/fgets() converted to lmtools::lm_open()/lmtools::lm_nextline()
+ *        Not currently used by system.
  *
  * @param string $myfeature
  * @return integer number of licenses
@@ -207,6 +207,9 @@ function num_licenses_used($feature) {
 
 /**
  * Run cli command.  Use disk cache.
+ *
+ * TO DO: Disk cache isn't currently used.  This should be moved to lmtools.php
+ *        class
  *
  * @param string $command  path and exectuable of cli command to run.
  * @return string Output from $command, possibly from disk cache.
@@ -268,130 +271,34 @@ function cache_store($command, $data) {
     file_put_contents($cacheFile, $data);
 }
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                                             #
-# B00zy's timespan script v1.2                                                #
-#                                                                             #
-# timespan -- get the exact time span between any two moments in time.        #
-#                                                                             #
-# Description:                                                                #
-#                                                                             #
-#        class timespan, function calc ( int timestamp1, int timestamp2)      #
-#                                                                             #
-#        The purpose of this script is to be able to return the time span     #
-#        between any two specific moments in time AFTER the Unix Epoch        #
-#        (January 1 1970) in a human-readable format. You could, for example, #
-#        determine your age, how long you have been married, or the last time #
-#        you... you know. ;)                                                  #
-#                                                                             #
-#        The class, "timespan", will produce variables within the class       #
-#        respectively titled years, months, weeks, days, hours, minutes,      #
-#        seconds.                                                             #
-#                                                                             #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                                             #
-# Example 1. B00zy's age.                                                     #
-#                                                                             #
-#        $t = new timespan( time(), mktime(0,13,0,8,28,1982));                #
-#        print "B00zy is $t->years years, $t->months months, ".               #
-#                "$t->days days, $t->hours hours, $t->minutes minutes, ".     #
-#                "and $t->seconds seconds old.\n";                            #
-#                                                                             #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+/**
+ * Interpret a DateInterval object into words.
+ *
+ * DateInterval's format fnuction doesn't give us the power to exclude a
+ * zero value.  e.g. $dti->format("%y year(s), %m month(s), %d day(s).") will
+ * always include years, months, and days even when they are zero.  Same
+ * goes for hours, minutes, seconds.  This function will exclude zero values.
+ * e.g. years = 1, months = 0, days = 5 is interpeted as "1 year(s), 5 day(s)"
+ *
+ * @param DateInterval $dti
+ * @return string Readable sentence describing DateInterval object.
+ */
+function get_readable_timespan(DateInterval $dti) {
+    // Break days into weeks.  As of PHP 8.0, DateInterval does not have a
+    // weeks property, so we'll record weeks as $w.  Note that when
+    // $dti->d (represents days) < 7, $w is 0 and $dti->d is unchanged.
+    $w = intdiv($dti->d, 7);
+    $dti->d = $dti->d % 7;
 
-// Code updates from PHP4 by Peter Bailie (RPI DotCIO Research Computing).
-define('day', 60*60*24 );
-define('hour', 60*60 );
-define('minute', 60 );
-
-class timespan
-{
-    public $years;
-    public $months;
-    public $weeks;
-    public $days;
-    public $hours;
-    public $minutes;
-    public $seconds;
-
-    public function __construct ($after, $before) {
-        // Set variables to zero, instead of null.
-        $this->years = 0;
-        $this->months = 0;
-        $this->weeks = 0;
-        $this->days = 0;
-        $this->hours = 0;
-        $this->minutes = 0;
-        $this->seconds = 0;
-
-        $duration = $after - $before;
-
-        // 1. Number of years
-        $dec = $after;
-        $year = $this->leap($dec);
-
-        while (floor($duration / $year) >= 1) {
-            // We don't need this VV
-            //print date("F j, Y\n",$dec);
-            $this->years += 1;
-            $duration -= (int)$year;
-            $dec -= (int)$year;
-            $year = $this->leap($dec);
-        }
-
-        // 2. Number of months
-        $dec = $after;
-        $m = date('n',$after);
-        $d = date('j',$after);
-
-        while (($duration - day) >= 0) {
-            $duration -= day;
-            $dec -= day;
-            $this->days += 1;
-
-            if ( (date('n',$dec) != $m) and (date('j',$dec) <= $d) ) {
-                $m = date('n',$dec);
-                $d = date('j',$dec);
-
-                $this->months += 1;
-                $this->days = 0;
-            }
-        }
-
-        // 3. Number of weeks.
-        $this->weeks = floor($this->days / 7);
-        $this->days %= 7;
-
-        // 4. Number of hours, minutes, and seconds.
-        $this->hours = floor($duration / (60*60));
-        $duration %= (60*60);
-
-        $this->minutes = floor($duration / 60);
-        $duration %= 60;
-
-        $this->seconds = $duration;
+    // Build readable duration string
+    $readable = array();
+    $vals = array($dti->y, $dti->m, $w, $dti->d, $dti->h, $dti->i);
+    $units = array('years', 'months', 'weeks', 'days', 'hours', 'minutes');
+    foreach ($vals as $i => $val) {
+        if ($val > 0) $readable[] = "{$val} {$units[$i]}";
     }
-
-    private function leap($time) {
-        if (date('L',$time) and (date('z',$time) > 58))
-            return (double)(60*60*24*366);
-        else {
-            $de = getdate($time);
-            $mkt = mktime(0,0,0,$de['mon'],$de['mday'],($de['year'] - 1));
-            if ((date('z',$time) <= 58) and date('L',$mkt))
-                return (double)(60*60*24*366);
-            else
-                return (double)(60*60*24*365);
-        }
-    }
-
-    public function readable() {
-        $values = array('years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds');
-        foreach ($values as $k => $v)
-            if ($this->{$v})
-                $fmt .= ($fmt ? ', ' : '') . $this->{$v} . " $v";
-        return $fmt . ($fmt ? '.' : '') ;
-    }
+    $readable = implode(", ", $readable);
+    return $readable;
 }
 
 ?>

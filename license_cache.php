@@ -1,39 +1,53 @@
 <?php
 require_once __DIR__ . "/common.php";
+require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
-$servers = db_get_servers($db, array('name'));
 
-foreach ($servers as $server) {
-    $fp = popen($lmutil_binary . " lmstat -a -c " . $server['name'], "r");
-    while ( !feof ($fp) ) {
-        $line = fgets ($fp, 1024);
-
-        // Look for features in the output. You will see stuff like
-        // Users of Allegro_Viewer: (Total of 5 licenses available
-        if ( preg_match("/^Users of (.*)Total /i", $line ) )  {
-            $out = explode(" ", $line);
-            // Remove the : in the end of the string
-            $feature = str_replace(":", "", $out[2]);
-
-            $sql = <<<SQL
+$sql = <<<SQL
 INSERT IGNORE INTO `available` (`license_id`, `date`, `num_licenses`)
-    SELECT `licenses`.`id`, NOW(), {$out[6]}
-    FROM `licenses`
-    JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
-    JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-    WHERE `servers`.`name`='{$server["name"]}' AND `features`.`name`='{$feature}';
+SELECT `licenses`.`id`, NOW(), ? FROM `licenses`
+JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
+JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
+WHERE `servers`.`name`=? AND `features`.`name`=?;
 SQL;
+$query = $db->prepare($sql);
 
-            $result = $db->query($sql);
-            if (!$result) {
-                die ($db->error);
-            }
+$servers = db_get_servers($db, array('name', 'license_manager'));
+$lmtools = new lmtools();
+
+$db->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
+foreach ($servers as $server) {
+    if ($lmtools->lm_open($server['license_manager'], 'license_cache', $server['name']) === false) {
+        $db->rollback();
+        fprintf(STDERR, "%s\n", $lmtools->err);
+        exit(1);
+    }
+
+    $lmdata = $lmtools->lm_nextline();
+    if ($lmdata === false) {
+        $db->rollback();
+        fprintf(STDERR, "%s\n", $lmtools->err);
+        exit(1);
+    }
+
+    while (!is_null($lmdata)) {
+        $query->bind_param("iss", $lmdata['num_licenses'], $server['name'], $lmdata['feature']);
+        if ($query->execute() === false) {
+            $db->rollback();
+            fprintf(STDERR, "MySQL: %s\n", $query->error);
+            exit(1);
+        }
+
+        $lmdata = $lmtools->lm_nextline();
+        if ($lmdata === false) {
+            $db->rollback();
+            fprintf(STDERR, "%s\n", $lmtools->err);
+            exit(1);
         }
     }
-    pclose($fp);
 }
 
+$db->commit();
 $db->close();
-
 ?>
