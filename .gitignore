@@ -4,12 +4,14 @@
 #NetBeans IDE
 /nbproject/
 
-# Flex LM binaries (should never be committed to repo!)
+# License manager binaries (should never be committed to repo!)
 /vagrant_provision/lmtools/**
 !/vagrant_provision/lmtools/readme.md
 adskflex
 lmgrd
 lmutil
+mathlm
+monitorlm
 
 # Text temp files
 **/*~

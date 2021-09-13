@@ -86,12 +86,8 @@ sub setup_lmtools {
         $dest = catfile(@dest_path, $_);
 
         # autodie doesn't work with File::Copy
-        if (copy $source, $dest) {
-            print "Copied LM binary $_\n";
-        } else {
-            print STDERR "LM binary $_: $!\n";
-            exit 1;
-        }
+        print STDERR "LM binary $_: $!\n" and exit 1 unless copy $source, $dest;
+        print "Copied LM binary $_\n";
 
         chown $uid, $gid, $dest;
         print "$_ ownership granted to ${lmtools_user}:${vagrant_user}\n";

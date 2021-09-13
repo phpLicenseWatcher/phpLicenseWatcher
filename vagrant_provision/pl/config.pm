@@ -6,7 +6,7 @@ use File::Spec::Functions qw(rootdir);
 # Paths (as arrays of directories)
 our @VAGRANT_HOMEPATH = (rootdir(), "home", "vagrant");
 our @REPO_PATH = (@VAGRANT_HOMEPATH, "github_phplw");
-our @CONFIG_PATH = ("vagrant_provision", "config");  # Relative to @REPO_PATH
+our @CONFIG_PATH = (@REPO_PATH, "vagrant_provision", "config");
 our @LMTOOLS_PATH = (rootdir(), "opt", "lmtools");
 our @HTML_PATH = (rootdir(), "var", "www", "html");
 our @LOGROTATE_PATH = (rootdir(), "etc", "logrotate.d");
@@ -14,6 +14,7 @@ our @APACHE_PATH = (rootdir(), "etc", "apache2");
 our @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 
 # Relevant files
+our @CODE_FILES = qw(*.php *.html *.js *.css *.template mathematica);
 our $CONFIG_FILE = "config.php";
 our $SQL_FILE = "phplicensewatcher.sql";
 our $LOGROTATE_CONF_FILE = "phplw.conf";
@@ -38,7 +39,7 @@ our $CACHE_OWNER_GID = getgrnam $CACHE_OWNER;
 our $CACHE_PERMISSIONS = 0700;
 
 # List of Flex LM binaries and ownership
-our @LMTOOLS_FILES = ("lmutil");
+our @LMTOOLS_FILES = ("lmutil", "monitorlm");
 our $LMTOOLS_OWNER = "www-data";
 our $LMTOOLS_OWNER_UID = getpwnam $LMTOOLS_OWNER;
 our $LMTOOLS_OWNER_GID = getgrnam $LMTOOLS_OWNER;

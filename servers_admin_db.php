@@ -5,6 +5,7 @@ function db_process() {
     $id = $_POST['submit_id'];
     $name = $_POST['name'];
     $label = $_POST['label'];
+    $license_manager = $_POST['license_manager'];
     // checkboxes are not included in POST when unchecked.
     $is_active = isset($_POST['is_active']) && $_POST['is_active'] === "on" ? 1 : 0;
 
@@ -13,9 +14,9 @@ function db_process() {
     // $id must be all numbers or the word "new"
     case preg_match("/^\d+$|^new$/", $id):
         return array('msg' => "Invalid server ID \"{$id}\"", 'lvl' => "failure");
-    // $name must match port@domain.tld
-    case preg_match("/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $name,):
-        return array('msg' => "Server name MUST be in form <code>port@domain.tld</code>", 'lvl' => "failure");
+    // $name must be valid (depends on license manager)
+    case preg_match("/^(?:\d{1,5}@)?(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $name);
+        return array('msg' => "Server name MUST be in form <code>port@domain.tld</code>, port optional", 'lvl' => "failure");
     // $label cannot be blank
     case !empty($label):
         return array('msg' => "Server's label cannot be blank", 'lvl' => "failure");
@@ -24,13 +25,13 @@ function db_process() {
 
     if ($id === "new") {
         // Adding a new server
-        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`) VALUES (?, ?, ?)";
-        $params = array("ssi", $name, $label, $is_active);
+        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`, `license_manager`) VALUES (?, ?, ?, ?)";
+        $params = array("ssis", $name, $label, $is_active, $license_manager);
         $op = "added";
     } else {
         // Editing an existing server
-        $sql = "UPDATE `servers` SET `name`=?, `label`=?, `is_active`=? WHERE `ID`=?";
-        $params = array("ssii", $name, $label, $is_active, $id);
+        $sql = "UPDATE `servers` SET `name`=?, `label`=?, `is_active`=?, `license_manager`=? WHERE `ID`=?";
+        $params = array("ssisi", $name, $label, $is_active, $license_manager, $id);
         $op = "updated";
     }
 
@@ -58,7 +59,7 @@ function db_process() {
  */
 function db_server_details_by_getid($id) {
     db_connect($db);
-    $server_details = db_get_servers($db, array("name", "label", "is_active"), array($id), "", false);
+    $server_details = db_get_servers($db, array("name", "label", "is_active", "license_manager"), array($id), "", false);
     $db->close();
     return !empty($server_details) ? $server_details[0] : false;
 } // END function db_server_details_by_getid()
@@ -101,7 +102,7 @@ function db_delete_server() {
  */
 function db_get_servers_json() {
     db_connect($db);
-    $res = $db->query("SELECT `name`, `label`, `is_active` FROM `servers` ORDER BY `label`;");
+    $res = $db->query("SELECT `name`, `label`, `is_active`, `license_manager` FROM `servers` ORDER BY `label`;");
     $data = $res->fetch_all(MYSQLI_ASSOC);
     $res->free();
     $db->close();
@@ -110,7 +111,7 @@ function db_get_servers_json() {
 
 function db_import_servers_json($json) {
     db_connect($db);
-    $sql = "INSERT IGNORE INTO `servers` (`name`, `label`, `is_active`) VALUES (?, ?, ?);";
+    $sql = "INSERT IGNORE INTO `servers` (`name`, `label`, `is_active`, `license_manager`) VALUES (?, ?, ?, ?);";
     $query = $db->prepare($sql);
     if ($query === false) {
         return array('msg' => "DB error: {$db->error}", 'lvl' => "failure");
@@ -118,7 +119,7 @@ function db_import_servers_json($json) {
 
     $db->begin_transaction(0, "import");
     foreach($json as $row) {
-        $query->bind_param("ssi", $row['name'], $row['label'], $row['is_active']);
+        $query->bind_param("ssis", $row['name'], $row['label'], $row['is_active'], $row['license_manager']);
         $query->execute();
         if ($query === false) {
             $db->rollback(0, "import");

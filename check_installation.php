@@ -34,8 +34,15 @@ $test_values  = $test ? "Readable" : "Not Readable";
 $test_results = $test ? PASS_MARK : FAIL_MARK;
 $table->add_row(array($test_names, $test_values, $test_results));
 
+clearstatcache();
 $test         = isset($lmutil_binary) && is_executable($lmutil_binary);
 $test_names   = "lmutil binary";
+$test_values  = $test ? "Is Executable" : "Not Executable (maybe check permissions?)";
+$test_results = $test ? PASS_MARK : FAIL_MARK;
+$table->add_row(array($test_names, $test_values, $test_results));
+
+$test         = isset($monitorlm_binary) && is_executable($monitorlm_binary);
+$test_names   = "monitorlm binary";
 $test_values  = $test ? "Is Executable" : "Not Executable (maybe check permissions?)";
 $test_results = $test ? PASS_MARK : FAIL_MARK;
 $table->add_row(array($test_names, $test_values, $test_results));

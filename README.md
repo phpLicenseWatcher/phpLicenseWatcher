@@ -27,8 +27,8 @@
 
 ## Limitations
 
-   Currently only FlexLM servers are supported but in the future a wider array
-   of license servers may be supported.
+   Currently FlexLM and MathLM (Mathematica) servers are supported but in the
+   future a wider array of license servers may be supported.
 
 ## Requirements
 

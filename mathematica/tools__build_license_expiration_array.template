@@ -1,0 +1,7 @@
+# monitorlm doesn't appear to support reporting license expiration.
+# So this is a (necessary) dummy template.
+%TEXT
+Mathematica:    N/A N/A %CONST_TOTAL_FE_AUTHORIZED
+MathKernel:     N/A N/A %CONST_TOTAL_KE_AUTHORIZED
+SubMathematica: N/A N/A %CONST_TOTAL_SUB_FE_AUTHORIZED
+SubMathKernel:  N/A N/A %CONST_TOTAL_SUB_KE_AUTHORIZED

@@ -15,6 +15,14 @@ a {
     color: #2f6fa7;
 }
 
+.bold-text {
+    font-weight: bold;
+}
+
+.center-text {
+    text-align: center;
+}
+
 /* Red (#ff0000) is too light for contrast ratio > 4.5:1 against white and #efefef. */
 .red-text {
     color: #b22222; /* firebrick */

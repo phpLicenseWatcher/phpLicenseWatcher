@@ -20,8 +20,8 @@ Download and install for your operating system:
 1. Install Vagrant and VirtualBox.
     * Make sure to install the vbguest plugin:  `vagrant plugin install vagrant-vbguest`
     * You do _not_ need the Virtualbox Extension Pack to run this Vagrant box.
-2. Provide license manager binary for FlexLM (`lmutil`).
-    * Copy the license manager binary to `vagrant_provision/lmservers` within the cloned repository.
+2. Provide license manager binaries for FlexLM (`lmutil`) and Mathematica (`monitorlm`).
+    * Copy the license manager binaries to `vagrant_provision/lmtools` within the cloned repository.
     * Make sure the binaries are compiled for Linux.
     * License manager binaries shall not be tracked in this repository.  Please do not remove their entries in `.gitignore`.
 3. Clone this repository to your host, either with `git` command line or the Github Application.

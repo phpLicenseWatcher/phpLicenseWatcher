@@ -150,7 +150,7 @@ function get_alert_html($msg, $lvl="info") {
         $class = "alert-danger";    // bootstrap class
         break;
     default:
-        $class = "alert-info";
+        $class = "alert-info";      // bootstrap class
         break;
     }
 
