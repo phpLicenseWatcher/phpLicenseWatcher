@@ -197,7 +197,7 @@ function list_licenses_in_use($servers, &$html_body) {
                          // Output the user line
                          $html = "User: {$checkout['user']}";
                          $html .= "<br>Computer: {$checkout['host']}";
-                         if (!is_null($checkout['num_licenses'])) $html .= "<br>Licenses: {$checkout['num_licenses']}";
+                         if (array_key_exists('num_licenses', $checkout)) $html .= "<br>Licenses: {$checkout['num_licenses']}";
                          $table->add_row(array("", "", $html, $time_difference), $class);
                      } // END foreach ($license['checkouts'] as $checkout)
                  } // END if (isset($license['checkouts']) && is_countable($license['checkouts']))
