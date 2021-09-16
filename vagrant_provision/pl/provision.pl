@@ -23,9 +23,11 @@ setup_lmtools();
 setup_mysql();
 setup_database();
 setup_logrotate();
+setup_php();
 setup_apache();
 # setup_composer();  # Composer disabled.
 create_symlink();
+setup_other_tweaks();
 copy_code();
 
 # Done!
@@ -118,7 +120,7 @@ sub setup_mysql {
         $dest = catfile(@db_config_path, "${db_config_file}.bak");
 
         # move original file to a backup
-        rename($source, $dest);
+        rename $source, $dest;
 
         # Swap so we can read from backup ($source) and write adjustments to
         # original ($dest).
@@ -126,15 +128,15 @@ sub setup_mysql {
         $source = $dest;
         $dest = $file;
 
-        open(my $source_fh, "<:encoding(UTF-8)", $source);
-        open(my $dest_fh, ">:encoding(UTF-8)", $dest);
+        open my $source_fh, "<:encoding(UTF-8)", $source;
+        open my $dest_fh, ">:encoding(UTF-8)", $dest;
         while(<$source_fh>) {
             $_ =~ s/bind\-address\s+= 127\.0\.0\.1/bind\-address = $ip/g;
             print $dest_fh $_;
         }
 
-        close($source_fh);
-        close($dest_fh);
+        close $source_fh;
+        close $dest_fh;
         print "MySQL configured to listen on localhost:53306.  Restarting MySQL...\n";
         exec_cmd("service mysql restart");
     } else {
@@ -176,8 +178,31 @@ sub setup_logrotate {
     my $dest   = catfile(@dest_path, $CONFIG::LOGROTATE_CONF_FILE);
 
     print "Copy logrotate conf file.\n";
-    print STDERR $! and exit 1 unless copy $source, $dest;
+    print STDERR $! and exit 1 unless copy($source, $dest);
     print "\n";
+}
+
+# Copy php.ini for development environment.
+sub setup_php {
+    my $php_dev_ini    = catfile(@CONFIG::PHP_INI_DEV_PATH, $CONFIG::PHP_INI_DEV_FILE);
+    my $php_apache_ini = catfile(@CONFIG::PHP_INI_APACHE_PATH, $CONFIG::PHP_INI_FILE);
+    my $php_cli_ini    = catfile(@CONFIG::PHP_INI_CLI_PATH, $CONFIG::PHP_INI_FILE);
+    my ($source, $dest, $file);
+
+    print "Copying php.ini for development environment.\n";
+
+    # Working with PHP ini for Apache and CLI
+    foreach $file ($php_apache_ini, $php_cli_ini) {
+        # Backup original PHP ini files.
+        $source = $file;
+        $dest   = "${file}.bak";
+        rename $source, $dest;
+
+        # Copy development environment PHP ini.
+        $source = $php_dev_ini;
+        $dest   = $file;
+        print STDERR $! and exit 1 unless copy($source, $dest);
+    }
 }
 
 # Setup apache and conf files.
@@ -188,7 +213,7 @@ sub setup_apache {
     print "Setting up Apache2\n";
     @working_path = (@CONFIG::APACHE_PATH, "sites-enabled");
     $files = catfile(@working_path, "*");
-    foreach (glob($files)) {
+    foreach (glob $files) {
         $conf = fileparse($_);
         $conf =~ s{\.[^.]+$}{};  # Removes ".conf" extension
         exec_cmd("a2dissite $conf");
@@ -200,7 +225,7 @@ sub setup_apache {
     @dest_path   = (@CONFIG::APACHE_PATH, "sites-available");
     $source = catfile(@source_path, $CONFIG::APACHE_CONF_FILE);
     $dest   = catfile(@dest_path, $CONFIG::APACHE_CONF_FILE);
-    print STDERR $! and exit 1 unless copy $source, $dest;
+    print STDERR $! and exit 1 unless copy($source, $dest);
 
     # (3) Activate phpLicenseWatcher Apache conf file
     print "Activate conf file.\n";
@@ -238,6 +263,13 @@ sub create_symlink {
     }
 }
 
+# Any other small misc stuff to do.
+sub setup_other_tweaks {
+    # Permits other uids to write to the Vagrant home dir.
+    # i.e. To write debugging logs.  q.v. function log_var() in common.php
+    my $home_dir = catdir(@CONFIG::VAGRANT_HOMEPATH);
+    chmod 0777, $home_dir;
+}
 
 # Call script to copy code files to HTML directory.
 sub copy_code {

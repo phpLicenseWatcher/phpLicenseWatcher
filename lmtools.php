@@ -244,7 +244,6 @@ class lmtools extends lmtools_lib {
                 if ($lmdata === false) return false;
             }
 
-            log_var($used_licenses, 99);
             return $used_licenses;
         }
 
