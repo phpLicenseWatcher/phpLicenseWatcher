@@ -11,6 +11,9 @@ our @LMTOOLS_PATH = (rootdir(), "opt", "lmtools");
 our @HTML_PATH = (rootdir(), "var", "www", "html");
 our @LOGROTATE_PATH = (rootdir(), "etc", "logrotate.d");
 our @APACHE_PATH = (rootdir(), "etc", "apache2");
+our @PHP_INI_DEV_PATH = (rootdir(), "usr", "lib", "php", "7.4");
+our @PHP_INI_APACHE_PATH = (rootdir(), "etc", "php", "7.4", "apache2");
+our @PHP_INI_CLI_PATH = (rootdir(), "etc", "php", "7.4", "cli");
 our @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 
 # Relevant files
@@ -19,6 +22,8 @@ our $CONFIG_FILE = "config.php";
 our $SQL_FILE = "phplicensewatcher.sql";
 our $LOGROTATE_CONF_FILE = "phplw.conf";
 our $APACHE_CONF_FILE = "phplw.conf";
+our $PHP_INI_DEV_FILE = "php.ini-development";
+our $PHP_INI_FILE = "php.ini";
 our $UPDATE_CODE = "update_code.pl";
 our $LICENSE_UTIL = "license_util.php";
 our $LICENSE_CACHE = "license_cache.php";
