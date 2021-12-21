@@ -172,7 +172,7 @@ function update_licenses(&$db, $servers) {
 } // END function update_licenses()
 
 /**
- * Print error to STDERR and exit 1.
+ * Print error to STDERR, close DB, and exit 1.
  *
  * die() is insufficient because it prints to STDOUT and exits 0.
  *
