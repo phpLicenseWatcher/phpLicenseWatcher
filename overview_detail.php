@@ -62,10 +62,15 @@ while ($row = $recordset->fetch_row()){
 $db->close();
 $label = str_replace('|', ' or ', $label);
 
+$title_span = "{$days}-Days";
+if ($days == 365) {
+    $title_span = "Yearly";
+}
+
 // Print View.
 print_header();
 print <<<HTML
-<h1>Yearly Usage: {$label}</h1>
+<h1>${title_span} Usage: {$label}</h1>
 
 <hr/>
 
