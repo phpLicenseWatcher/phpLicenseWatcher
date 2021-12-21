@@ -39,12 +39,12 @@ $result->free();
 $csv_results = "date,users" . $NEW_LINE;
 
 $sql = "
-SELECT `features`.`name`, `time`, MAX(`num_users`)
+SELECT `features`.`name`, `time`, MAX(`num_users`), date_format( `time`, '%Y%m%d%H' ) as hourly
 FROM `usage`
 JOIN `licenses` ON `usage`.`license_id`=`licenses`.`id`
 JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
 WHERE `features`.`name` = '{$feature}' AND DATE_SUB(NOW(), INTERVAL {$days} DAY) <= DATE(`time`)
-GROUP BY `features`.`name`, date_format( `time`, '%Y%m%d%H' )
+GROUP BY `features`.`name`, `hourly`, `time`
 ORDER BY `time` ASC;";
 
 $recordset = $db->query($sql, MYSQLI_STORE_RESULT);
