@@ -15,8 +15,8 @@ function db_process() {
     case preg_match("/^\d+$|^new$/", $id):
         return array('msg' => "Invalid server ID \"{$id}\"", 'lvl' => "failure");
     // $name must be valid (depends on license manager)
-    case preg_match("/^(?:\d{1,5}@)?(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $name);
-        return array('msg' => "Server name MUST be in form <code>port@domain.tld</code>, port optional", 'lvl' => "failure");
+    case preg_match("/^(?:[1-6]?\d{1,4}@)?(?:(?:(?:[a-z\d\-]+\.)+[a-z\-]{2,})|[a-z\d\-]+|(?:(?:[12]?\d{1,2}\.){3}[12]?\d{1,2}))$/i", $name);
+        return array('msg' => "Server name MUST be in form <code>port@domain</code> or <code>port@ip</code>, port optional", 'lvl' => "failure");
     // $label cannot be blank
     case !empty($label):
         return array('msg' => "Server's label cannot be blank", 'lvl' => "failure");
