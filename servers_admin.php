@@ -175,7 +175,7 @@ function edit_form() {
     <h1>Server Details</h1>
     <form action='servers_admin.php' method='post' class='edit-form'>
         <div class='edit-form block'>
-            <label for='name'>Name (format: <code>port@domain</code> or <code>port@ip</code>, port optional)</label><br>
+            <label for='name'>Name (format: <code>port@domain</code> or <code>port@ipv4</code>, port optional)</label><br>
             <input type='text' name='name' id='name' class='edit-form' value='{$server_details['name']}'>
         </div><div class='edit-form block'>
             <label for='label'>Label</label><br>
