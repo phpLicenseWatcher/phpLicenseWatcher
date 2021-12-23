@@ -14,9 +14,8 @@ function db_process() {
     // $id must be all numbers or the word "new"
     case preg_match("/^\d+$|^new$/", $id):
         return array('msg' => "Invalid server ID \"{$id}\"", 'lvl' => "failure");
-    // $name must be valid (depends on license manager)
-    case preg_match("/^(?:[1-6]?\d{1,4}@)?(?:(?:(?:[a-z\d\-]+\.)+[a-z\-]{2,})|[a-z\d\-]+|(?:(?:[12]?\d{1,2}\.){3}[12]?\d{1,2}))$/i", $name);
-        return array('msg' => "Server name MUST be in form <code>port@domain</code> or <code>port@ip</code>, port optional", 'lvl' => "failure");
+    case validate_server_name($name):
+        return array('msg' => "Server name MUST be in form <code>port@domain</code> or <code>port@ipv4</code>, port optional", 'lvl' => "failure");
     // $label cannot be blank
     case !empty($label):
         return array('msg' => "Server's label cannot be blank", 'lvl' => "failure");
@@ -133,4 +132,38 @@ function db_import_servers_json($json) {
     return array('msg' => "Import succeeded.", 'lvl' => "success");
 } // END Function db_import_servers_json()
 
+/**
+ *  Sanity check on server $name.
+ *
+ *  Port is optional as Mathematica doesn't require a specified port number.
+ *  First check is by regular expression.  Port/IPv4 values are then checked
+ *  for numerical range.
+ *
+ * @param string $name
+ * @return bool TRUE when $name is valid, FALSE otherwise.
+ */
+function validate_server_name(string $name) : bool {
+    switch(true) {
+    // Check for port@domain.tld, port optional.
+    case preg_match("/^(?:(?<port>\d{1,5})@)?(?:(?!\-)[a-z0-9\-]+(?<!\-)\.)+[a-z\-]{2,}$/i", $name, $matches) === 1:
+    // Check for port@hostname, port optional.
+    case preg_match("/^(?:(?<port>\d{1,5})@)?(?!\-)[a-z0-9\-]+(?<!\-)$/i", $name, $matches) === 1:
+        if (array_key_exists('port', $matches)) {
+            if ((int) $matches['port'] < 1 || (int) $matches['port'] > 65535) return false;
+        }
+        return true;
+    // Check for port@ipv4, port optional.
+    case preg_match("/^(?:(?<port>\d{1,5})@)?(?<octet1>\d{1,3})\.(?<octet2>\d{1,3})\.(?<octet3>\d{1,3})\.(?<octet4>\d{1,3})$/i", $name, $matches) === 1:
+        if (array_key_exists('port', $matches)) {
+            if ((int) $matches['port'] < 1 || (int) $matches['port'] > 65535) return false;
+        }
+        foreach(array("octet1", "octet2", "octet3", "octet4") as $octet) {
+            if (!array_key_exists($octet, $matches)) return false;
+            if ((int) $matches[$octet] < 1 || (int) $matches[$octet] > 255) return false;
+        }
+        return true;
+    default:
+        return false;
+    }
+} // END function validate_server_name()
 ?>
