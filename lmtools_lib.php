@@ -57,7 +57,7 @@ STRING CONSTANTS
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -template " . __DIR__ . "/mathematica/license_util__update_servers.template",
             'regex' => [
-                'server_up' => "/^(?<server_version>v\d+(?:\.\d+)+)$/"]]];  // placeholders
+                'server_up' => "/^(?<server_version>v\d+(?:\.\d+)+)/"]]];  // placeholders
 
     static protected $license_util__update_licenses = [
         'flexlm' => [
