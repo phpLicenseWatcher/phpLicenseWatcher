@@ -136,33 +136,31 @@ function db_import_servers_json($json) {
  *  Sanity check on server $name.
  *
  *  Port is optional as Mathematica doesn't require a specified port number.
- *  First check is by regular expression.  Port/IPv4 values are then checked
+ *  First checks are by regular expression.  Port/IPv4 values are then checked
  *  for numerical range.
  *
  * @param string $name
  * @return bool TRUE when $name is valid, FALSE otherwise.
  */
 function validate_server_name(string $name) : bool {
-    switch(true) {
-    // Check for port@domain.tld, port optional.
+    // Regex checks are order of: (1) port@domain.tld  (2) port@hostname  (3) port@ipv4
+    switch (true) {
     case preg_match("/^(?:(?<port>\d{1,5})@)?(?:(?!\-)[a-z0-9\-]+(?<!\-)\.)+[a-z\-]{2,}$/i", $name, $matches) === 1:
-    // Check for port@hostname, port optional.
     case preg_match("/^(?:(?<port>\d{1,5})@)?(?!\-)[a-z0-9\-]+(?<!\-)$/i", $name, $matches) === 1:
-        if (array_key_exists('port', $matches)) {
-            if ((int) $matches['port'] < 1 || (int) $matches['port'] > 65535) return false;
+    case preg_match("/^(?:(?<port>\d{1,5})@)?(?<octet1>\d{1,3})\.(?<octet2>\d{1,3})\.(?<octet3>\d{1,3})\.(?<octet4>\d{1,3})$/", $name, $matches) === 1:
+        // Port is optional since Mathematica doesn't specify a port.
+        if (array_key_exists('port', $matches) && ((int) $matches['port'] < 1024 || (int) $matches['port'] > 65535)) {
+            return false;
         }
-        return true;
-    // Check for port@ipv4, port optional.
-    case preg_match("/^(?:(?<port>\d{1,5})@)?(?<octet1>\d{1,3})\.(?<octet2>\d{1,3})\.(?<octet3>\d{1,3})\.(?<octet4>\d{1,3})$/i", $name, $matches) === 1:
-        if (array_key_exists('port', $matches)) {
-            if ((int) $matches['port'] < 1 || (int) $matches['port'] > 65535) return false;
-        }
-        foreach(array("octet1", "octet2", "octet3", "octet4") as $octet) {
-            if (!array_key_exists($octet, $matches)) return false;
-            if ((int) $matches[$octet] < 1 || (int) $matches[$octet] > 255) return false;
+        // Octets only exist in third regex check (for valid ipv4).
+        foreach (array('octet1', 'octet2', 'octet3', 'octet4') as $octet) {
+            if (array_key_exists($octet, $matches) && ((int) $matches[$octet] < 0 || (int) $matches[$octet] > 255)) {
+                return false;
+            }
         }
         return true;
     default:
+        // No regex matches mean $name is definitely invalid.
         return false;
     }
 } // END function validate_server_name()

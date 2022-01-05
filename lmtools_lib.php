@@ -93,13 +93,14 @@ Regex pattern "/(?:[a-z\d\-]+\.)+[a-z\-]{2,}/i" should well represent most FQDNs
 ***This has not yet been implemented elsewhere in phplw.
 * --------------------------------------------------------------------------- */
 
-    static protected $_namecheck_regex = [
-        'flexlm' => [
-            'format'  => "port@doman.tld",
-            'pattern' => "/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"],
-        'mathematica' => [
-            'format'  => "domain.tld",
-            'pattern' => "/^(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"]];
+    /* Currently unused and needs updating to permit hostname and ipv4        */
+    // static protected $_namecheck_regex = [
+    //     'flexlm' => [
+    //         'format'  => "port@doman.tld",
+    //         'pattern' => "/^\d{1,5}@(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"],
+    //     'mathematica' => [
+    //         'format'  => "domain.tld",
+    //         'pattern' => "/^(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i"]];
 
     static protected function get_dateinterval($date = null, $time = null, $duration = null) {
         // Create DateInterval based on either $date/$time or $duration.
