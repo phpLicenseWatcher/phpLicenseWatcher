@@ -38,7 +38,7 @@ STRING CONSTANTS
             'regex' => ["/(?:INCREMENT|FEATURE) (?<name>[^ ]+) (?<vendor_daemon>[^ ]+) [^ ]+ (?<expiration_date>[^ ]+) (?<num_licenses>[^ ]+)/i"]],
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -template " . __DIR__ . "/mathematica/tools__build_license_expiration_array.template",
-            'regex' => ["/^(?<name>[^:]+):\s+(?<vendor_daemon>[^ ]+)\s+(?<expiration_date>[^ ]+)\s+(?<num_licenses>[^ ]+)$/i"]]];
+            'regex' => ["/^(?<name>[^:]+):\s+(?<vendor_daemon>[^ ]+)\s+(?<expiration_date>[^ ]+)\s+(?<num_licenses>[^ ]+)\s*$/i"]]];
 
     static protected $license_cache = [
         'flexlm' => [
@@ -46,7 +46,7 @@ STRING CONSTANTS
             'regex' => ["/^Users of (?<feature>[^ ]+):  \(Total of (?<num_licenses>\d+)/"]],
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -template " . __DIR__ . "/mathematica/license_cache.template",
-            'regex' => ["/^(?<feature>[^:]+):\s+(?<num_licenses>\d+)$/"]]]; // placeholder
+            'regex' => ["/^(?<feature>[^:]+):\s+(?<num_licenses>\d+)\s*$/"]]];
 
     static protected $license_util__update_servers = [
         'flexlm' => [
@@ -57,7 +57,7 @@ STRING CONSTANTS
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -template " . __DIR__ . "/mathematica/license_util__update_servers.template",
             'regex' => [
-                'server_up' => "/^(?<server_version>v\d+(?:\.\d+)+)/"]]];  // placeholders
+                'server_up' => "/^(?<server_version>v\d+(?:\.\d+)+)\s*$/"]]];
 
     static protected $license_util__update_licenses = [
         'flexlm' => [
@@ -65,7 +65,7 @@ STRING CONSTANTS
             'regex' => ["/^Users of (?<feature>[^ ]+):  (?:\(Total of \d+ licenses? issued;  Total of (?<licenses_used>\d+)|(?:\(Uncounted))/"]],
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -template " . __DIR__ . "/mathematica/license_util__update_licenses.template",
-            'regex' => ["/^(?<feature>[^:]+):\s+(?<licenses_used>\d+)$/"]]]; // placeholder
+            'regex' => ["/^(?<feature>[^:]+):\s+(?<licenses_used>\d+)\s*$/"]]];
 
     static protected $self__get_license_usage_array = [
         'flexlm' => [
@@ -77,8 +77,8 @@ STRING CONSTANTS
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template " . __DIR__ . "/mathematica/details__list_licenses_in_use.template",
             'regex' => [
-                'users_counted'   => "/^COUNTS (?<feature>[^:]+):\s+(?<used_licenses>\d+)\s+(?<total_licenses>\d+)$/",  // placeholders
-                'details'         => "/^DETAILS (?<feature>[^:]+): (?<user>[^~]+)~(?<host>[^~]+)~(?<duration>\d+(?::\d+)+)$/"]]];
+                'users_counted'   => "/^COUNTS (?<feature>[^:]+):\s+(?<used_licenses>\d+)\s+(?<total_licenses>\d+)\s*$/",
+                'details'         => "/^DETAILS (?<feature>[^:]+): (?<user>[^~]+)~(?<host>[^~]+)~(?<duration>\d+(?::\d+)+)\s*$/"]]];
 
 
 /* --------------------------------------------------------------------------- *
