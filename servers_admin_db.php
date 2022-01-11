@@ -145,16 +145,16 @@ function db_import_servers_json($json) {
 function validate_server_name(string $name) : bool {
     // Regex checks are order of: (1) port@domain.tld  (2) port@hostname  (3) port@ipv4
     switch (true) {
-    case preg_match("/^(?:(?<port>\d{1,5})@)?(?:(?!\-)[a-z0-9\-]+(?<!\-)\.)+[a-z\-]{2,}$/i", $name, $matches) === 1:
-    case preg_match("/^(?:(?<port>\d{1,5})@)?(?!\-)[a-z0-9\-]+(?<!\-)$/i", $name, $matches) === 1:
-    case preg_match("/^(?:(?<port>\d{1,5})@)?(?<octet1>\d{1,3})\.(?<octet2>\d{1,3})\.(?<octet3>\d{1,3})\.(?<octet4>\d{1,3})$/", $name, $matches) === 1:
+    case preg_match("/^(?:(?<port>\d{1,5})@)?(?:(?!\-)[a-z0-9\-]+(?<!\-)\.)+[a-z\-]{2,}$/i", $name, $matches, PREG_UNMATCHED_AS_NULL) === 1:
+    case preg_match("/^(?:(?<port>\d{1,5})@)?(?!\-)[a-z0-9\-]+(?<!\-)$/i", $name, $matches, PREG_UNMATCHED_AS_NULL) === 1:
+    case preg_match("/^(?:(?<port>\d{1,5})@)?(?<octet1>\d{1,3})\.(?<octet2>\d{1,3})\.(?<octet3>\d{1,3})\.(?<octet4>\d{1,3})$/", $name, $matches, PREG_UNMATCHED_AS_NULL) === 1:
         // Port is optional since Mathematica doesn't specify a port.
-        if (array_key_exists('port', $matches) && ((int) $matches['port'] < 1024 || (int) $matches['port'] > 65535)) {
+        if (!is_null($matches['port']) && ((int) $matches['port'] < 1024 || (int) $matches['port'] > 65535)) {
             return false;
         }
         // Octets only exist in third regex check (for valid ipv4).
         foreach (array('octet1', 'octet2', 'octet3', 'octet4') as $octet) {
-            if (array_key_exists($octet, $matches) && ((int) $matches[$octet] < 0 || (int) $matches[$octet] > 255)) {
+            if (!is_null($matches[$octet]) && ((int) $matches[$octet] < 0 || (int) $matches[$octet] > 255)) {
                 return false;
             }
         }
