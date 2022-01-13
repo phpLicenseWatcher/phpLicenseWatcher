@@ -153,11 +153,13 @@ function validate_server_name(string $name) : bool {
             return false;
         }
         // Octets only exist in third regex check (for valid ipv4).
+        // $octet array keys only exist when matching the third regex.
         foreach (array('octet1', 'octet2', 'octet3', 'octet4') as $octet) {
-            if (!is_null($matches[$octet]) && ((int) $matches[$octet] < 0 || (int) $matches[$octet] > 255)) {
+            if (array_key_exists($matches, $octet) && ((int) $matches[$octet] < 0 || (int) $matches[$octet] > 255)) {
                 return false;
             }
         }
+
         return true;
     default:
         // No regex matches mean $name is definitely invalid.

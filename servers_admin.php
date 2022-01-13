@@ -126,7 +126,7 @@ function main_form($alert=null) {
     <script src="servers_admin_jquery.js"></script>
     <h1>Server Administration</h1>
     <p>You may edit an existing server's name, label, active status, or add a new server to the database.<br>
-    Server names must be unique and in the form of "<code>port@domain.tld</code>", port optional.
+    Server names must be unique and in the form of <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>.  Port is optional, but must unprivileged.
     {$alert_html}
     {$control_panel_html}
     <form id='server_list' action='servers_admin.php' method='POST'>
@@ -175,7 +175,7 @@ function edit_form() {
     <h1>Server Details</h1>
     <form action='servers_admin.php' method='post' class='edit-form'>
         <div class='edit-form block'>
-            <label for='name'>Name (format: <code>port@domain</code> or <code>port@ipv4</code>, port optional)</label><br>
+            <label for='name'>Name (format: <code>port@domain</code>, <code>port@host</code>, <code>port@ipv4</code>, port optional.)</label><br>
             <input type='text' name='name' id='name' class='edit-form' value='{$server_details['name']}'>
         </div><div class='edit-form block'>
             <label for='label'>Label</label><br>
