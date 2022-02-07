@@ -217,7 +217,7 @@ function print_var ($var) {
  * "var0.txt", "var1.txt", etc.  If the files aren't being written, it is
  * likely a permissions issue.  $ chmod ugo+w /home/vagrant
  *
- * @param mixed $var variable to be exported to browser view.
+ * @param mixed $var variable to be exported to file.
  */
 function log_var($var, $num=0) {
     global $debug; // from config.php

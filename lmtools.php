@@ -16,11 +16,13 @@ class lmtools extends lmtools_lib {
     private $regex;
     public $err;
 
-    static public function validate_servername($name, $lm, &$is_valid, &$format) {
-        $pattern  = lmtools_lib::$_namecheck_regex[$lm]['pattern'];
-        $is_valid = preg_match($pattern, $name);
-        $format   = lmtools_lib::$_namecheck_regex[$lm]['format'];
-    }
+    /* Not currently in use and needs updating to permit hostname and ipv4.
+       This also includes lmtools_lib::$_namecheck_regex[].                   */
+    // static public function validate_servername($name, $lm, &$is_valid, &$format) {
+    //     $pattern  = lmtools_lib::$_namecheck_regex[$lm]['pattern'];
+    //     $is_valid = preg_match($pattern, $name);
+    //     $format   = lmtools_lib::$_namecheck_regex[$lm]['format'];
+    // }
 
     public function __construct() {
         clearstatcache();

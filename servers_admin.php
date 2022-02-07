@@ -126,7 +126,7 @@ function main_form($alert=null) {
     <script src="servers_admin_jquery.js"></script>
     <h1>Server Administration</h1>
     <p>You may edit an existing server's name, label, active status, or add a new server to the database.<br>
-    Server names must be unique and in the form of "<code>port@domain.tld</code>", port optional.
+    Server names must be unique and in the form of <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>.  Port is optional, but must unprivileged.
     {$alert_html}
     {$control_panel_html}
     <form id='server_list' action='servers_admin.php' method='POST'>
@@ -175,7 +175,7 @@ function edit_form() {
     <h1>Server Details</h1>
     <form action='servers_admin.php' method='post' class='edit-form'>
         <div class='edit-form block'>
-            <label for='name'>Name (format: <code>port@domain.tld</code>, port optional)</label><br>
+            <label for='name'>Name (format: <code>port@domain</code>, <code>port@host</code>, <code>port@ipv4</code>, port optional.)</label><br>
             <input type='text' name='name' id='name' class='edit-form' value='{$server_details['name']}'>
         </div><div class='edit-form block'>
             <label for='label'>Label</label><br>
@@ -231,12 +231,13 @@ function validate_uploaded_json() {
     }
 
     foreach ($json as $row) {
+        // validate_server_name() is defined in servers_admin_db.php
         switch (false) {
         case is_array($row):
         case array_key_exists('license_manager', $row):
-        case array_key_exists('name', $row) && preg_match("/^(?:\d{1,5}@)?(?:[a-z\d\-]+\.)+[a-z\-]{2,}$/i", $row['name']):
+        case array_key_exists('name', $row) && validate_server_name($row['name']):
         case array_key_exists('label', $row):
-        case array_key_exists('is_active', $row) && preg_match("/^[01]$/", $row['is_active']):
+        case array_key_exists('is_active', $row) && preg_match("/^[01]$/", $row['is_active']) === 1:
             return false;
         }
     }
