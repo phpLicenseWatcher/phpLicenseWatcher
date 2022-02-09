@@ -36,7 +36,8 @@ print <<<HTML
 <h1>{$label} Usage</h1>
 
 <hr/>
-<p class="a_centre">Data is taken every {$collection_interval} minutes. It shows usage for past day, past week, past month and past year.</p>
+<p class="a_centre">Data is taken every {$collection_interval} minutes. It shows usage for past day, past week, past month and past year. See the <a href="overview_detail.php?feature={$feature}&days=365">heat map</a> for an hourly overview.
+</p>
 
 <!--Load the AJAX API-->
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
