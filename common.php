@@ -206,7 +206,7 @@ function print_var ($var) {
     global $debug; // from config.php
     if (isset($debug) && $debug == 1) {
         $code = htmlentities(var_export($var, true), ENT_COMPAT | ENT_HTML5);
-        print "<p><span style='color: crimson;'>Var Export: </span><pre>{$code}</pre>\n";
+        print "<p><span class='red-text'>Var Export: </span><pre>{$code}</pre>\n";
     }
 }
 
