@@ -78,7 +78,7 @@ STRING CONSTANTS
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template " . __DIR__ . "/mathematica/details__list_licenses_in_use.template",
             'regex' => [
                 'users_counted'   => "/^COUNTS (?<feature>[^:]+):\s+(?<used_licenses>\d+)\s+(?<total_licenses>\d+)\s*$/",
-                'details'         => "/^DETAILS (?<feature>[^:]+): (?<user>[^~]+)~(?<host>[^~]+)~(?<duration>\d+(?::\d+)+)\s*$/"]]];
+                'details'         => "/^DETAILS (?<feature>[^:]+): (?<user>[^~]+)~(?<host>[^~]*)~(?<duration>\d+(?::\d+)+)\s*$/"]]];
 
 
 /* --------------------------------------------------------------------------- *
