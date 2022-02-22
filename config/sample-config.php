@@ -38,4 +38,7 @@ $db_database="licenses";
 // Allows debug logging when set to 1.
 $debug=0;
 
+//Uncomment line below to change the timezone.  List of possible values can be found at https://www.php.net/manual/en/timezones.php
+//date_default_timezone_set("PROPER_TZ_HERE");
+
 ?>
