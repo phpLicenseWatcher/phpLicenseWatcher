@@ -5,7 +5,7 @@ require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name', 'license_manager'));
-update_servers($db, $servers);
+//update_servers($db, $servers);
 update_licenses($db, $servers);
 $db->close();
 exit;
@@ -116,12 +116,20 @@ function update_licenses(&$db, $servers) {
     $db->query("LOCK TABLES `features` WRITE, `servers` READ, `licenses` WRITE, `usage` WRITE;");
 
     $lmtools = new lmtools();
+    $var = "";
+    $var1 = "";
     foreach ($servers as $server) {
         if ($lmtools->lm_open($server['license_manager'], 'license_util__update_licenses', $server['name']) === false) {
             db_cleanup($db, $queries, $reset_autocommit);
             print_error_and_die($db, $lmtools->err);
         }
         $lmdata = $lmtools->lm_nextline();
+        $lmdata1 = $lmtools->get_usage_counts($server['license_manager'], $server['name']);
+        $var .= "SERVER\n";
+        $var .= var_export($server, true) . PHP_EOL;
+        $var .= "DATA\n";
+        $var .= var_export($lmdata, true) . PHP_EOL;
+        $var1 .= var_export($lmdata1, true) . PHP_EOL;
         if ($lmdata === false) {
             db_cleanup($db, $queries, $reset_autocommit);
             print_error_and_die($db, $lmtools->err);
@@ -144,14 +152,14 @@ function update_licenses(&$db, $servers) {
                 if ($db->affected_rows < 1) {
                     // Features table
                     $queries['features']->bind_param("s", $lmdata['feature']);
-                    $queries['features']->execute();
+                    //$queries['features']->execute();
 
                     // Licenses table
                     $queries['licenses']->bind_param("ss", $server['name'], $lmdata['feature']);
-                    $queries['licenses']->execute();
+                    //$queries['licenses']->execute();
 
                     // Usage table
-                    $queries['usage']->execute();
+                    //$queries['usage']->execute();
                 }
             } catch (mysqli_sql_exception $e) {
                 db_cleanup($db, $queries, $reset_autocommit);
@@ -164,9 +172,12 @@ function update_licenses(&$db, $servers) {
                 db_cleanup($db, $queries, $reset_autocommit);
                 print_error_and_die($db, $lmtools->err);
             }
+            $var .= var_export($lmdata, true) . PHP_EOL;
         } // END while(!is_null($lmdata))
     } // END foreach($servers as $server)
 
+    log_var($var, 0);
+    log_var($var1, 1);
     // Complete and cleanup
     db_cleanup($db, $queries, $reset_autocommit);
 } // END function update_licenses()

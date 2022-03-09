@@ -161,7 +161,8 @@ function list_licenses_in_use($servers, &$html_body) {
         $table->add_row($colHeaders, array(), "th");
 
         foreach(array_merge($used_licenses, $unused_licenses) as $i => $license) {
-            if (!isset($_GET['filter_feature']) || in_array($license['feature_name'], $_GET['filter_feature'])) {
+            print_var($license);
+            if (!array_key_exists('filter_feature', $_GET) || in_array($license['feature_name'], $_GET['filter_feature'])) {
                 $feature = $license['feature_name'];
                 $graph_url = "monitor_detail.php?feature={$feature}";
 

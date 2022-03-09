@@ -252,5 +252,24 @@ class lmtools extends lmtools_lib {
         $this->err = "Unknown license manager.";
         return false;
     }
+
+    static public function get_usage_counts(string $lm, string $server) {
+        $license_data = self::get_license_usage_array($lm, $server);
+        $return_data = array();
+        $i = 0;
+        foreach ($license_data as $feature) {
+            $num_licenses = 0;
+            if (array_key_exists('checkouts', $feature)) {
+                foreach ($feature['checkouts'] as $checkout) {
+                    $num_licenses += array_key_exists('num_licenses', $checkout) ? (int) $checkout['num_licenses'] : 1;
+                }
+            }
+            $return_data[$i] = array('feature' => $feature['feature_name'], 'used_licenses' => $num_licenses);
+            var_dump($i, $return_data[$i]);
+            $i++;
+        }
+
+        return $return_data;
+    }
 }
 ?>
