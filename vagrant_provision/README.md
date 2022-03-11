@@ -2,7 +2,7 @@
 ## Summary
 Vagrant is software used to more easily manage VirtualBox, while VirtualBox will run the actual virtual machine.  This repository provides a `vagrantfile` that defines a Vagrant box to help with code development.  The Vagrant box is a virtual machine that acts as a development and test server.  It provides a LAMP stack with Ubuntu 20.04, Apache2, MySQL, and PHP.
 
-The Vagrant Box was originally developed and tested with Vagrant 2.2.3, VirtualBox 5.2.26, and macOS 10.12.6.  It should work with Vagrant 2.2.0 or later, VirtualBox 5.2.x or later, and any operating systems compatible with Vagrant and Virtualbox.
+The Vagrant Box was originally developed and tested with Vagrant 2.2.3, VirtualBox 5.2.26, and macOS 10.12.6.  It should work with Vagrant 2.2.0 or later, VirtualBox 5.2.x or later, and any operating systems compatible with Vagrant and Virtualbox.  This development environment does not work on (ARM) M1 based Macintosh because Virtualbox only works with x86/x64.
 
 _Please do **not** try to use the vagrant box as a production system.  The vagrant box is provided as a development aid.  It is meant to be only accessible to its host computer, and it is not designed with the proper security needed for a production system._
 
