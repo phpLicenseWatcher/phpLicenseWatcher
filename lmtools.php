@@ -265,7 +265,6 @@ class lmtools extends lmtools_lib {
                 }
             }
             $return_data[$i] = array('feature' => $feature['feature_name'], 'used_licenses' => $num_licenses);
-            var_dump($i, $return_data[$i]);
             $i++;
         }
 

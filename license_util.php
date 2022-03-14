@@ -124,12 +124,11 @@ function update_licenses(&$db, $servers) {
             print_error_and_die($db, $lmtools->err);
         }
         $lmdata = $lmtools->lm_nextline();
+        $var .= "SERVER {$server['name']}\n";
+        $var .= print_r($lmdata, true) . PHP_EOL;
         $lmdata1 = $lmtools->get_usage_counts($server['license_manager'], $server['name']);
-        $var .= "SERVER\n";
-        $var .= var_export($server, true) . PHP_EOL;
-        $var .= "DATA\n";
-        $var .= var_export($lmdata, true) . PHP_EOL;
-        $var1 .= var_export($lmdata1, true) . PHP_EOL;
+        $var1 .= "SERVER {$server['name']}\n";
+        $var1 .= print_r($lmdata1, true) . PHP_EOL;
         if ($lmdata === false) {
             db_cleanup($db, $queries, $reset_autocommit);
             print_error_and_die($db, $lmtools->err);
@@ -172,7 +171,7 @@ function update_licenses(&$db, $servers) {
                 db_cleanup($db, $queries, $reset_autocommit);
                 print_error_and_die($db, $lmtools->err);
             }
-            $var .= var_export($lmdata, true) . PHP_EOL;
+            $var .= print_r($lmdata, true) . PHP_EOL;
         } // END while(!is_null($lmdata))
     } // END foreach($servers as $server)
 
