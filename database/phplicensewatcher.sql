@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `name` VARCHAR(50) NOT NULL,
   `label` VARCHAR(100) NOT NULL,
   `is_active` TINYINT NOT NULL DEFAULT 1,
+  `count_reserve_tokens_as_used` TINYINT NOT NULL DEFAULT 1,
   `status` VARCHAR(25) NULL,
   `license_manager` VARCHAR(25) NOT NULL,
   `version` VARCHAR(15) NULL,

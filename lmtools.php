@@ -172,6 +172,7 @@ class lmtools extends lmtools_lib {
             |-- ['feature_name']       string
             |-- ['num_total_licenses'] string
             |-- ['num_used_licenses']  string
+            |-- ['num_reservations']   string
             |-- ['checkouts']
                      |-- [$j] int index
                           |-- ['user']         string
@@ -210,6 +211,11 @@ class lmtools extends lmtools_lib {
                     $used_licenses[$i]['checkouts'][$j]['timespan'] = lmtools_lib::get_dateinterval($lmdata['date'], $lmdata['time'], null);
                     if (array_key_exists('num_licenses', $lmdata)) $used_licenses[$i]['checkouts'][$j]['num_licenses'] = $lmdata['num_licenses'];
                     $j++;
+                    break;
+                case $lmdata['_matched_patterm'] === 'reservations':
+                    $used_licenses[$i]['num_reservations'] = (array_key_exists('num_reservations', $used_licenses[$i])) ?
+                        (string) ((int) $used_licenses[$i]['num_reservations'] + (int) $lmdata['num_reservations']) :
+                        $lmdata['num_reservations'];
                     break;
                 }
 
@@ -253,22 +259,21 @@ class lmtools extends lmtools_lib {
         return false;
     }
 
-    static public function get_usage_counts(string $lm, string $server) {
-        $license_data = self::get_license_usage_array($lm, $server);
-        $return_data = array();
-        $i = 0;
-        foreach ($license_data as $feature) {
-            $num_licenses = 0;
-            if (array_key_exists('checkouts', $feature)) {
-                foreach ($feature['checkouts'] as $checkout) {
-                    $num_licenses += array_key_exists('num_licenses', $checkout) ? (int) $checkout['num_licenses'] : 1;
-                }
-            }
-            $return_data[$i] = array('feature' => $feature['feature_name'], 'used_licenses' => $num_licenses);
-            $i++;
-        }
-
-        return $return_data;
-    }
+    // static public function get_usage_counts(string $lm, string $server) {
+    //     $license_data = self::get_license_usage_array($lm, $server);
+    //     print_r($license_data);
+    //     $return_data = array();
+    //     foreach ($license_data as $feature) {
+    //         $num_licenses = 0;
+    //         if (array_key_exists('checkouts', $feature)) {
+    //             foreach ($feature['checkouts'] as $checkout) {
+    //                 $num_licenses += array_key_exists('num_licenses', $checkout) ? (int) $checkout['num_licenses'] : 1;
+    //             }
+    //         }
+    //         $return_data[] = array('feature' => $feature['feature_name'], 'used_licenses' => $num_licenses);
+    //     }
+    //
+    //     return $return_data;
+    // }
 }
 ?>

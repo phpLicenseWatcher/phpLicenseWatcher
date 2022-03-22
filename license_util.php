@@ -116,33 +116,47 @@ function update_licenses(&$db, $servers) {
     $db->query("LOCK TABLES `features` WRITE, `servers` READ, `licenses` WRITE, `usage` WRITE;");
 
     $lmtools = new lmtools();
-    $var = "";
-    $var1 = "";
     foreach ($servers as $server) {
         if ($lmtools->lm_open($server['license_manager'], 'license_util__update_licenses', $server['name']) === false) {
             db_cleanup($db, $queries, $reset_autocommit);
             print_error_and_die($db, $lmtools->err);
         }
+
+        // Read/process features, one "line" at a time.
         $lmdata = $lmtools->lm_nextline();
-        $var .= "SERVER {$server['name']}\n";
-        $var .= print_r($lmdata, true) . PHP_EOL;
-        $lmdata1 = $lmtools->get_usage_counts($server['license_manager'], $server['name']);
-        $var1 .= "SERVER {$server['name']}\n";
-        $var1 .= print_r($lmdata1, true) . PHP_EOL;
         if ($lmdata === false) {
             db_cleanup($db, $queries, $reset_autocommit);
             print_error_and_die($db, $lmtools->err);
         }
-        // INSERT license data to DB
         while (!is_null($lmdata)) {
-            // $lmdata['licenses_used'] will be missing when the feature has no license count ("uncounted").
-            // But `usage`.`num_users` in the DB can't be null, so we'll fill in '0'.
-            if (!array_key_exists('licenses_used', $lmdata)) $lmdata['licenses_used'] = 0;
+            $licenses_used    = array_key_exists("licenses_used", $lmdata) ? (int) $lmdata['licenses_used'] : 0;
+            $feature          = $lmdata['feature'];
+            $name             = $server['name'];
+            $num_reservations = 0;
+            $need_next_line = true;
 
-            // DB operations
+            if ($server['include_reserve_tokens'] === 0) {
+                $lmdata = $lmtools->lm_nextline();
+                if ($lmdata === false) {
+                    db_cleanup($db, $queries, $reset_autocommit);
+                    print_error_and_die($db, $lmtools->err);
+                }
+                while ($lmdata['_matched_regex'] === "reservations") {
+                    $num_reservations += (int) $lmdata['num_reservations'];
+                    $lmdata = $lmtools->lm_nextline();
+                    if ($lmdata === false) {
+                        db_cleanup($db, $queries, $reset_autocommit);
+                        print_error_and_die($db, $lmtools->err);
+                    }
+                }
+                $licenses_used -= $num_reservations;
+                $need_next_line = false;
+            }
+
+            // INSERT license data to DB
             try {
                 // Attempt to INSERT license usage...
-                $queries['usage']->bind_param("iss", $lmdata['licenses_used'], $server['name'], $lmdata['feature']);
+                $queries['usage']->bind_param("iss", $licenses_used, $name, $feature);
                 $queries['usage']->execute();
 
                 // when affectedRows < 1, we will attempt to populate features
@@ -166,17 +180,16 @@ function update_licenses(&$db, $servers) {
             }
 
             // Get another data set from license manager.
-            $lmdata = $lmtools->lm_nextline();
-            if ($lmdata === false) {
-                db_cleanup($db, $queries, $reset_autocommit);
-                print_error_and_die($db, $lmtools->err);
+            if ($need_next_line) {
+                $lmdata = $lmtools->lm_nextline();
+                if ($lmdata === false) {
+                    db_cleanup($db, $queries, $reset_autocommit);
+                    print_error_and_die($db, $lmtools->err);
+                }
             }
-            $var .= print_r($lmdata, true) . PHP_EOL;
         } // END while(!is_null($lmdata))
     } // END foreach($servers as $server)
 
-    log_var($var, 0);
-    log_var($var1, 1);
     // Complete and cleanup
     db_cleanup($db, $queries, $reset_autocommit);
 } // END function update_licenses()
