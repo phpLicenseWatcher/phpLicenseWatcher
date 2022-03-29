@@ -4,7 +4,7 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
-$servers = db_get_servers($db, array('name', 'license_manager'));
+$servers = db_get_servers($db, array('name', 'license_manager', 'count_reserve_tokens_as_used'));
 //update_servers($db, $servers);
 update_licenses($db, $servers);
 $db->close();
@@ -123,7 +123,8 @@ function update_licenses(&$db, $servers) {
         }
 
         // Read/process features, one "line" at a time.
-        $lmdata = $lmtools->lm_nextline();
+        $lmdata = $lmtools->lm_nextline(array('feature_and_counts', 'reservations'));
+        var_dump($lmdata);
         if ($lmdata === false) {
             db_cleanup($db, $queries, $reset_autocommit);
             print_error_and_die($db, $lmtools->err);
@@ -133,17 +134,17 @@ function update_licenses(&$db, $servers) {
             $feature          = $lmdata['feature'];
             $name             = $server['name'];
             $num_reservations = 0;
-            $need_next_line = true;
+            $need_next_line   = true;
 
-            if ($server['include_reserve_tokens'] === 0) {
-                $lmdata = $lmtools->lm_nextline();
+            if ($server['count_reserve_tokens_as_used'] === 0) {
+                $lmdata = $lmtools->lm_nextline(array('feature_and_counts', 'reservations'));
                 if ($lmdata === false) {
                     db_cleanup($db, $queries, $reset_autocommit);
                     print_error_and_die($db, $lmtools->err);
                 }
                 while ($lmdata['_matched_regex'] === "reservations") {
                     $num_reservations += (int) $lmdata['num_reservations'];
-                    $lmdata = $lmtools->lm_nextline();
+                    $lmdata = $lmtools->lm_nextline(array('feature_and_counts', 'reservations'));
                     if ($lmdata === false) {
                         db_cleanup($db, $queries, $reset_autocommit);
                         print_error_and_die($db, $lmtools->err);
@@ -152,6 +153,7 @@ function update_licenses(&$db, $servers) {
                 $licenses_used -= $num_reservations;
                 $need_next_line = false;
             }
+            var_dump($name, $feature, $licenses_used);
 
             // INSERT license data to DB
             try {
@@ -181,7 +183,7 @@ function update_licenses(&$db, $servers) {
 
             // Get another data set from license manager.
             if ($need_next_line) {
-                $lmdata = $lmtools->lm_nextline();
+                $lmdata = $lmtools->lm_nextline(array('feature_and_counts', 'reservations'));
                 if ($lmdata === false) {
                     db_cleanup($db, $queries, $reset_autocommit);
                     print_error_and_die($db, $lmtools->err);

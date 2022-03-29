@@ -187,7 +187,7 @@ class lmtools extends lmtools_lib {
         if ($lm === "flexlm") {
             $i = -1;
 
-            $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
+            $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted', 'reservations'));
             if ($lmdata === false) return false;
             while (!is_null($lmdata)) {
                 switch (true) {
@@ -212,14 +212,19 @@ class lmtools extends lmtools_lib {
                     if (array_key_exists('num_licenses', $lmdata)) $used_licenses[$i]['checkouts'][$j]['num_licenses'] = $lmdata['num_licenses'];
                     $j++;
                     break;
-                case $lmdata['_matched_patterm'] === 'reservations':
-                    $used_licenses[$i]['num_reservations'] = (array_key_exists('num_reservations', $used_licenses[$i])) ?
-                        (string) ((int) $used_licenses[$i]['num_reservations'] + (int) $lmdata['num_reservations']) :
-                        $lmdata['num_reservations'];
+                case $lmdata['_matched_pattern'] === "reservations":
+                    // $used_licenses[$i]['num_reservations'] = array_key_exists('num_reservations', $used_licenses[$i])
+                    //     ? (string) ((int) $used_licenses[$i]['num_reservations'] + (int) $lmdata['num_reservations'])
+                    //     : $lmdata['num_reservations'];
+                    if (array_key_exists('num_reservations', $used_licenses[$i])) {
+                        $used_licenses[$i]['num_reservations'] = (string) ((int) $used_licenses[$i]['num_reservations'] + (int) $lmdata['num_reservations']);
+                    } else {
+                        $used_licenses[$i]['num_reservations'] = $lmdata['num_reservations'];
+                    }
                     break;
                 }
 
-                $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted'));
+                $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted', 'reservations'));
                 if ($lmdata === false) return false;
             }
 

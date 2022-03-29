@@ -26,12 +26,12 @@ function db_process() {
     if ($id === "new") {
         // Adding a new server
         $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`, `count_reserve_tokens_as_used`, `license_manager`) VALUES (?, ?, ?, ?)";
-        $params = array("ssis", $name, $label, $is_active, $count_reserved, $license_manager);
+        $params = array("ssiis", $name, $label, $is_active, $count_reserved, $license_manager);
         $op = "added";
     } else {
         // Editing an existing server
         $sql = "UPDATE `servers` SET `name`=?, `label`=?, `is_active`=?, `count_reserve_tokens_as_used`=?, `license_manager`=? WHERE `ID`=?";
-        $params = array("ssisi", $name, $label, $is_active, $count_reserved, $license_manager, $id);
+        $params = array("ssiisi", $name, $label, $is_active, $count_reserved, $license_manager, $id);
         $op = "updated";
     }
 

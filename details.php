@@ -19,10 +19,10 @@ if ( isset($_GET['multiple_servers']) ) {
 }
 
 db_connect($db);
-$servers = db_get_servers($db, array('name', 'label', 'id', 'license_manager'), $ids);
+$servers = db_get_servers($db, array('name', 'label', 'id', 'count_reserve_tokens_as_used', 'license_manager'), $ids);
 $db->close();
-
 $html_body = ""; // To be filled by the process function called below.
+
 switch($_GET['listing']) {
 case 0:
     list_licenses_in_use($servers, $html_body);
