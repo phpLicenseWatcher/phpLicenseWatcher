@@ -206,7 +206,8 @@ function db_cleanup(&$db, &$queries, $reset_autocommit) {
         if (ctype_digit($max_id)) {
             $db->query("ALTER TABLE `{$table}` AUTO_INCREMENT = {$max_id};");
         } else {
-            print_error_and_die($db, ucfirst($table) . " table has no records.  Is the license server reachable?");
+            $table = ucfirst($table);
+            print_error_and_die($db, "Error: {$table} table has no records.  Is the license server reachable?");
         }
     }
 
