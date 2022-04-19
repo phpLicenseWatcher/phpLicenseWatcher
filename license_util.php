@@ -203,7 +203,11 @@ function db_cleanup(&$db, &$queries, $reset_autocommit) {
     foreach (array("features", "licenses") as $table) {
         $result = $db->query("SELECT max(id)+1 FROM `{$table}`;", MYSQLI_STORE_RESULT);
         $max_id = $result->fetch_row()[0];
-        $db->query("ALTER TABLE `{$table}` AUTO_INCREMENT = {$max_id};");
+        if (ctype_digit($max_id)) {
+            $db->query("ALTER TABLE `{$table}` AUTO_INCREMENT = {$max_id};");
+        } else {
+            print_error_and_die($db, ucfirst($table) . " table has no records.  Is the license server reachable?");
+        }
     }
 
     $db->query("UNLOCK TABLES;");
