@@ -25,7 +25,7 @@ function db_process() {
 
     if ($id === "new") {
         // Adding a new server
-        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`, `count_reserve_tokens_as_used`, `license_manager`) VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`, `count_reserve_tokens_as_used`, `license_manager`) VALUES (?, ?, ?, ?, ?)";
         $params = array("ssiis", $name, $label, $is_active, $count_reserved, $license_manager);
         $op = "added";
     } else {

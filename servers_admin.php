@@ -127,7 +127,7 @@ function main_form($alert=null) {
     <script src="servers_admin_jquery.js"></script>
     <h1>Server Administration</h1>
     <p>You may edit an existing server's name, label, active status, or add a new server to the database.<br>
-    Server names must be unique and in the form of <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>.  Port is optional, but must unprivileged.
+    Server names must be unique and in the form of <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>.  Port is optional, but must be unprivileged.
     {$alert_html}
     {$control_panel_html}
     <form id='server_list' action='servers_admin.php' method='POST'>
@@ -170,13 +170,18 @@ function edit_form() {
     // print view
     $is_active_checked = $server_details['is_active'] === "1" ? " CHECKED" : "";
     $count_reserved_checked = $server_details['count_reserve_tokens_as_used'] === "1" ? " CHECKED" : "";
-    $server_select_box = build_select_box($lm_supported, array('name' => "license_manager", 'id' => "license_manager"), $server_details['license_manager']);
+    $server_select_box = build_select_box($lm_supported, array('name' => "license_manager", 'id' => "license_manager"),
+        array_key_exists('license_manager', $server_details) ? $server_details['license_manager'] : "");
     print_header();
 
     print <<<HTML
     <h1>Server Details</h1>
     <form action='servers_admin.php' method='post' class='edit-form'>
         <div class='edit-form block'>
+            <input type='hidden' id='server_id' value='{$id}'>
+            <input type='hidden' id='server_name' value='{$server_details['name']}'>
+            <input type='hidden' id='server_label' value='{$server_details['label']}'>
+        </div><div class='edit-form block'>
             <label for='name'>Name (format: <code>port@domain</code>, <code>port@host</code>, <code>port@ipv4</code>, port optional.)</label><br>
             <input type='text' name='name' id='name' class='edit-form' value='{$server_details['name']}'>
         </div><div class='edit-form block'>
@@ -186,7 +191,7 @@ function edit_form() {
             <label for='license_manager'>Server Type:</label>
             {$server_select_box}
         </div><div class='edit-form block'>
-            <label for='count_reserved'>Count Reserved Tokens As Used?</label>
+            <label for='count_reserved' id='count_reserved_label'>Count Reserved Tokens As Used Licenses?</label>
             <input type='checkbox' name='count_reserved' id='count_reserved' class='edit-form'{$count_reserved_checked}>
         </div><div class='edit-form inline-block'>
             <label for='is_active'>Is Active?</label>
@@ -198,15 +203,7 @@ function edit_form() {
             {$delete_button}
         </div>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-        <script>
-        $('#delete-button').click(function() {
-            if (confirm("Confirm removal for \\"{$server_details['name']}\\" ({$server_details['label']})\\n*** THIS WILL REMOVE USAGE HISTORY FOR EVERY FEATURE\\n*** THIS CANNOT BE UNDONE")) {
-                $('#delete-server').attr('name', "delete_id");
-                $('#delete-server').attr('value', {$id});
-                $('form').submit();
-            }
-        });
-        </script>
+        <script src="servers_edit_jquery.js"></script>
     </form>
     HTML;
 
