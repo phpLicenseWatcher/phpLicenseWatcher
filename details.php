@@ -119,8 +119,6 @@ HTML;
  * @param &$html_body data view to build
  */
 function list_licenses_in_use($servers, &$html_body) {
-    global $lmutil_binary; // from config.php
-
     $html_body .= "<p>Following is the list of licenses currently being used.";
 
     // If person is filtering for certain features
@@ -144,6 +142,8 @@ function list_licenses_in_use($servers, &$html_body) {
                 return strcasecmp($a['feature_name'], $b['feature_name']);
             });
         }
+
+        print_var($used_licenses);
 
         $unused_licenses = array_udiff(get_features_and_licenses($server['id']), $used_licenses, function($a, $b) {
             return strcasecmp($a['feature_name'], $b['feature_name']);

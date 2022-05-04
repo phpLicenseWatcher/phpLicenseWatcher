@@ -179,6 +179,15 @@ class lmtools extends lmtools_lib {
                           |-- ['host']         string
                           |-- ['num_licenses'] string
                           |-- ['timespan']     DateInterval object
+            |-- ['queued']
+                     |-- [$k] int index
+                         |-- ['user']       string
+                         |-- ['host']       string
+                         |-- ['num_queued'] string
+            |-- ['reservations']
+                     |-- [$l] int index
+                          |-- ['num_reserved'] string
+                          |-- ['reserved_for'] string
         */
         $obj = new lmtools();
         $obj->lm_open($lm, "self__get_license_usage_array", $server);
@@ -186,14 +195,15 @@ class lmtools extends lmtools_lib {
 
         if ($lm === "flexlm") {
             $i = -1;
-
-            $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted', 'reservations'));
+            $lmdata = $obj->lm_nextline(array('users_counted', 'details', 'users_uncounted', 'queued', 'reservations'));
             if ($lmdata === false) return false;
             while (!is_null($lmdata)) {
                 switch (true) {
                 case $lmdata['_matched_pattern'] === "users_counted":
                     $i++;
                     $j = 0;
+                    $k = 0;
+                    $l = 0;
                     $used_licenses[$i]['feature_name']      = $lmdata['feature'];
                     $used_licenses[$i]['num_licenses']      = $lmdata['total_licenses'];
                     $used_licenses[$i]['num_licenses_used'] = $lmdata['used_licenses'];
@@ -201,6 +211,8 @@ class lmtools extends lmtools_lib {
                 case $lmdata['_matched_pattern'] === "users_uncounted":
                     $i++;
                     $j = 0;
+                    $k = 0;
+                    $l = 0;
                     $used_licenses[$i]['feature_name']      = $lmdata['feature'];
                     $used_licenses[$i]['num_licenses']      = "uncounted";
                     $used_licenses[$i]['num_licenses_used'] = "uncounted";
@@ -212,15 +224,22 @@ class lmtools extends lmtools_lib {
                     if (array_key_exists('num_licenses', $lmdata)) $used_licenses[$i]['checkouts'][$j]['num_licenses'] = $lmdata['num_licenses'];
                     $j++;
                     break;
+                case $lmdata['_matched_pattern'] === "queued":
+                    $used_licenses[$i]['checkouts'][$k]['user']       = $lmdata['user'];
+                    $used_licenses[$i]['checkouts'][$k]['host']       = $lmdata['host'];
+                    $used_licenses[$i]['checkouts'][$k]['num_queued'] = $lmdata['num_queued'];
+                    $k++;
+                    break;
                 case $lmdata['_matched_pattern'] === "reservations":
-                    // $used_licenses[$i]['num_reservations'] = array_key_exists('num_reservations', $used_licenses[$i])
-                    //     ? (string) ((int) $used_licenses[$i]['num_reservations'] + (int) $lmdata['num_reservations'])
-                    //     : $lmdata['num_reservations'];
                     if (array_key_exists('num_reservations', $used_licenses[$i])) {
                         $used_licenses[$i]['num_reservations'] = (string) ((int) $used_licenses[$i]['num_reservations'] + (int) $lmdata['num_reservations']);
                     } else {
                         $used_licenses[$i]['num_reservations'] = $lmdata['num_reservations'];
                     }
+
+                    $used_licenses[$i]['reservations'][$l]['num_reserved'] = $lmdata['num_reservations'];
+                    $used_licenses[$i]['reservations'][$l]['reserved_for'] = $lmdata['reserved_for'];
+                    $l++;
                     break;
                 }
 
