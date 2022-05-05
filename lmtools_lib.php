@@ -77,7 +77,7 @@ STRING CONSTANTS
                 'details'         => "/^ *(?<user>[^ ]+) (?<host>[^ ]+) .+, start \w{3} (?<date>[0-9]{1,2}\/[0-9]{1,2}) (?<time>[0-9]{1,2}:[0-9]{2})(?:, (?<num_licenses>\d+) licenses)?/i",
                 'queued'          => "/^ *(?<user>[^ ]+(?: [^ ]+)?) (?<host>[^ ]+) [^ ]+ \([^ ]+\) \([^ ]+ \d+\) queued for (?<num_queued>\d+)/i",
                 'users_uncounted' => "/^Users of (?<feature>[\w\- ]+):  \(Uncounted/i",
-                'reservations'    => "/^ *(?<num_reservations>\d+) RESERVATIONs? for (?<reserved_for>[^ ]+ [^ ]+)/"]],
+                'reservations'    => "/ *(?<num_reservations>\d+) RESERVATIONs? for (?<reserved_for>[^ ]+ [^ ]+)/"]],
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -localtime -template " . __DIR__ . "/mathematica/details__list_licenses_in_use.template",
             'regex' => [

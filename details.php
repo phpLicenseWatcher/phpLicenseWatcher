@@ -143,8 +143,6 @@ function list_licenses_in_use($servers, &$html_body) {
             });
         }
 
-        print_var($used_licenses);
-
         $unused_licenses = array_udiff(get_features_and_licenses($server['id']), $used_licenses, function($a, $b) {
             return strcasecmp($a['feature_name'], $b['feature_name']);
         });
@@ -165,11 +163,17 @@ function list_licenses_in_use($servers, &$html_body) {
                 $feature = $license['feature_name'];
                 $graph_url = "monitor_detail.php?feature={$feature}";
 
-                // How many licenses are currently used
-                $licenses_available = $license['num_licenses'] - $license['num_licenses_used'];
+                // $license['num_licenses_used'] is the value reported by the license manager.
+                // $license['num_checkouts'] is the accumulated count of licenses reported to be checked out by all individual users.
+                // The discrepency has to do with the license manager counting reserved tokens as used licenses or not.
+                $licenses_used = $server['count_reserve_tokens_as_used'] === "1"
+                    ? $license['num_licenses_used']
+                    : $license['num_checkouts'];
+
+                $licenses_available = $license['num_licenses'] - $licenses_used;
 
                 $license_info = <<<HTML
-                Total of {$license['num_licenses']} licenses, {$license['num_licenses_used']} currently in use,
+                Total of {$license['num_licenses']} licenses, {$licenses_used} currently in use,
                 <span style='font-weight: bold'>{$licenses_available} available</span>
                 <br/><a href='{$graph_url}'>Historical Usage</a>
                 HTML;
@@ -235,7 +239,9 @@ function get_features_and_licenses($server_id) {
     for ($i = 0; $query->fetch(); $i++) {
         $results[$i]['feature_name'] = $feature_name;
         $results[$i]['num_licenses'] = $num_licenses;
-        $results[$i]['num_licenses_used'] = 0; // needed by function caller
+        $results[$i]['num_licenses_used'] = "0";  // needed by function caller
+        $results[$i]['num_checkouts'] = "0";      // needed by function caller
+        $results[$i]['num_reservations'] = "0";   // needed by function caller
     }
 
     if (!empty($db->error_list)) {
