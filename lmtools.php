@@ -208,6 +208,7 @@ class lmtools extends lmtools_lib {
                     $used_licenses[$i]['num_licenses']      = $lmdata['total_licenses'];
                     $used_licenses[$i]['num_licenses_used'] = $lmdata['used_licenses'];
                     $used_licenses[$i]['num_checkouts']     = "0";
+                    $used_licenses[$i]['num_queued']        = "0";
                     $used_licenses[$i]['num_reservations']  = "0";
                     break;
                 case $lmdata['_matched_pattern'] === "users_uncounted":
@@ -219,6 +220,7 @@ class lmtools extends lmtools_lib {
                     $used_licenses[$i]['num_licenses']      = "uncounted";
                     $used_licenses[$i]['num_licenses_used'] = "uncounted";
                     $used_licenses[$i]['num_checkouts']     = "0";
+                    $used_licenses[$i]['num_queued']        = "0";
                     $used_licenses[$i]['num_reservations']  = "0";
                     break;
                 case $lmdata['_matched_pattern'] === "details":
@@ -235,6 +237,7 @@ class lmtools extends lmtools_lib {
                     $j++;
                     break;
                 case $lmdata['_matched_pattern'] === "queued":
+                    $used_licenses[$i]['num_queued'] = (string) ((int) $used_licenses[$i]['num_queued'] + (int) $lmdata['num_queued']);
                     $used_licenses[$i]['queued'][$k]['user']       = $lmdata['user'];
                     $used_licenses[$i]['queued'][$k]['host']       = $lmdata['host'];
                     $used_licenses[$i]['queued'][$k]['num_queued'] = $lmdata['num_queued'];
