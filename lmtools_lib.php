@@ -71,7 +71,7 @@ STRING CONSTANTS
 
     static protected $self__get_license_usage_array = [
         'flexlm' => [
-            'cli'   => "%CLI_BINARY% lmstat -A -c %CLI_SERVER%",
+            'cli'   => "%CLI_BINARY% lmstat -a -c %CLI_SERVER%",
             'regex' => [
                 'users_counted'   => "/^Users of (?<feature>[\w\- ]+):  \(Total of (?<total_licenses>\d+) licenses? issued;  Total of (?<used_licenses>\d+)/i",
                 'details'         => "/^ *(?<user>[^ ]+(?: [^ ]+)?) (?<host>[^ ]+) [^ ]+ \([^ ]+\) \([^ ]+ \d+\), start \w{3} (?<date>[0-9]{1,2}\/[0-9]{1,2}) (?<time>[0-9]{1,2}:[0-9]{2})(?:, (?<num_licenses>\d+) licenses)?/i",
