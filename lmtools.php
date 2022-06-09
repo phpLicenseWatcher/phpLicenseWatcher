@@ -98,7 +98,6 @@ class lmtools extends lmtools_lib {
 
         $line = fgets($this->fp);
         while (!feof($this->fp)) {
-            print_var($line);
             foreach ($patterns as $pattern) {
                 if (preg_match($this->regex[$pattern], $line, $matches) === 1) {
                     $matches = array_filter($matches, function($key) {return is_string($key);}, ARRAY_FILTER_USE_KEY);
@@ -260,8 +259,6 @@ class lmtools extends lmtools_lib {
 
             return $used_licenses;
         } else if ($lm === "mathematica") {
-            // 'users_counted'   => "/^COUNT (?<feature>[^:]+):\s+(?<used_licenses>\d+)\s+(?<total_licenses>\d+)$/",  // placeholders
-            // 'details'         => "/^DETAILS (?<feature>[^:]+): (?<user>[^~]+)~(?<host>[^~]+)~(?<duration>\d+(?::\d+)+)$/"]]];
             $lmdata = $obj->lm_nextline(array('users_counted', 'details'));
             if ($lmdata === false) return false;
             while (!is_null($lmdata)) {
@@ -296,7 +293,6 @@ class lmtools extends lmtools_lib {
 
     // static public function get_usage_counts(string $lm, string $server) {
     //     $license_data = self::get_license_usage_array($lm, $server);
-    //     print_r($license_data);
     //     $return_data = array();
     //     foreach ($license_data as $feature) {
     //         $num_licenses = 0;

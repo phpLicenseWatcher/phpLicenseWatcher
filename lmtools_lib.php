@@ -63,11 +63,13 @@ STRING CONSTANTS
         'flexlm' => [
             'cli'   => "%CLI_BINARY% lmstat -a -c %CLI_SERVER%",
             'regex' => [
-                'feature_and_counts' => "/^Users of (?<feature>[^ ]+):  (?:\(Total of \d+ licenses? issued;  Total of (?<licenses_used>\d+)|(?:\(Uncounted))/",
+                'feature_and_counts' => "/^Users of (?<feature>[^ ]+):  (?:\(Total of \d+ licenses? issued;  Total of (?<licenses_used>\d+)|(?:\(Uncounted))/m",
                 'reservations'       => "/^ *(?<num_reservations>\d+) RESERVATIONs?/"]],
         'mathematica' => [
             'cli'   => "%CLI_BINARY% %CLI_SERVER% -template " . __DIR__ . "/mathematica/license_util__update_licenses.template",
-            'regex' => ["/^(?<feature>[^:]+):\s+(?<licenses_used>\d+)\s*$/"]]];
+            'regex' => [
+                'feature_and_counts' => "/^(?<feature>[^:]+):\s+(?<licenses_used>\d+)\s*$/",
+                'reservations'       => "/^TOKEN (?<num_reservations>TOKEN) TOKEN$/"]]];  // Doesn't really exist, but a not null and not matched placeholder is necessary.
 
     static protected $self__get_license_usage_array = [
         'flexlm' => [
