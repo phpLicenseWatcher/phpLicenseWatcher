@@ -113,83 +113,47 @@ function update_licenses(&$db, $servers) {
     $db->autocommit(false);
     $db->query("LOCK TABLES `features` WRITE, `servers` READ, `licenses` WRITE, `usage` WRITE;");
 
-    $lmtools = new lmtools();
     foreach ($servers as $server) {
-        if ($lmtools->lm_open($server['license_manager'], 'license_util__update_licenses', $server['name']) === false) {
+        $licenses_data = lmtools::get_license_usage_array($server['license_manager'], $server['name'], 1);
+        if ($licenses_data === false) {
             db_cleanup($db, $queries, $reset_autocommit);
-            print_error_and_die($db, $lmtools->err);
+            print_error_and_die($db, "Error calling lmtools::get_license_usage_array()");
         }
 
-        // Read/process features, one "line" at a time.
-        $lmdata = $lmtools->lm_nextline(array('reservations', 'feature_and_counts'));
-        if ($lmdata === false) {
+        // Translate uncounted licenses to 0 licenses used.
+        if ($licenses_data['num_used_licenses'] === "uncounted") $licenses_data['num_used_licenses'] = "0";
+
+        $feature       = $licenses_data['feature_name'];
+        $name          = $server['name'];
+        $licenses_used = $server['count_reserve_tokens_as_used'] === "0"
+            ? $licenses_used = (int) $licenses_data['num_used_licenses'] - (int) $licenses_data['num_reservations']
+            : $licenses_used = (int) $licenses_data['num_used_licenses'];
+
+        // INSERT license data to DB
+        try {
+            // Attempt to INSERT license usage...
+            $queries['usage']->bind_param("iss", $licenses_used, $name, $feature);
+            $queries['usage']->execute();
+
+            // when affectedRows < 1, we will attempt to populate features
+            // and licenses and re-run usage query.
+            // 'INSERT IGNORE' in queries prevents unique key collisions.
+            if ($db->affected_rows < 1) {
+                // Features table
+                $queries['features']->bind_param("s", $feature);
+                //$queries['features']->execute();
+
+                // Licenses table
+                $queries['licenses']->bind_param("ss", $name, $feature);
+                //$queries['licenses']->execute();
+
+                // Usage table
+                //$queries['usage']->execute();
+            }
+        } catch (mysqli_sql_exception $e) {
             db_cleanup($db, $queries, $reset_autocommit);
-            print_error_and_die($db, $lmtools->err);
+            print_error_and_die($db, $e->getMessage());
         }
-
-        while (!is_null($lmdata)) {
-            $licenses_used    = array_key_exists("licenses_used", $lmdata) ? (int) $lmdata['licenses_used'] : 0;
-            $feature          = $lmdata['feature'];
-            $name             = $server['name'];
-            $num_reservations = 0;
-            $next_feature_read = false;
-
-            if ($server['count_reserve_tokens_as_used'] === "0") {
-                $lmdata = $lmtools->lm_nextline(array('reservations', 'feature_and_counts'));
-                if ($lmdata === false) {
-                    db_cleanup($db, $queries, $reset_autocommit);
-                    print_error_and_die($db, $lmtools->err);
-                }
-
-                while ($lmdata['_matched_regex'] !== "features_and_counts") {
-
-                    $num_reservations += array_key_exists('num_reservations', $lmdata) ? (int) $lmdata['num_reservations'] : 0;
-                    $lmdata = $lmtools->lm_nextline(array('reservations', 'feature_and_counts'));
-                    if ($lmdata === false) {
-                        db_cleanup($db, $queries, $reset_autocommit);
-                        print_error_and_die($db, $lmtools->err);
-                    }
-                }
-
-                $licenses_used -= $num_reservations;
-                $next_feature_read = true;
-            }
-
-            // INSERT license data to DB
-            try {
-                // Attempt to INSERT license usage...
-                $queries['usage']->bind_param("iss", $licenses_used, $name, $feature);
-                $queries['usage']->execute();
-
-                // when affectedRows < 1, we will attempt to populate features
-                // and licenses and re-run usage query.
-                // 'INSERT IGNORE' in queries prevents unique key collisions.
-                if ($db->affected_rows < 1) {
-                    // Features table
-                    $queries['features']->bind_param("s", $feature);
-                    //$queries['features']->execute();
-
-                    // Licenses table
-                    $queries['licenses']->bind_param("ss", $name, $feature);
-                    //$queries['licenses']->execute();
-
-                    // Usage table
-                    //$queries['usage']->execute();
-                }
-            } catch (mysqli_sql_exception $e) {
-                db_cleanup($db, $queries, $reset_autocommit);
-                print_error_and_die($db, $e->getMessage());
-            }
-
-            // Get another data set from license manager.
-            if (!$next_feature_read) {
-                $lmdata = $lmtools->lm_nextline(array('reservations', 'feature_and_counts'));
-                if ($lmdata === false) {
-                    db_cleanup($db, $queries, $reset_autocommit);
-                    print_error_and_die($db, $lmtools->err);
-                }
-            }
-        } // END while(!is_null($lmdata))
     } // END foreach($servers as $server)
 
     // Complete and cleanup

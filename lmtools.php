@@ -165,7 +165,7 @@ class lmtools extends lmtools_lib {
         return true;
     }
 
-    static public function get_license_usage_array(string $lm, string $server) {
+    static public function get_license_usage_array(string $lm, string $server, int $detail_level=2) {
         /* Returned array structure
 
            [$i] int index
@@ -194,9 +194,25 @@ class lmtools extends lmtools_lib {
         $used_licenses = array();
 
         if ($lm === "flexlm") {
+            switch ($detail_level) {
+            case 1:
+                $detail_list = array('users_counted', 'users_uncounted');
+                break;
+            case 2:
+                $detail_list = array('users_counted', 'users_uncounted', 'details', 'queued', 'reservations');
+                break;
+            default:
+                fprintf(STDERR, "lmtools.php: Unknown detail level: {$detail_level}\n");
+                return false;
+            }
+
             $i = -1;
-            $lmdata = $obj->lm_nextline(array('users_counted', 'users_uncounted', 'details', 'queued', 'reservations'));
-            if ($lmdata === false) return false;
+            $lmdata = $obj->lm_nextline($detail_list);
+            if ($lmdata === false) {
+                fprintf(STDERR, "%s\n", $lmtools->err);
+                return false;
+            }
+
             while (!is_null($lmdata)) {
                 if (array_key_exists('_matched_pattern', $lmdata)) {
                     switch (true) {
@@ -253,14 +269,32 @@ class lmtools extends lmtools_lib {
                     }
                 }
 
-                $lmdata = $obj->lm_nextline(array('users_counted', 'users_uncounted', 'details', 'queued', 'reservations'));
-                if ($lmdata === false) return false;
+                $lmdata = $obj->lm_nextline($detail_list);
+                if ($lmdata === false) {
+                    fprintf(STDERR, "%s\n", $lmtools->err);
+                    return false;
+                }
             }
 
             return $used_licenses;
         } else if ($lm === "mathematica") {
-            $lmdata = $obj->lm_nextline(array('users_counted', 'details'));
-            if ($lmdata === false) return false;
+            switch ($detail_level) {
+            case 1:
+                $detail_list = array('users_counted');
+                break;
+            case 2:
+                $detail_list = array('users_counted', 'details');
+                break;
+            default:
+                fprintf(STDERR, "lmtools.php: Unknown detail level: {$detail_level}\n");
+                return false;
+            }
+
+            $lmdata = $obj->lm_nextline($detail_list);
+            if ($lmdata === false) {
+                fprintf(STDERR, "%s\n", $lmtools->err);
+                return false;
+            }
             while (!is_null($lmdata)) {
                 switch (true) {
                 case $lmdata['_matched_pattern'] === "users_counted":
@@ -280,14 +314,17 @@ class lmtools extends lmtools_lib {
                     break;
                 }
 
-                $lmdata = $obj->lm_nextline(array('users_counted', 'details'));
-                if ($lmdata === false) return false;
+                $lmdata = $obj->lm_nextline($detail_list);
+                if ($lmdata === false) {
+                    fprintf(STDERR, "%s\n", $lmtools->err);
+                    return false;
+                }
             }
 
             return $used_licenses;
         }
 
-        $this->err = "Unknown license manager.";
+        fprintf(STDERR, "lmtools.php: unknown license manager: %s\n", $lm);
         return false;
     }
 
