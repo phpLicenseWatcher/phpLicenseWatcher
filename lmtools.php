@@ -171,8 +171,10 @@ class lmtools extends lmtools_lib {
            [$i] int index
             |-- ['feature_name']       string
             |-- ['num_total_licenses'] string
-            |-- ['num_used_licenses']  string
+            |-- ['num_licenses_used']  string
             |-- ['num_reservations']   string
+            |-- ['num_checkouts']      string
+            |-- ['num_queued']         string
             |-- ['checkouts']
                      |-- [$j] int index
                           |-- ['user']         string
@@ -188,6 +190,13 @@ class lmtools extends lmtools_lib {
                      |-- [$l] int index
                           |-- ['num_reserved'] string
                           |-- ['reserved_for'] string
+
+        NOTES
+        * num_licenses_used is the number of licenses used as reported by the
+          license manager.  Depending on the license manager, this report may
+          include reserved licenses not yet checked out.
+        * num_checkouts is a calculated count of license checkouts by users.
+          This does NOT include unused reserved licenses.
         */
         $obj = new lmtools();
         $obj->lm_open($lm, "self__get_license_usage_array", $server);

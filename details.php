@@ -133,9 +133,9 @@ function list_licenses_in_use($servers, &$html_body) {
 
     // Loop through the available servers
     foreach ($servers as $server) {
-        $used_licenses = lmtools::get_license_usage_array($server['license_manager'], $server['name']);
+        $used_licenses = lmtools::get_license_usage_array($server['license_manager'], $server['name'], 2);
         if (empty($used_licenses)) {
-            // when empty, no licenses are in use (boolean true)
+            // when $used_licenses is empty, no licenses are in use
             $html_body .= get_alert_html("No licenses are currently being used on {$server['name']} ({$server['label']})", "info");
         } else {
             usort($used_licenses, function($a, $b) {

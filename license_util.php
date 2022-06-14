@@ -115,19 +115,20 @@ function update_licenses(&$db, $servers) {
 
     foreach ($servers as $server) {
         $licenses_data = lmtools::get_license_usage_array($server['license_manager'], $server['name'], 1);
+        if (is_null($licenses_data)) continue;  // No licenses in use on this $server.
         if ($licenses_data === false) {
             db_cleanup($db, $queries, $reset_autocommit);
             print_error_and_die($db, "Error calling lmtools::get_license_usage_array()");
         }
 
         // Translate uncounted licenses to 0 licenses used.
-        if ($licenses_data['num_used_licenses'] === "uncounted") $licenses_data['num_used_licenses'] = "0";
+        if ($licenses_data['num_licenses_used'] === "uncounted") $licenses_data['num_licenses_used'] = "0";
 
         $feature       = $licenses_data['feature_name'];
         $name          = $server['name'];
         $licenses_used = $server['count_reserve_tokens_as_used'] === "0"
-            ? $licenses_used = (int) $licenses_data['num_used_licenses'] - (int) $licenses_data['num_reservations']
-            : $licenses_used = (int) $licenses_data['num_used_licenses'];
+            ? $licenses_used = $licenses_data['num_licenses_used']
+            : $licenses_used = $licenses_data['num_checkouts'];
 
         // INSERT license data to DB
         try {
