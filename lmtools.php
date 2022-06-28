@@ -310,7 +310,8 @@ class lmtools extends lmtools_lib {
                     $used_licenses[] = array(
                         'feature_name'      => $lmdata['feature'],
                         'num_licenses'      => $lmdata['total_licenses'],
-                        'num_licenses_used' => $lmdata['used_licenses']
+                        'num_licenses_used' => $lmdata['used_licenses'],
+                        'num_checkouts'     => "0"
                     );
                     break;
                 case $lmdata['_matched_pattern'] === "details":
@@ -320,6 +321,7 @@ class lmtools extends lmtools_lib {
                         'host'         => $lmdata['host'],
                         'timespan'     => lmtools_lib::get_dateinterval(null, null, $lmdata['duration'])
                     );
+                    $used_licenses[$i]['num_checkouts'] = (string) ((int)$used_licenses[$i]['num_checkouts'] + 1);
                     break;
                 }
 

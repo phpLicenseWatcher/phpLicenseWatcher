@@ -172,12 +172,10 @@ function list_licenses_in_use($servers, &$html_body) {
 
                 $licenses_available = $license['num_licenses'] - $licenses_used;
 
-                $license_info = <<<HTML
-                Total of {$license['num_licenses']} licenses, {$licenses_used} currently in use, {$license['num_queued']} queued,<br>
-                {$license['num_reservations']} reserved,
-                <span class="bold-text">{$licenses_available} available</span><br>
-                <a href='{$graph_url}'>Historical Usage</a>
-                HTML;
+                $license_info = "Total of {$license['num_licenses']} licenses, {$licenses_used} currently in use, ";
+                $license_info .= array_key_exists('num_queued', $license) ? "{$license['num_queued']} queued, " : "";
+                $license_info .= array_key_exists('num_reservations', $license) ? "{$license['num_reservations']} reserved, " : "";
+                $license_info .= "<br><span class='bold-text'>{$licenses_available} available</span><br><a href='{$graph_url}'>Historical Usage</a>";
 
                 // Used licenses have a blue tinted background to differentiate from unused licenses.
                 if ($licenses_used > 0) {
