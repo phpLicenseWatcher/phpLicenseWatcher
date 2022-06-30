@@ -121,41 +121,45 @@ function update_licenses(&$db, $servers) {
             print_error_and_die($db, "Error calling lmtools::get_license_usage_array()");
         }
 
-        // Translate uncounted licenses to 0 licenses used.
-        if ($licenses_data['num_licenses_used'] === "uncounted") $licenses_data['num_licenses_used'] = "0";
+        foreach ($licenses_data as $license_data) {
+            // Translate uncounted licenses to 0 licenses used.
+            if ($license_data['num_licenses_used'] === "uncounted") $license_data['num_licenses_used'] = "0";
 
-        $feature       = $licenses_data['feature_name'];
-        $name          = $server['name'];
-        $licenses_used = $server['count_reserve_tokens_as_used'] === "0"
-            ? $licenses_used = $licenses_data['num_licenses_used']
-            : $licenses_used = $licenses_data['num_checkouts'];
+            $feature       = $license_data['feature_name'];
+            $name          = $server['name'];
+            $licenses_used = $server['count_reserve_tokens_as_used'] === "0"
+                ? $licenses_used = $license_data['num_licenses_used']
+                : $licenses_used = $license_data['num_checkouts'];
 
-        // INSERT license data to DB
-        try {
-            // Attempt to INSERT license usage...
-            $queries['usage']->bind_param("iss", $licenses_used, $name, $feature);
-            $queries['usage']->execute();
+            var_dump($name, $feature, $licenses_used);
 
-            // when affectedRows < 1, we will attempt to populate features
-            // and licenses and re-run usage query.
-            // 'INSERT IGNORE' in queries prevents unique key collisions.
-            if ($db->affected_rows < 1) {
-                // Features table
-                $queries['features']->bind_param("s", $feature);
-                //$queries['features']->execute();
+            // INSERT license data to DB
+            try {
+                // Attempt to INSERT license usage...
+                $queries['usage']->bind_param("iss", $licenses_used, $name, $feature);
+                $queries['usage']->execute();
 
-                // Licenses table
-                $queries['licenses']->bind_param("ss", $name, $feature);
-                //$queries['licenses']->execute();
+                // when affectedRows < 1, we will attempt to populate features
+                // and licenses and re-run usage query.
+                // 'INSERT IGNORE' in queries prevents unique key collisions.
+                if ($db->affected_rows < 1) {
+                    // Features table
+                    $queries['features']->bind_param("s", $feature);
+                    //$queries['features']->execute();
 
-                // Usage table
-                //$queries['usage']->execute();
+                    // Licenses table
+                    $queries['licenses']->bind_param("ss", $name, $feature);
+                    //$queries['licenses']->execute();
+
+                    // Usage table
+                    //$queries['usage']->execute();
+                }
+            } catch (mysqli_sql_exception $e) {
+                db_cleanup($db, $queries, $reset_autocommit);
+                print_error_and_die($db, $e->getMessage());
             }
-        } catch (mysqli_sql_exception $e) {
-            db_cleanup($db, $queries, $reset_autocommit);
-            print_error_and_die($db, $e->getMessage());
-        }
-    } // END foreach($servers as $server)
+        } // END foreach ($licences_data as $license)
+    } // END foreach ($servers as $server)
 
     // Complete and cleanup
     db_cleanup($db, $queries, $reset_autocommit);
