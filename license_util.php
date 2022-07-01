@@ -122,16 +122,18 @@ function update_licenses(&$db, $servers) {
         }
 
         foreach ($licenses_data as $license_data) {
+            if ($server['name']=="27001@licsrvr5.arc.rpi.edu") var_dump($license_data);
             // Translate uncounted licenses to 0 licenses used.
             if ($license_data['num_licenses_used'] === "uncounted") $license_data['num_licenses_used'] = "0";
+
 
             $feature       = $license_data['feature_name'];
             $name          = $server['name'];
             $licenses_used = $server['count_reserve_tokens_as_used'] === "0"
-                ? $licenses_used = $license_data['num_licenses_used']
-                : $licenses_used = $license_data['num_checkouts'];
+                ? $license_data['num_checkouts']
+                : $license_data['num_licenses_used'];
 
-            var_dump($name, $feature, $licenses_used);
+
 
             // INSERT license data to DB
             try {
@@ -139,20 +141,20 @@ function update_licenses(&$db, $servers) {
                 $queries['usage']->bind_param("iss", $licenses_used, $name, $feature);
                 $queries['usage']->execute();
 
-                // when affectedRows < 1, we will attempt to populate features
+                // when affected_rows < 1, we will attempt to populate features
                 // and licenses and re-run usage query.
                 // 'INSERT IGNORE' in queries prevents unique key collisions.
                 if ($db->affected_rows < 1) {
                     // Features table
                     $queries['features']->bind_param("s", $feature);
-                    //$queries['features']->execute();
+                    $queries['features']->execute();
 
                     // Licenses table
                     $queries['licenses']->bind_param("ss", $name, $feature);
-                    //$queries['licenses']->execute();
+                    $queries['licenses']->execute();
 
                     // Usage table
-                    //$queries['usage']->execute();
+                    $queries['usage']->execute();
                 }
             } catch (mysqli_sql_exception $e) {
                 db_cleanup($db, $queries, $reset_autocommit);

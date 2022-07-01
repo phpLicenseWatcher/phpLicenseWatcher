@@ -205,7 +205,7 @@ class lmtools extends lmtools_lib {
         if ($lm === "flexlm") {
             switch ($detail_level) {
             case 1:
-                $detail_list = array('users_counted', 'users_uncounted');
+                $detail_list = array('users_counted', 'users_uncounted', 'details');
                 break;
             case 2:
                 $detail_list = array('users_counted', 'users_uncounted', 'details', 'queued', 'reservations');
@@ -224,8 +224,8 @@ class lmtools extends lmtools_lib {
 
             while (!is_null($lmdata)) {
                 if (array_key_exists('_matched_pattern', $lmdata)) {
-                    switch (true) {
-                    case $lmdata['_matched_pattern'] === "users_counted":
+                    switch ($lmdata['_matched_pattern']) {
+                    case "users_counted":
                         $i++;
                         $j = 0;
                         $k = 0;
@@ -237,7 +237,7 @@ class lmtools extends lmtools_lib {
                         $used_licenses[$i]['num_queued']        = "0";
                         $used_licenses[$i]['num_reservations']  = "0";
                         break;
-                    case $lmdata['_matched_pattern'] === "users_uncounted":
+                    case "users_uncounted":
                         $i++;
                         $j = 0;
                         $k = 0;
@@ -249,7 +249,7 @@ class lmtools extends lmtools_lib {
                         $used_licenses[$i]['num_queued']        = "0";
                         $used_licenses[$i]['num_reservations']  = "0";
                         break;
-                    case $lmdata['_matched_pattern'] === "details":
+                    case "details":
                         $used_licenses[$i]['checkouts'][$j]['user']     = $lmdata['user'];
                         $used_licenses[$i]['checkouts'][$j]['host']     = $lmdata['host'];
                         $used_licenses[$i]['checkouts'][$j]['timespan'] = lmtools_lib::get_dateinterval($lmdata['date'], $lmdata['time'], null);
@@ -262,14 +262,14 @@ class lmtools extends lmtools_lib {
                         }
                         $j++;
                         break;
-                    case $lmdata['_matched_pattern'] === "queued":
+                    case "queued":
                         $used_licenses[$i]['num_queued'] = (string) ((int) $used_licenses[$i]['num_queued'] + (int) $lmdata['num_queued']);
                         $used_licenses[$i]['queued'][$k]['user']       = $lmdata['user'];
                         $used_licenses[$i]['queued'][$k]['host']       = $lmdata['host'];
                         $used_licenses[$i]['queued'][$k]['num_queued'] = $lmdata['num_queued'];
                         $k++;
                         break;
-                    case $lmdata['_matched_pattern'] === "reservations":
+                    case "reservations":
                         $used_licenses[$i]['num_reservations'] = (string) ((int) $used_licenses[$i]['num_reservations'] + (int) $lmdata['num_reservations']);
                         $used_licenses[$i]['reservations'][$l]['num_reserved'] = $lmdata['num_reservations'];
                         $used_licenses[$i]['reservations'][$l]['reserved_for'] = $lmdata['reserved_for'];
@@ -305,8 +305,8 @@ class lmtools extends lmtools_lib {
                 return false;
             }
             while (!is_null($lmdata)) {
-                switch (true) {
-                case $lmdata['_matched_pattern'] === "users_counted":
+                switch ($lmdata['_matched_pattern']) {
+                case "users_counted":
                     $used_licenses[] = array(
                         'feature_name'      => $lmdata['feature'],
                         'num_licenses'      => $lmdata['total_licenses'],
@@ -314,14 +314,14 @@ class lmtools extends lmtools_lib {
                         'num_checkouts'     => "0"
                     );
                     break;
-                case $lmdata['_matched_pattern'] === "details":
+                case "details":
                     $i = array_search($lmdata['feature'], array_column($used_licenses, 'feature_name'), true);
                     $used_licenses[$i]['checkouts'][] = array(
                         'user'         => $lmdata['user'],
                         'host'         => $lmdata['host'],
-                        'timespan'     => lmtools_lib::get_dateinterval(null, null, $lmdata['duration'])
+                        'timespan'     => lmtools_lib::get_dateinterval(null, null, $lmdata['duration']),
                     );
-                    $used_licenses[$i]['num_checkouts'] = (string) ((int)$used_licenses[$i]['num_checkouts'] + 1);
+                    $used_licenses[$i]['num_checkouts'] = (string) ((int) $used_licenses[$i]['num_checkouts'] + 1);
                     break;
                 }
 
