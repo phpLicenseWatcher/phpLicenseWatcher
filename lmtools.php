@@ -320,6 +320,7 @@ class lmtools extends lmtools_lib {
                         'user'         => $lmdata['user'],
                         'host'         => $lmdata['host'],
                         'timespan'     => lmtools_lib::get_dateinterval(null, null, $lmdata['duration']),
+                        'num_licenses' => "1"
                     );
                     $used_licenses[$i]['num_checkouts'] = (string) ((int) $used_licenses[$i]['num_checkouts'] + 1);
                     break;
