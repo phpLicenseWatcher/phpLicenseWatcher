@@ -119,6 +119,7 @@ HTML;
  * @param &$html_body data view to build
  */
 function list_licenses_in_use($servers, &$html_body) {
+
     $html_body .= "<p>Following is the list of licenses currently being used.";
 
     // If person is filtering for certain features
@@ -147,16 +148,29 @@ function list_licenses_in_use($servers, &$html_body) {
             return strcasecmp($a['feature_name'], $b['feature_name']);
         });
 
+        // This table shows a color guide
+        $color_guide = new html_table(array('class'=>"table", 'aria-hidden'=>"true"));
+        $col_headers = array("Row Color Guide");
+        $color_guide->add_row($col_headers, array(), "th");
+        $color_guide->update_cell(0, 0, array('colspan'=>"3"));
+        $table_row = array(
+            "<div class='color-box alt-odd-blue-bgcolor'></div> / <div class='color-box alt-even-blue-bgcolor'></div> License In Use",
+            "<div class='color-box alt-odd-yellow-bgcolor'></div> / <div class='color-box alt-even-yellow-bgcolor'></div> License Reserved, Not In Use",
+            "<div class='color-box'></div> / <div class='color-box alt-bgcolor'></div> License Not Reserved, Not In Use"
+        );
+        $color_guide->add_row($table_row, array(), "td");
+        $html_body .= $color_guide->get_html();
+
         // Create a new table
         $table = new html_table(array('class'=>"table"));
 
         // Show a banner with the name of the port@server plus description
-        $colHeaders = array("Server: {$server['name']} ({$server['label']})");
-        $table->add_row($colHeaders, array(), "th");
+        $col_headers = array("Server: {$server['name']} ({$server['label']})");
+        $table->add_row($col_headers, array(), "th");
         $table->update_cell(0, 0, array('colspan'=>"4"));
 
-        $colHeaders = array("Feature", "# Cur. Avail", "Details", "Time Checked Out");
-        $table->add_row($colHeaders, array(), "th");
+        $col_headers = array("Feature", "# Cur. Avail", "Details", "Time Checked Out");
+        $table->add_row($col_headers, array(), "th");
 
         foreach(array_merge($used_licenses, $unused_licenses) as $i => $license) {
             if (!array_key_exists('filter_feature', $_GET) || in_array($license['feature_name'], $_GET['filter_feature'])) {
@@ -170,16 +184,22 @@ function list_licenses_in_use($servers, &$html_body) {
                     ? $license['num_licenses_used']
                     : $license['num_checkouts'];
 
+                $licenses_reserved = array_key_exists('num_reservations', $license)
+                    ? $license['num_reservations']
+                    : 0;
+
                 $licenses_available = $license['num_licenses'] - $licenses_used;
 
                 $license_info = "Total of {$license['num_licenses']} licenses, {$licenses_used} currently in use, ";
                 $license_info .= array_key_exists('num_queued', $license) ? "{$license['num_queued']} queued, " : "";
-                $license_info .= array_key_exists('num_reservations', $license) ? "{$license['num_reservations']} reserved, " : "";
+                $license_info .= $licenses_reserved > 0 ? "{$license['num_reservations']} reserved, " : "";
                 $license_info .= "<br><span class='bold-text'>{$licenses_available} available</span><br><a href='{$graph_url}'>Historical Usage</a>";
 
                 // Used licenses have a blue tinted background to differentiate from unused licenses.
                 if ($licenses_used > 0) {
                     $class = $i % 2 === 0 ? array('class'=>"alt-even-blue-bgcolor") : array('class'=>"alt-odd-blue-bgcolor");
+                } else if ($licenses_reserved > 0) {
+                    $class = $i % 2 === 0 ? array('class'=>"alt-even-yellow-bgcolor") : array('class'=>"alt-odd-yellow-bgcolor");
                 } else {
                     $class = $i % 2 === 0 ? array('class'=>"alt-bgcolor") : array();
                 }
