@@ -48,7 +48,7 @@ function main_form($alert=null) {
     $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
-    $headers = array("Name", "Label", "Licensing", "Active", "Count Resevered", "Status", "Server Version", "Last Updated");
+    $headers = array("Name", "Label", "Licensing", "Active", "LM Default Usage Reporting", "Status", "Server Version", "Last Updated");
     $table->add_row($headers, array(), "th");
 
     // Don't display "no servers polled" notice when there are no servers in DB.
