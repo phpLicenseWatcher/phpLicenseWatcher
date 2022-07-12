@@ -2,7 +2,7 @@ let count_reserved_checked = $('#count_reserved').prop('checked');
 
 function crt_checkbox() {
     if ($('#license_manager').val() != "flexlm") {
-        $('#count_reserved').prop('checked', false);
+        $('#count_reserved').prop('checked', true);
         $('#count_reserved').prop('disabled', true);
         $('#count_reserved_label').css('color', "#767676");
     } else {
