@@ -60,7 +60,7 @@ function main_form($alert=null) {
             $server['label'],
             ucwords($server['license_manager']),
             $server['is_active'] === "1" ? "True" : "False",
-            $server['count_reserve_tokens_as_used'] === "1" ? "True" : "False",
+            $server['lm_default_usage_reporting'] === "1" ? "True" : "False",
             $server['status'],
             $server['version'],
             date_format(date_create($server['last_updated']), "m/d/Y h:ia"),
@@ -169,7 +169,7 @@ function edit_form() {
 
     // print view
     $is_active_checked = $server_details['is_active'] === "1" ? " CHECKED" : "";
-    $count_reserved_checked = $server_details['count_reserve_tokens_as_used'] === "1" ? " CHECKED" : "";
+    $count_reserved_checked = $server_details['lm_default_usage_reporting'] === "1" ? " CHECKED" : "";
     $server_select_box = build_select_box($lm_supported, array('name' => "license_manager", 'id' => "license_manager"),
         array_key_exists('license_manager', $server_details) ? $server_details['license_manager'] : "");
     print_header();
@@ -191,11 +191,11 @@ function edit_form() {
             <label for='license_manager'>Server Type:</label>
             {$server_select_box}
         </div><div class='edit-form block'>
-            <label for='count_reserved' id='count_reserved_label'>Count Reserved Tokens As Used Licenses?</label>
             <input type='checkbox' name='count_reserved' id='count_reserved' class='edit-form'{$count_reserved_checked}>
+            <label for='count_reserved' id='count_reserved_label'>Default license manager usage reporting (flexlm only)</label>
         </div><div class='edit-form inline-block'>
-            <label for='is_active'>Is Active?</label>
             <input type='checkbox' name='is_active' id='is_active' class='edit-form'{$is_active_checked}>
+            <label for='is_active'>Server is active</label>
         </div><div class='edit-form inline-block float-right'>
             <input type='hidden' id='delete-server'>
             <button type='submit' class='btn btn-cancel edit-form' name='cancel' value='1'>Cancel</button>

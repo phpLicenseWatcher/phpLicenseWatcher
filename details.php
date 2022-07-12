@@ -19,7 +19,7 @@ if ( isset($_GET['multiple_servers']) ) {
 }
 
 db_connect($db);
-$servers = db_get_servers($db, array('name', 'label', 'id', 'count_reserve_tokens_as_used', 'license_manager'), $ids);
+$servers = db_get_servers($db, array('name', 'label', 'id', 'lm_default_usage_reporting', 'license_manager'), $ids);
 $db->close();
 $html_body = ""; // To be filled by the process function called below.
 
@@ -180,7 +180,7 @@ function list_licenses_in_use($servers, &$html_body) {
                 // $license['num_licenses_used'] is the value reported by the license manager, which can include reserved tokens.
                 // $license['num_checkouts'] is the accumulated count of licenses reported to be checked out by all individual users.
                 // 'num_checkouts' will not include reserved tokens.
-                $licenses_used = $server['count_reserve_tokens_as_used'] === "1"
+                $licenses_used = $server['lm_default_usage_reporting'] === "1"
                     ? $license['num_licenses_used']
                     : $license['num_checkouts'];
 

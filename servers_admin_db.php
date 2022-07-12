@@ -25,12 +25,12 @@ function db_process() {
 
     if ($id === "new") {
         // Adding a new server
-        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`, `count_reserve_tokens_as_used`, `license_manager`) VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`, `lm_default_usage_reporting`, `license_manager`) VALUES (?, ?, ?, ?, ?)";
         $params = array("ssiis", $name, $label, $is_active, $count_reserved, $license_manager);
         $op = "added";
     } else {
         // Editing an existing server
-        $sql = "UPDATE `servers` SET `name`=?, `label`=?, `is_active`=?, `count_reserve_tokens_as_used`=?, `license_manager`=? WHERE `ID`=?";
+        $sql = "UPDATE `servers` SET `name`=?, `label`=?, `is_active`=?, `lm_default_usage_reporting`=?, `license_manager`=? WHERE `ID`=?";
         $params = array("ssiisi", $name, $label, $is_active, $count_reserved, $license_manager, $id);
         $op = "updated";
     }
@@ -59,7 +59,7 @@ function db_process() {
  */
 function db_server_details_by_getid($id) {
     db_connect($db);
-    $server_details = db_get_servers($db, array("name", "label", "is_active", "count_reserve_tokens_as_used", "license_manager"), array($id), "", false);
+    $server_details = db_get_servers($db, array("name", "label", "is_active", "lm_default_usage_reporting", "license_manager"), array($id), "", false);
     $db->close();
     return !empty($server_details) ? $server_details[0] : false;
 } // END function db_server_details_by_getid()

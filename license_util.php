@@ -4,7 +4,7 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
-$servers = db_get_servers($db, array('name', 'license_manager', 'count_reserve_tokens_as_used'));
+$servers = db_get_servers($db, array('name', 'license_manager', 'lm_default_usage_reporting'));
 //update_servers($db, $servers);
 update_licenses($db, $servers);
 $db->close();
@@ -129,7 +129,7 @@ function update_licenses(&$db, $servers) {
 
             $feature       = $license_data['feature_name'];
             $name          = $server['name'];
-            $licenses_used = $server['count_reserve_tokens_as_used'] === "0"
+            $licenses_used = $server['lm_default_usage_reporting'] === "0"
                 ? $license_data['num_checkouts']
                 : $license_data['num_licenses_used'];
 
