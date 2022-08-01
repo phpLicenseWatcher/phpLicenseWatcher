@@ -91,7 +91,9 @@ foreach (array_keys($table) as $date){
     $ta = array();
     $ta[] = array('v' => $date);
     foreach (array_keys($products) as $product) {
-        $ta[] = array('v' => $table[$date][$product]);
+        if (array_key_exists($product, $table[$date])) {
+            $ta[] = array('v' => $table[$date][$product]);
+        }
     }
 
     $result['rows'][] = array('c' => $ta);
