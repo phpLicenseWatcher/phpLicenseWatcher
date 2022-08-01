@@ -5,7 +5,7 @@ require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name', 'license_manager', 'lm_default_usage_reporting'));
-//update_servers($db, $servers);
+update_servers($db, $servers);
 update_licenses($db, $servers);
 $db->close();
 exit;
@@ -122,10 +122,8 @@ function update_licenses(&$db, $servers) {
         }
 
         foreach ($licenses_data as $license_data) {
-            if ($server['name']=="27001@licsrvr5.arc.rpi.edu") var_dump($license_data);
             // Translate uncounted licenses to 0 licenses used.
             if ($license_data['num_licenses_used'] === "uncounted") $license_data['num_licenses_used'] = "0";
-
 
             $feature       = $license_data['feature_name'];
             $name          = $server['name'];
