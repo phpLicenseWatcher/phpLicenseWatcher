@@ -19,6 +19,7 @@ print STDERR "Root required.\n" and exit 1 if ($> != 0);
 
 update_ubuntu();
 prepare_cache();
+setup_debug();
 setup_lmtools();
 setup_mysql();
 setup_database();
@@ -65,6 +66,20 @@ sub prepare_cache {
     mkdir $dest, 0701;
     chown $uid, $gid, $dest;
     print "Created cache file directory: ${dest}\n";
+}
+
+# Dir to write files to help with debugging.  ie. /home/vagrant/debug
+# i.e. To write debugging logs.  q.v. function log_var() in common.php
+sub setup_debug {
+    my $dest = catdir(@CONFIG::DEBUG_PATH);
+    my $uid = $CONFIG::DEBUG_UID;
+    my $gid = $CONFIG::DEBUG_GID;
+    my $permissions = $CONFIG::DEBUG_PERMISSIONS;
+
+    mkdir $dest;
+    chown $uid, $gid, $dest;
+    chmod $permissions, $dest;
+    print "Created debugging directory: ${dest}\n";
 }
 
 # Copy LM tools binaries to system.
@@ -265,10 +280,6 @@ sub create_symlink {
 
 # Any other small misc stuff to do.
 sub setup_other_tweaks {
-    # Permits other uids to write to the Vagrant home dir.
-    # i.e. To write debugging logs.  q.v. function log_var() in common.php
-    my $home_dir = catdir(@CONFIG::VAGRANT_HOMEPATH);
-    chmod 0777, $home_dir;
 }
 
 # Call script to copy code files to HTML directory.

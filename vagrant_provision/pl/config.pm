@@ -7,6 +7,7 @@ use File::Spec::Functions qw(rootdir);
 our @VAGRANT_HOMEPATH = (rootdir(), "home", "vagrant");
 our @REPO_PATH = (@VAGRANT_HOMEPATH, "github_phplw");
 our @CONFIG_PATH = (@REPO_PATH, "vagrant_provision", "config");
+our @DEBUG_PATH = (@VAGRANT_HOMEPATH, "debug");
 our @LMTOOLS_PATH = (rootdir(), "opt", "lmtools");
 our @HTML_PATH = (rootdir(), "var", "www", "html");
 our @LOGROTATE_PATH = (rootdir(), "etc", "logrotate.d");
@@ -37,18 +38,30 @@ our $VAGRANT_USER = "vagrant";
 our $VAGRANT_UID = getpwnam $VAGRANT_USER;
 our $VAGRANT_GID = getgrnam $VAGRANT_USER;
 
+# Apache user for www.
+our $WWW_USER = "www-data";
+our $WWW_UID = getpwnam $WWW_USER;
+our $WWW_GID = getgrnam $WWW_USER;
+our $WWW_FILE_PERMISSIONS = 0644;
+our $WWW_DIR_PERMISSIONS = 0755;
+
+# Debug dir settings
+our $DEBUG_UID = $VAGRANT_UID;
+our $DEBUG_GID = $WWW_GID;
+our $DEBUG_PERMISSIONS = 0771;
+
 # Cache files owner
-our $CACHE_OWNER = "www-data";
+our $CACHE_OWNER = $WWW_USER;
 our $CACHE_OWNER_UID = getpwnam $CACHE_OWNER;
 our $CACHE_OWNER_GID = getgrnam $CACHE_OWNER;
 our $CACHE_PERMISSIONS = 0700;
 
 # List of Flex LM binaries and ownership
 our @LMTOOLS_FILES = ("lmutil", "monitorlm");
-our $LMTOOLS_OWNER = "www-data";
+our $LMTOOLS_OWNER = $WWW_USER;
 our $LMTOOLS_OWNER_UID = getpwnam $LMTOOLS_OWNER;
 our $LMTOOLS_OWNER_GID = getgrnam $LMTOOLS_OWNER;
-our $LMTOOLS_PERMISSIONS = 0770;
+our $LMTOOLS_PERMISSIONS = 0771;
 
 # DB config
 our @DB_HOSTS = ("localhost", "_gateway");
