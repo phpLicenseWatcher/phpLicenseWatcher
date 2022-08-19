@@ -19,7 +19,7 @@ print "Root required.\n" and exit 1 if ($> != 0);
 # CLI arg = full:  remove/reinstall all code and dependencies to HTML directory
 # CLI arg = update-composer:  Run update only on composer dependencies
 # No CLI arg:  (default) copy latest development code to HTML directory
-my ($source, $dest, @files);
+my ($source, $dest, $file, @files);
 if (defined $ARGV[0] && $ARGV[0] eq "full") {
     # composer("install"); # Composer is disabled.
     clear_html_folder();
@@ -29,11 +29,12 @@ if (defined $ARGV[0] && $ARGV[0] eq "full") {
     print "Install development code.\n";
     copy_code($source, $dest, @files);
 
+    # Config file copy
     $source = catdir(@CONFIG::CONFIG_PATH);
     $dest   = catdir(@CONFIG::HTML_PATH);
-    @files  = ($CONFIG::CONFIG_FILE);
+    $file   = $CONFIG::CONFIG_FILE;
     print "Install vagrant config file.\n";
-    copy_code($source, $dest, @files);
+    copy_code($source, $dest, $file);
 } elsif (defined $ARGV[0] && $ARGV[0] eq "update-composer") {
     # composer("update"); # Composer is disabled.
 } else {
@@ -103,18 +104,21 @@ sub copy_code {
     my $source_path = shift;
     my $dest_path   = shift;
     my @file_list   = @_;
+    my $uid = $CONFIG::WWW_UID;
+    my $gid = $CONFIG::WWW_GID;
+    my $dir_perms = $CONFIG::WWW_DIR_PERMISSIONS;
+    my $file_perms = $CONFIG::WWW_FILE_PERMISSIONS;
     my ($source, $dest);
 
     foreach (@file_list) {
         $source = catfile($source_path, $_);
         $dest = catfile($dest_path, $_);
-
         # Make sure dir exists before copy
-        make_path($1) if ($dest =~ /^(.+\/)/);
-
+        make_path($1, {mode => $dir_perms, owner => $uid, group => $gid}) if ($dest =~ /^(.+\/)/);
         unlink $dest if (-e $dest);
         copy_file ($source, $dest);
-        chmod 0644, $dest;
+        chown $uid, $gid, $dest;
+        chmod $file_perms, $dest;
     }
 
     print "Files copy/update done.\n";

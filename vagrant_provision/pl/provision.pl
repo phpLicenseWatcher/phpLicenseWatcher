@@ -19,6 +19,7 @@ print STDERR "Root required.\n" and exit 1 if ($> != 0);
 
 update_ubuntu();
 prepare_cache();
+setup_debug();
 setup_lmtools();
 setup_mysql();
 setup_database();
@@ -27,7 +28,6 @@ setup_php();
 setup_apache();
 # setup_composer();  # Composer disabled.
 create_symlink();
-setup_other_tweaks();
 copy_code();
 
 # Done!
@@ -67,23 +67,38 @@ sub prepare_cache {
     print "Created cache file directory: ${dest}\n";
 }
 
+# Dir to write files to help with debugging.  ie. /home/vagrant/debug
+# i.e. To write debugging logs.  q.v. function log_var() in common.php
+sub setup_debug {
+    my $dest = catdir(@CONFIG::DEBUG_PATH);
+    my $uid = $CONFIG::DEBUG_UID;
+    my $gid = $CONFIG::DEBUG_GID;
+    my $permissions = $CONFIG::DEBUG_PERMISSIONS;
+
+    mkdir $dest;
+    chown $uid, $gid, $dest;
+    chmod $permissions, $dest;
+    print "Created debugging directory: ${dest}\n";
+}
+
 # Copy LM tools binaries to system.
 sub setup_lmtools {
-    my @source_path    = (@CONFIG::REPO_PATH, "vagrant_provision", "lmtools");
-    my @dest_path      = @CONFIG::LMTOOLS_PATH;
-    my @lm_files       = @CONFIG::LMTOOLS_FILES;
-    my $lm_permissions = $CONFIG::LMTOOLS_PERMISSIONS;
+    my @source_path  = (@CONFIG::REPO_PATH, "vagrant_provision", "lmtools");
+    my @dest_path    = @CONFIG::LMTOOLS_PATH;
+    my @files        = @CONFIG::LMTOOLS_FILES;
+    my $dir_perms    = $CONFIG::LMTOOLS_DIR_PERMISSIONS;
+    my $file_perms   = $CONFIG::LMTOOLS_FILE_PERMISSIONS;
     # File ownership is something like "www-data:vagrant"
-    my $lmtools_user   = $CONFIG::LMTOOLS_OWNER;
-    my $uid            = $CONFIG::LMTOOLS_OWNER_UID;
-    my $vagrant_user   = $CONFIG::VAGRANT_USER;
-    my $gid            = $CONFIG::VAGRANT_GID;
+    my $lmtools_user = $CONFIG::LMTOOLS_OWNER;
+    my $uid          = $CONFIG::LMTOOLS_OWNER_UID;
+    my $vagrant_user = $CONFIG::VAGRANT_USER;
+    my $gid          = $CONFIG::VAGRANT_GID;
     my ($source, $dest);
 
     $dest = catdir(@dest_path);
-    mkdir $dest, 0701;
+    mkdir $dest, $dir_perms;
     print "Created directory: ${dest}\n";
-    foreach (@lm_files) {
+    foreach (@files) {
         $source = catfile(@source_path, $_);
         $dest = catfile(@dest_path, $_);
 
@@ -94,8 +109,8 @@ sub setup_lmtools {
         chown $uid, $gid, $dest;
         print "$_ ownership granted to ${lmtools_user}:${vagrant_user}\n";
 
-        chmod $lm_permissions, $dest;
-        printf "$_ permissions set to 0%o\n", $lm_permissions;
+        chmod $file_perms, $dest;
+        printf "$_ permissions set to 0%o\n", $file_perms;
     }
 }
 
@@ -244,18 +259,25 @@ sub setup_composer {
 }
 
 # Create convenient symlink
-# '$ sudo perl ~/update' to updte latest code within testing server.
+# '$ sudo perl ~/update' to update latest code within testing server.
 sub create_symlink {
     print "Create convenience symlinks.\n";
     my (@scripts, @links); # parralel arrays
 
+    foreach(@CONFIG::LMTOOLS_FILES) {
+        push @scripts, catfile(@CONFIG::LMTOOLS_PATH, $_);
+        push @links, catfile(@CONFIG::VAGRANT_HOMEPATH, $_);
+    }
+
     push @scripts, catfile(@CONFIG::REPO_PATH, "vagrant_provision", "pl", $CONFIG::UPDATE_CODE);
     push @scripts, catfile(@CONFIG::HTML_PATH, $CONFIG::LICENSE_UTIL);
     push @scripts, catfile(@CONFIG::HTML_PATH, $CONFIG::LICENSE_CACHE);
-
+    push @scripts, catdir(@CONFIG::DEBUG_PATH);
+    
     push @links, catfile(@CONFIG::VAGRANT_HOMEPATH, "update");
     push @links, catfile(@CONFIG::VAGRANT_HOMEPATH, "license_util");
     push @links, catfile(@CONFIG::VAGRANT_HOMEPATH, "license_cache");
+    push @links, catfile(@CONFIG::VAGRANT_HOMEPATH, "debug");
 
     my $arr_length = scalar @scripts;
     for my $i (0..$arr_length - 1) {
@@ -263,18 +285,10 @@ sub create_symlink {
     }
 }
 
-# Any other small misc stuff to do.
-sub setup_other_tweaks {
-    # Permits other uids to write to the Vagrant home dir.
-    # i.e. To write debugging logs.  q.v. function log_var() in common.php
-    my $home_dir = catdir(@CONFIG::VAGRANT_HOMEPATH);
-    chmod 0777, $home_dir;
-}
-
 # Call script to copy code files to HTML directory.
 sub copy_code {
     print "Copying repository code.\n";
     my @working_path = (@CONFIG::REPO_PATH, "vagrant_provision", "pl");
     my $file = catfile(@working_path, $CONFIG::UPDATE_CODE);
-    exec_cmd("perl $file full");
+    exec_cmd("perl ${file} full");
 }
