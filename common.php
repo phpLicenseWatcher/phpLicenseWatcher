@@ -193,7 +193,7 @@ function print_sql ($sql) {
     global $debug; // from config.php
     if (isset($debug) && $debug == 1) {
         $code = print_r($sql, true);
-        print "<p><span style='color: crimson;'>Executing SQL: </span><pre>{$code}</pre>\n";
+        print "<p><span class='red-text'>Executing SQL: </span><pre>{$code}</pre>\n";
     }
 }
 
@@ -206,24 +206,25 @@ function print_var ($var) {
     global $debug; // from config.php
     if (isset($debug) && $debug == 1) {
         $code = htmlentities(var_export($var, true), ENT_COMPAT | ENT_HTML5);
-        print "<p><span style='color: crimson;'>Var Export: </span><pre>{$code}</pre>\n";
+        print "<p><span class='red-text'>Var Export: </span><pre>{$code}</pre>\n";
     }
 }
 
 /**
  * Debug helper function to send var_export() to a file.
  *
- * The files are written to /home/vagrant/debug and should be something like
- * "var0.txt", "var1.txt", etc.  If the files aren't being written, it is
- * likely a permissions issue.  $ chmod ugo+w /home/vagrant
+ * The files are written to /opt/debug/ and should be something like
+ * "var-0.txt", "var-db.txt", etc.  If the files aren't being written, check
+ * if /opt/debug/ exists and that user 'www-data' can write to it.
  *
- * @param mixed $var variable to be exported to file.
+ * @param mixed $var variable data to be exported to file.
+ * @param mixed $label label appended to logged variable file.
  */
-function log_var($var, $num=0) {
+function log_var($var, $label="0") {
     global $debug; // from config.php
-    if (isset($debug) && $debug == 1) {
+    if (isset($debug) && $debug == 1 && is_dir("/opt/debug")) {
         $export = var_export($var, true);
-        file_put_contents("/home/vagrant/debug/var{$num}.log", $export);
+        file_put_contents("/opt/debug/var-{$label}.log", $export);
     }
 }
 ?>

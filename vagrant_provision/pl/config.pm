@@ -7,7 +7,7 @@ use File::Spec::Functions qw(rootdir);
 our @VAGRANT_HOMEPATH = (rootdir(), "home", "vagrant");
 our @REPO_PATH = (@VAGRANT_HOMEPATH, "github_phplw");
 our @CONFIG_PATH = (@REPO_PATH, "vagrant_provision", "config");
-our @DEBUG_PATH = (@VAGRANT_HOMEPATH, "debug");
+our @DEBUG_PATH = (rootdir(), "opt", "debug");
 our @LMTOOLS_PATH = (rootdir(), "opt", "lmtools");
 our @HTML_PATH = (rootdir(), "var", "www", "html");
 our @LOGROTATE_PATH = (rootdir(), "etc", "logrotate.d");
@@ -48,7 +48,7 @@ our $WWW_DIR_PERMISSIONS = 0755;
 # Debug dir settings
 our $DEBUG_UID = $VAGRANT_UID;
 our $DEBUG_GID = $WWW_GID;
-our $DEBUG_PERMISSIONS = 0771;
+our $DEBUG_PERMISSIONS = 0775;
 
 # Cache files owner
 our $CACHE_OWNER = $WWW_USER;
@@ -61,7 +61,8 @@ our @LMTOOLS_FILES = ("lmutil", "monitorlm");
 our $LMTOOLS_OWNER = $WWW_USER;
 our $LMTOOLS_OWNER_UID = getpwnam $LMTOOLS_OWNER;
 our $LMTOOLS_OWNER_GID = getgrnam $LMTOOLS_OWNER;
-our $LMTOOLS_PERMISSIONS = 0771;
+our $LMTOOLS_DIR_PERMISSIONS = 0775;
+our $LMTOOLS_FILE_PERMISSIONS = 0775;
 
 # DB config
 our @DB_HOSTS = ("localhost", "_gateway");

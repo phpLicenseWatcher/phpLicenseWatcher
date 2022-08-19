@@ -104,25 +104,21 @@ sub copy_code {
     my $source_path = shift;
     my $dest_path   = shift;
     my @file_list   = @_;
+    my $uid = $CONFIG::WWW_UID;
+    my $gid = $CONFIG::WWW_GID;
+    my $dir_perms = $CONFIG::WWW_DIR_PERMISSIONS;
+    my $file_perms = $CONFIG::WWW_FILE_PERMISSIONS;
     my ($source, $dest);
 
     foreach (@file_list) {
         $source = catfile($source_path, $_);
         $dest = catfile($dest_path, $_);
-
         # Make sure dir exists before copy
-        if ($dest =~ /^(.+\/)/) {
-            make_path($1, {
-                mode  => $CONFIG::WWW_DIR_PERMISSIONS,
-                owner => $CONFIG::WWW_UID,
-                group => $CONFIG::WWW_GID
-            });
-        }
-
+        make_path($1, {mode => $dir_perms, owner => $uid, group => $gid}) if ($dest =~ /^(.+\/)/);
         unlink $dest if (-e $dest);
         copy_file ($source, $dest);
-        chown $CONFIG::WWW_UID, $CONFIG::WWW_GID, $dest;
-        chmod $CONFIG::WWW_FILE_PERMISSIONS, $dest;
+        chown $uid, $gid, $dest;
+        chmod $file_perms, $dest;
     }
 
     print "Files copy/update done.\n";
