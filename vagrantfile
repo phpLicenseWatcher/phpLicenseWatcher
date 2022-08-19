@@ -41,5 +41,5 @@ Vagrant.configure(2) do |config|
 #   config.vm.provision "composer-update", type: "shell", inline: "perl #{REPO_PATH}/#{UPDATE_SCRIPT} update-composer ", privileged: true, run: "never"
     config.vm.provision "full-update", type: "shell", inline: "perl #{REPO_PATH}/#{UPDATE_SCRIPT} full ", privileged: true, run: "never"
     config.vm.provision "delete-cache", type: "shell", inline: "rm --verbose /var/cache/phplw/*.cache", privileged: true, run: "never"
-    config.vm.provision "show-log", type: "shell", inline: "tail phplw_error.log", privileged: true, run: "never"
+    config.vm.provision "show-log", type: "shell", inline: "tail /opt/debug/phplw-error.log", privileged: true, run: "never"
 end

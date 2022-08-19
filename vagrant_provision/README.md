@@ -44,7 +44,7 @@ You may develop code for this repository on your host.  Make sure the VM is runn
 * You can view the VM server webpage at `http://localhost:50080`
 * A MySQL database viewer can connect to the VM server at `localhost`, port `53306`.
     * MySQL Workbench can connect to the VM server with user and password as `vagrant`.  Database Schema is also `vagrant`.
-* Should Apache generate a 500 error, the error will be logged to `/home/vagrant/phplw_errors.log` within VM.
+* Should Apache generate a 500 error, the error will be logged to `/opt/debug/phplw_errors.log` within VM.
     * You can use `vagrant up --provision-with show-log` to view the tail of the log.
     * You can use `vagrant ssh` to get a command line shell to the VM.
     * Some code editors have (either built-in or as a module/plugin) SFTP access to files.  You can gain access to the VM's file system (and log files) this way using the same login as ssh &mdash; port: `2222`, user: `vagrant`, password: `vagrant`.
