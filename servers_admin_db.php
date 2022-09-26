@@ -7,7 +7,8 @@ function db_process() {
     $label = $_POST['label'];
     $license_manager = $_POST['license_manager'];
     // checkboxes are not included in POST when unchecked.
-    $is_active = isset($_POST['is_active']) && $_POST['is_active'] === "on" ? 1 : 0;
+    $is_active = array_key_exists('is_active', $_POST) && $_POST['is_active'] === "on" ? 1 : 0;
+    $count_reserved = array_key_exists('count_reserved', $_POST) && $_POST['count_reserved'] === "on" ? 1 : 0;
 
     // Error check.  On error, stop and return error message.
     switch(false) {
@@ -24,13 +25,13 @@ function db_process() {
 
     if ($id === "new") {
         // Adding a new server
-        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`, `license_manager`) VALUES (?, ?, ?, ?)";
-        $params = array("ssis", $name, $label, $is_active, $license_manager);
+        $sql = "INSERT INTO `servers` (`name`, `label`, `is_active`, `lm_default_usage_reporting`, `license_manager`) VALUES (?, ?, ?, ?, ?)";
+        $params = array("ssiis", $name, $label, $is_active, $count_reserved, $license_manager);
         $op = "added";
     } else {
         // Editing an existing server
-        $sql = "UPDATE `servers` SET `name`=?, `label`=?, `is_active`=?, `license_manager`=? WHERE `ID`=?";
-        $params = array("ssisi", $name, $label, $is_active, $license_manager, $id);
+        $sql = "UPDATE `servers` SET `name`=?, `label`=?, `is_active`=?, `lm_default_usage_reporting`=?, `license_manager`=? WHERE `ID`=?";
+        $params = array("ssiisi", $name, $label, $is_active, $count_reserved, $license_manager, $id);
         $op = "updated";
     }
 
@@ -58,7 +59,7 @@ function db_process() {
  */
 function db_server_details_by_getid($id) {
     db_connect($db);
-    $server_details = db_get_servers($db, array("name", "label", "is_active", "license_manager"), array($id), "", false);
+    $server_details = db_get_servers($db, array("name", "label", "is_active", "lm_default_usage_reporting", "license_manager"), array($id), "", false);
     $db->close();
     return !empty($server_details) ? $server_details[0] : false;
 } // END function db_server_details_by_getid()

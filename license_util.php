@@ -4,7 +4,7 @@ require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/lmtools.php";
 
 db_connect($db);
-$servers = db_get_servers($db, array('name', 'license_manager'));
+$servers = db_get_servers($db, array('name', 'license_manager', 'lm_default_usage_reporting'));
 update_servers($db, $servers);
 update_licenses($db, $servers);
 $db->close();
@@ -20,8 +20,6 @@ exit;
  * @param $servers active servers list array.
  */
 function update_servers(&$db, $servers) {
-    global $lmutil_binary;
-
     $update_data = array();
     $lmtools = new lmtools();
     foreach ($servers as $index => $server) {
@@ -115,39 +113,42 @@ function update_licenses(&$db, $servers) {
     $db->autocommit(false);
     $db->query("LOCK TABLES `features` WRITE, `servers` READ, `licenses` WRITE, `usage` WRITE;");
 
-    $lmtools = new lmtools();
     foreach ($servers as $server) {
-        if ($lmtools->lm_open($server['license_manager'], 'license_util__update_licenses', $server['name']) === false) {
+        $licenses_data = lmtools::get_license_usage_array($server['license_manager'], $server['name'], 1);
+        if (is_null($licenses_data)) continue;  // No licenses in use on this $server.
+        if ($licenses_data === false) {
             db_cleanup($db, $queries, $reset_autocommit);
-            print_error_and_die($db, $lmtools->err);
+            print_error_and_die($db, "Error calling lmtools::get_license_usage_array()");
         }
-        $lmdata = $lmtools->lm_nextline();
-        if ($lmdata === false) {
-            db_cleanup($db, $queries, $reset_autocommit);
-            print_error_and_die($db, $lmtools->err);
-        }
-        // INSERT license data to DB
-        while (!is_null($lmdata)) {
-            // $lmdata['licenses_used'] will be missing when the feature has no license count ("uncounted").
-            // But `usage`.`num_users` in the DB can't be null, so we'll fill in '0'.
-            if (!array_key_exists('licenses_used', $lmdata)) $lmdata['licenses_used'] = 0;
 
-            // DB operations
+        foreach ($licenses_data as $license_data) {
+            // Translate uncounted licenses to 0 licenses used.
+            if ($license_data['num_licenses_used'] === "uncounted") $license_data['num_licenses_used'] = "0";
+
+            $feature       = $license_data['feature_name'];
+            $name          = $server['name'];
+            $licenses_used = $server['lm_default_usage_reporting'] === "0"
+                ? $license_data['num_checkouts']
+                : $license_data['num_licenses_used'];
+
+
+
+            // INSERT license data to DB
             try {
                 // Attempt to INSERT license usage...
-                $queries['usage']->bind_param("iss", $lmdata['licenses_used'], $server['name'], $lmdata['feature']);
+                $queries['usage']->bind_param("iss", $licenses_used, $name, $feature);
                 $queries['usage']->execute();
 
-                // when affectedRows < 1, we will attempt to populate features
+                // when affected_rows < 1, we will attempt to populate features
                 // and licenses and re-run usage query.
                 // 'INSERT IGNORE' in queries prevents unique key collisions.
                 if ($db->affected_rows < 1) {
                     // Features table
-                    $queries['features']->bind_param("s", $lmdata['feature']);
+                    $queries['features']->bind_param("s", $feature);
                     $queries['features']->execute();
 
                     // Licenses table
-                    $queries['licenses']->bind_param("ss", $server['name'], $lmdata['feature']);
+                    $queries['licenses']->bind_param("ss", $name, $feature);
                     $queries['licenses']->execute();
 
                     // Usage table
@@ -157,15 +158,8 @@ function update_licenses(&$db, $servers) {
                 db_cleanup($db, $queries, $reset_autocommit);
                 print_error_and_die($db, $e->getMessage());
             }
-
-            // Get another data set from license manager.
-            $lmdata = $lmtools->lm_nextline();
-            if ($lmdata === false) {
-                db_cleanup($db, $queries, $reset_autocommit);
-                print_error_and_die($db, $lmtools->err);
-            }
-        } // END while(!is_null($lmdata))
-    } // END foreach($servers as $server)
+        } // END foreach ($licences_data as $license)
+    } // END foreach ($servers as $server)
 
     // Complete and cleanup
     db_cleanup($db, $queries, $reset_autocommit);

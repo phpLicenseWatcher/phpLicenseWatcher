@@ -129,13 +129,19 @@ class html_table {
         // Do not change tag when a new tag is not given.
         if (!is_null($new_tag)) $this->rows[$row_offset]->cells[$cell_offset]->tag = $this->check_tag($new_tag);
 
-        // Do not change attribute when it is not included in the array.
-        if (isset($new_attributes['style']))   $this->rows[$row_offset]->cells[$cell_offset]->attributes->style   = $new_attributes['style'];
-        if (isset($new_attributes['class']))   $this->rows[$row_offset]->cells[$cell_offset]->attributes->class   = $new_attributes['class'];
-        if (isset($new_attributes['id']))      $this->rows[$row_offset]->cells[$cell_offset]->attributes->id      = $new_attributes['id'];
-        if (isset($new_attributes['name']))    $this->rows[$row_offset]->cells[$cell_offset]->attributes->name    = $new_attributes['name'];
-        if (isset($new_attributes['colspan'])) $this->rows[$row_offset]->cells[$cell_offset]->attributes->colspan = $new_attributes['colspan'];
-        if (isset($new_attributes['rowspan'])) $this->rows[$row_offset]->cells[$cell_offset]->attributes->rowspan = $new_attributes['rowspan'];
+        // Only update attributes given in $new_attributes.
+        if (is_array($new_attributes)) {
+            foreach ($new_attributes as $key=>$new_attribute) {
+                $this->rows[$row_offset]->cells[$cell_offset]->attributes->$key = $new_attribute;
+            }
+        }
+
+        // if (isset($new_attributes['style']))   $this->rows[$row_offset]->cells[$cell_offset]->attributes->style   = $new_attributes['style'];
+        // if (isset($new_attributes['class']))   $this->rows[$row_offset]->cells[$cell_offset]->attributes->class   = $new_attributes['class'];
+        // if (isset($new_attributes['id']))      $this->rows[$row_offset]->cells[$cell_offset]->attributes->id      = $new_attributes['id'];
+        // if (isset($new_attributes['name']))    $this->rows[$row_offset]->cells[$cell_offset]->attributes->name    = $new_attributes['name'];
+        // if (isset($new_attributes['colspan'])) $this->rows[$row_offset]->cells[$cell_offset]->attributes->colspan = $new_attributes['colspan'];
+        // if (isset($new_attributes['rowspan'])) $this->rows[$row_offset]->cells[$cell_offset]->attributes->rowspan = $new_attributes['rowspan'];
     }
 
     /**
@@ -223,12 +229,19 @@ class html_table {
      * @return string
      */
     private function build_attributes($attributes) {
-        $class   = isset($attributes->class)   ? " class='{$attributes->class}'"     : "";
-        $style   = isset($attributes->style)   ? " style='{$attributes->style}'"     : "";
-        $id      = isset($attributes->id)      ? " id='{$attributes->id}'"           : "";
-        $name    = isset($attributes->name)    ? " name='{$attributes->name}'"       : "";
-        $colspan = isset($attributes->colspan) ? " colspan='{$attributes->colspan}'" : "";
-        $rowspan = isset($attributes->rowspan) ? " rowspan='{$attributes->rowspan}'" : "";
-        return "{$name}{$id}{$class}{$style}{$colspan}{$rowspan}";
+        $attr_string = "";
+        foreach($attributes as $key=>$attribute) {
+            $attr_string .= " {$key}='{$attribute}'";
+        }
+
+        return $attr_string;
+
+        // $class   = isset($attributes->class)   ? " class='{$attributes->class}'"     : "";
+        // $style   = isset($attributes->style)   ? " style='{$attributes->style}'"     : "";
+        // $id      = isset($attributes->id)      ? " id='{$attributes->id}'"           : "";
+        // $name    = isset($attributes->name)    ? " name='{$attributes->name}'"       : "";
+        // $colspan = isset($attributes->colspan) ? " colspan='{$attributes->colspan}'" : "";
+        // $rowspan = isset($attributes->rowspan) ? " rowspan='{$attributes->rowspan}'" : "";
+        // return "{$name}{$id}{$class}{$style}{$colspan}{$rowspan}";
     }
 }

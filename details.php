@@ -19,10 +19,10 @@ if ( isset($_GET['multiple_servers']) ) {
 }
 
 db_connect($db);
-$servers = db_get_servers($db, array('name', 'label', 'id', 'license_manager'), $ids);
+$servers = db_get_servers($db, array('name', 'label', 'id', 'lm_default_usage_reporting', 'license_manager'), $ids);
 $db->close();
-
 $html_body = ""; // To be filled by the process function called below.
+
 switch($_GET['listing']) {
 case 0:
     list_licenses_in_use($servers, $html_body);
@@ -119,7 +119,6 @@ HTML;
  * @param &$html_body data view to build
  */
 function list_licenses_in_use($servers, &$html_body) {
-    global $lmutil_binary; // from config.php
 
     $html_body .= "<p>Following is the list of licenses currently being used.";
 
@@ -135,9 +134,9 @@ function list_licenses_in_use($servers, &$html_body) {
 
     // Loop through the available servers
     foreach ($servers as $server) {
-        $used_licenses = lmtools::get_license_usage_array($server['license_manager'], $server['name']);
+        $used_licenses = lmtools::get_license_usage_array($server['license_manager'], $server['name'], 2);
         if (empty($used_licenses)) {
-            // when empty, no licenses are in use (boolean true)
+            // when $used_licenses is empty, no licenses are in use
             $html_body .= get_alert_html("No licenses are currently being used on {$server['name']} ({$server['label']})", "info");
         } else {
             usort($used_licenses, function($a, $b) {
@@ -149,35 +148,58 @@ function list_licenses_in_use($servers, &$html_body) {
             return strcasecmp($a['feature_name'], $b['feature_name']);
         });
 
+        // This table shows a color guide
+        $color_guide = new html_table(array('class'=>"table", 'aria-hidden'=>"true"));
+        $col_headers = array("Row Color Guide");
+        $color_guide->add_row($col_headers, array(), "th");
+        $color_guide->update_cell(0, 0, array('colspan'=>"3"));
+        $table_row = array(
+            "<div class='color-box alt-odd-blue-bgcolor'></div> / <div class='color-box alt-even-blue-bgcolor'></div> License In Use",
+            "<div class='color-box alt-odd-yellow-bgcolor'></div> / <div class='color-box alt-even-yellow-bgcolor'></div> License Reserved, Not In Use",
+            "<div class='color-box'></div> / <div class='color-box alt-bgcolor'></div> License Not Reserved, Not In Use"
+        );
+        $color_guide->add_row($table_row, array(), "td");
+        $html_body .= $color_guide->get_html();
+
         // Create a new table
         $table = new html_table(array('class'=>"table"));
 
         // Show a banner with the name of the port@server plus description
-        $colHeaders = array("Server: {$server['name']} ({$server['label']})");
-        $table->add_row($colHeaders, array(), "th");
+        $col_headers = array("Server: {$server['name']} ({$server['label']})");
+        $table->add_row($col_headers, array(), "th");
         $table->update_cell(0, 0, array('colspan'=>"4"));
 
-        $colHeaders = array("Feature", "# Cur. Avail", "Details", "Time Checked Out");
-        $table->add_row($colHeaders, array(), "th");
+        $col_headers = array("Feature", "# Cur. Avail", "Details", "Time Checked Out");
+        $table->add_row($col_headers, array(), "th");
 
         foreach(array_merge($used_licenses, $unused_licenses) as $i => $license) {
-            if (!isset($_GET['filter_feature']) || in_array($license['feature_name'], $_GET['filter_feature'])) {
+            if (!array_key_exists('filter_feature', $_GET) || in_array($license['feature_name'], $_GET['filter_feature'])) {
                 $feature = $license['feature_name'];
                 $graph_url = "monitor_detail.php?feature={$feature}";
 
-                // How many licenses are currently used
-                $licenses_available = $license['num_licenses'] - $license['num_licenses_used'];
+                // $license['num_licenses_used'] is the value reported by the license manager, which can include reserved tokens.
+                // $license['num_checkouts'] is the accumulated count of licenses reported to be checked out by all individual users.
+                // 'num_checkouts' will not include reserved tokens.
+                $licenses_used = $server['lm_default_usage_reporting'] === "1"
+                    ? $license['num_licenses_used']
+                    : $license['num_checkouts'];
 
-                $license_info = <<<HTML
-                Total of {$license['num_licenses']} licenses, {$license['num_licenses_used']} currently in use,
-                <span style='font-weight: bold'>{$licenses_available} available</span>
-                <br/><a href='{$graph_url}'>Historical Usage</a>
-                HTML;
+                $licenses_reserved = array_key_exists('num_reservations', $license)
+                    ? $license['num_reservations']
+                    : 0;
 
-                // Used licenses have a blue tinted background to differentiate
-                // from unused licenses.
-                if ((int) $license['num_licenses_used'] > 0) {
+                $licenses_available = $license['num_licenses'] - $licenses_used;
+
+                $license_info = "Total of {$license['num_licenses']} licenses, {$licenses_used} currently in use, ";
+                $license_info .= array_key_exists('num_queued', $license) ? "{$license['num_queued']} queued, " : "";
+                $license_info .= $licenses_reserved > 0 ? "{$license['num_reservations']} reserved, " : "";
+                $license_info .= "<br><span class='bold-text'>{$licenses_available} available</span><br><a href='{$graph_url}'>Historical Usage</a>";
+
+                // Used licenses have a blue tinted background to differentiate from unused licenses.
+                if ($licenses_used > 0) {
                     $class = $i % 2 === 0 ? array('class'=>"alt-even-blue-bgcolor") : array('class'=>"alt-odd-blue-bgcolor");
+                } else if ($licenses_reserved > 0) {
+                    $class = $i % 2 === 0 ? array('class'=>"alt-even-yellow-bgcolor") : array('class'=>"alt-odd-yellow-bgcolor");
                 } else {
                     $class = $i % 2 === 0 ? array('class'=>"alt-bgcolor") : array();
                 }
@@ -187,21 +209,38 @@ function list_licenses_in_use($servers, &$html_body) {
                 // Not all used features have checkout data.  Skip over those that don't.
                 if (array_key_exists('checkouts', $license) && is_countable($license['checkouts'])) {
                     foreach ($license['checkouts'] as $checkout) {
-                        /* ---------------------------------------------------------------------------
-                         * I want to know how long a license has been checked out. This
-                         * helps in case some people forgot to close an application and
-                         * have licenses checked out for too long.
-                         * ---------------------------------------------------------------------------- */
-                         $time_difference = get_readable_timespan($checkout['timespan']);
+                        /* --------------------------------------------------------
+                         * I want to know how long a license has been checked out.
+                         * This helps in case some people forgot to close an
+                         * application and have licenses checked out for too long.
+                         * ----------------------------------------------------- */
+                        $time_difference = get_readable_timespan($checkout['timespan']);
 
-                         // Output the user line
-                         $html = "User: {$checkout['user']}";
-                         $html .= "<br>Computer: {$checkout['host']}";
-                         if (array_key_exists('num_licenses', $checkout)) $html .= "<br>Licenses: {$checkout['num_licenses']}";
-                         $table->add_row(array("", "", $html, $time_difference), $class);
-                     } // END foreach ($license['checkouts'] as $checkout)
-                 } // END if (isset($license['checkouts']) && is_countable($license['checkouts']))
-             } // END if (!isset($_GET['filter_feature']) || in_array($license['feature_name'], $_GET['filter_feature']))
+                        // Output the user line
+                        $html = "User: {$checkout['user']}<br>";
+                        $html .= "Computer: {$checkout['host']}<br>";
+                        $html .= "Licenses: {$checkout['num_licenses']}";
+                        $table->add_row(array("", "", $html, $time_difference), $class);
+                    } // END foreach ($license['checkouts'] as $checkout)
+                } // END if (array_key_exists('checkouts', $license) && is_countable($license['checkouts']))
+
+                if (array_key_exists('queued', $license) && is_countable($license['queued'])) {
+                    foreach ($license['queued'] as $queued) {
+                        $html = "User: {$queued['user']}<br>";
+                        $html .= "Computer: {$queued['host']}<br>";
+                        $html .= "Licenses queued: {$queued['num_queued']}";
+                        $table->add_row(array("", "", $html, ""), $class);
+                    } // END foreach ($license['queued'] as $queued)
+                } // END if (array_key_exists('queued', $license) && is_countable($license['queued']))
+
+                if (array_key_exists('reservations', $license) && is_countable($license['reservations'])) {
+                    foreach ($license['reservations'] as $reservation) {
+                        $html = "{$reservation['reserved_for']}<br>";
+                        $html .= "Tokens reserved: {$reservation['num_reserved']}";
+                        $table->add_row(array("", "", $html, ""), $class);
+                    } // END foreach ($license['reservations'] as $reservation)
+                } // END if (array_key_exists('reservations', $license) && is_countable($license['reservations']))
+             } // END if (!array_key_exists('filter_feature', $_GET) || in_array($license['feature_name'], $_GET['filter_feature']))
          } // END foreach(array_merge($used_licenses, $unused_licenses) as $i => $license)
 
         // Display the table
@@ -235,7 +274,10 @@ function get_features_and_licenses($server_id) {
     for ($i = 0; $query->fetch(); $i++) {
         $results[$i]['feature_name'] = $feature_name;
         $results[$i]['num_licenses'] = $num_licenses;
-        $results[$i]['num_licenses_used'] = 0; // needed by function caller
+        $results[$i]['num_licenses_used'] = "0";  // needed by function caller
+        $results[$i]['num_checkouts'] = "0";      // needed by function caller
+        $results[$i]['num_queued'] = "0";         // needed by function caller
+        $results[$i]['num_reservations'] = "0";   // needed by function caller
     }
 
     if (!empty($db->error_list)) {

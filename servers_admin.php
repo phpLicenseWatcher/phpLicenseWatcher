@@ -48,7 +48,7 @@ function main_form($alert=null) {
     $db->close();
 
     $table = new html_table(array('class' => "table alt-rows-bgcolor"));
-    $headers = array("Name", "Label", "Licensing", "Is Active", "Status", "Server Version", "Last Updated");
+    $headers = array("Name", "Label", "Licensing", "Active", "LM Default Usage Reporting", "Status", "Server Version", "Last Updated");
     $table->add_row($headers, array(), "th");
 
     // Don't display "no servers polled" notice when there are no servers in DB.
@@ -59,7 +59,8 @@ function main_form($alert=null) {
             $server['name'],
             $server['label'],
             ucwords($server['license_manager']),
-            $server['is_active'] ? "True" : "False",
+            $server['is_active'] === "1" ? "True" : "False",
+            $server['lm_default_usage_reporting'] === "1" ? "True" : "False",
             $server['status'],
             $server['version'],
             date_format(date_create($server['last_updated']), "m/d/Y h:ia"),
@@ -126,7 +127,7 @@ function main_form($alert=null) {
     <script src="servers_admin_jquery.js"></script>
     <h1>Server Administration</h1>
     <p>You may edit an existing server's name, label, active status, or add a new server to the database.<br>
-    Server names must be unique and in the form of <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>.  Port is optional, but must unprivileged.
+    Server names must be unique and in the form of <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>.  Port is optional, but must be unprivileged.
     {$alert_html}
     {$control_panel_html}
     <form id='server_list' action='servers_admin.php' method='POST'>
@@ -167,14 +168,20 @@ function edit_form() {
     $lm_supported = $lmtools->list_all_available();
 
     // print view
-    $is_checked = $server_details['is_active'] === '1' ? " CHECKED" : "";
-    $server_select_box = build_select_box($lm_supported, array('name' => "license_manager", 'id' => "license_manager"), $server_details['license_manager']);
+    $is_active_checked = $server_details['is_active'] === "1" ? " CHECKED" : "";
+    $count_reserved_checked = $server_details['lm_default_usage_reporting'] === "1" ? " CHECKED" : "";
+    $server_select_box = build_select_box($lm_supported, array('name' => "license_manager", 'id' => "license_manager"),
+        array_key_exists('license_manager', $server_details) ? $server_details['license_manager'] : "");
     print_header();
 
     print <<<HTML
     <h1>Server Details</h1>
     <form action='servers_admin.php' method='post' class='edit-form'>
         <div class='edit-form block'>
+            <input type='hidden' id='server_id' value='{$id}'>
+            <input type='hidden' id='server_name' value='{$server_details['name']}'>
+            <input type='hidden' id='server_label' value='{$server_details['label']}'>
+        </div><div class='edit-form block'>
             <label for='name'>Name (format: <code>port@domain</code>, <code>port@host</code>, <code>port@ipv4</code>, port optional.)</label><br>
             <input type='text' name='name' id='name' class='edit-form' value='{$server_details['name']}'>
         </div><div class='edit-form block'>
@@ -183,9 +190,12 @@ function edit_form() {
         </div><div class='edit-form block'>
             <label for='license_manager'>Server Type:</label>
             {$server_select_box}
+        </div><div class='edit-form block'>
+            <input type='checkbox' name='count_reserved' id='count_reserved' class='edit-form'{$count_reserved_checked}>
+            <label for='count_reserved' id='count_reserved_label'>Default license manager usage reporting (flexlm only)</label>
         </div><div class='edit-form inline-block'>
-            <label for='is_active'>Is Active?</label>
-            <input type='checkbox' name='is_active' id='is_active' class='edit-form'{$is_checked}>
+            <input type='checkbox' name='is_active' id='is_active' class='edit-form'{$is_active_checked}>
+            <label for='is_active'>Server is active</label>
         </div><div class='edit-form inline-block float-right'>
             <input type='hidden' id='delete-server'>
             <button type='submit' class='btn btn-cancel edit-form' name='cancel' value='1'>Cancel</button>
@@ -193,15 +203,7 @@ function edit_form() {
             {$delete_button}
         </div>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-        <script>
-        $('#delete-button').click(function() {
-            if (confirm("Confirm removal for \\"{$server_details['name']}\\" ({$server_details['label']})\\n*** THIS WILL REMOVE USAGE HISTORY FOR EVERY FEATURE\\n*** THIS CANNOT BE UNDONE")) {
-                $('#delete-server').attr('name', "delete_id");
-                $('#delete-server').attr('value', {$id});
-                $('form').submit();
-            }
-        });
-        </script>
+        <script src="servers_edit_jquery.js"></script>
     </form>
     HTML;
 

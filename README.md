@@ -68,6 +68,15 @@
 6. You should use your web server's built in capabilities to password protect your site.
 7. Navigate to page `check_installation.php` to check for possible installation issues.
 
+### What is "LM Default Usage Reporting"?
+FlexLM documentation states that FlexLM should report license usage based on licenses checked out by users, only.
+However, our internal FlexLM systems were also including reserved (but not in use) licenses in that count.
+
+*  When set `true`, PHP License Watcher will accept FlexLM's usage report as is.  This is the original behavior for PHP License Watcher (up to build 220503).
+* When set `false`, PHP License Watcher will do its own count of licenses in use, based on identified users of the license, and record/report that value.
+* This value is set on a per server basis.  It is found through server administration.
+* For Mathematica, this value is set `true` and should not be changed.
+
 ### Crontab details
 
 There are CLI scripts that need to be executed ie. license_util.php and license_cache.php.
