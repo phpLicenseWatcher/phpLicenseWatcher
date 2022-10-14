@@ -21,7 +21,7 @@ print "Root required.\n" and exit 1 if ($> != 0);
 # No CLI arg:  (default) copy latest development code to HTML directory
 my ($source, $dest, $file, @files);
 if (defined $ARGV[0] && $ARGV[0] eq "full") {
-    # composer("install"); # Composer is disabled.
+    composer("install");
     clear_html_folder();
     $source = catdir(@CONFIG::REPO_PATH);
     $dest   = catdir(@CONFIG::HTML_PATH);
@@ -36,7 +36,7 @@ if (defined $ARGV[0] && $ARGV[0] eq "full") {
     print "Install vagrant config file.\n";
     copy_code($source, $dest, $file);
 } elsif (defined $ARGV[0] && $ARGV[0] eq "update-composer") {
-    # composer("update"); # Composer is disabled.
+    composer("update");
 } else {
     $source = catdir(@CONFIG::REPO_PATH);
     $dest   = catdir(@CONFIG::HTML_PATH);
@@ -49,18 +49,17 @@ if (defined $ARGV[0] && $ARGV[0] eq "full") {
 exit 0;
 
 # Run composer to either install or update packages.
-# Composer is disabled.
-# sub composer {
-#     my $cmd = shift;
-#     my $dest = catdir(@CONFIG::REPO_PATH);
-#
-#     if ((system "su -c \"composer -d$dest $cmd\" $CONFIG::VAGRANT_USER") != 0) {
-#         print STDERR "composer exited ", $? >> 8, "\n";
-#         exit 1;
-#     }
-#
-#     print "Composer: $cmd done.\n";
-# }
+sub composer {
+    my $cmd = shift;
+    my $dest = catdir(@CONFIG::REPO_PATH);
+
+    if ((system "su -c \"composer -d$dest $cmd\" $CONFIG::VAGRANT_USER") != 0) {
+        print STDERR "composer exited ", $? >> 8, "\n";
+        exit 1;
+    }
+
+    print "Composer: $cmd done.\n";
+}
 
 # Remove everything from HTML directory
 sub clear_html_folder {

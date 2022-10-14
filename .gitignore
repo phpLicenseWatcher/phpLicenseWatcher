@@ -67,7 +67,10 @@ dist/
 nbdist/
 .nb-gradle/
 
+# VS Code
+.code-workspace
+
 # Composer
 /vendor/
-composer.lock
+!composer.lock
 !composer.json
