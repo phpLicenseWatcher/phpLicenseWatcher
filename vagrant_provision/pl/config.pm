@@ -18,7 +18,7 @@ our @PHP_INI_CLI_PATH = (rootdir(), "etc", "php", "8.1", "cli");
 our @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 
 # Relevant files
-our @CODE_FILES = qw(*.php *.html *.js *.css *.template mathematica vendor);
+our @CODE_FILES = qw(*.php *.html *.js *.css *.template mathematica);
 our $CONFIG_FILE = "config.php";
 our $SQL_FILE = "phplicensewatcher.sql";
 our $LOGROTATE_CONF_FILE = "phplw.conf";

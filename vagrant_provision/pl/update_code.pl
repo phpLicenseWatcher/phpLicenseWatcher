@@ -11,6 +11,7 @@ use File::Spec::Functions qw(catdir catfile);
 use FindBin qw($RealBin);
 use lib $RealBin;
 use config;
+use Data::Dumper;
 
 # main()
 # Root required
@@ -19,13 +20,14 @@ print "Root required.\n" and exit 1 if ($> != 0);
 # CLI arg = full:  remove/reinstall all code and dependencies to HTML directory
 # CLI arg = update-composer:  Run update only on composer dependencies
 # No CLI arg:  (default) copy latest development code to HTML directory
-my ($source, $dest, $file, @files);
+my ($source, $dest, $file, $composer, @files);
 if (defined $ARGV[0] && $ARGV[0] eq "full") {
-    composer("install");
     clear_html_folder();
     $source = catdir(@CONFIG::REPO_PATH);
     $dest   = catdir(@CONFIG::HTML_PATH);
-    @files  = build_file_list($source);
+    $composer = $CONFIG::COMPOSER_PACKAGES;
+    @files = build_file_list($source);
+    push @files, full_recursive_file_list($composer);
     print "Install development code.\n";
     copy_code($source, $dest, @files);
 
@@ -35,12 +37,16 @@ if (defined $ARGV[0] && $ARGV[0] eq "full") {
     $file   = $CONFIG::CONFIG_FILE;
     print "Install vagrant config file.\n";
     copy_code($source, $dest, $file);
-} elsif (defined $ARGV[0] && $ARGV[0] eq "update-composer") {
+} elsif (defined $ARGV[0] && $ARGV[0] eq "composer-install-packages") {
+    composer("install");
+} elsif (defined $ARGV[0] && $ARGV[0] eq "composer-update-packages") {
     composer("update");
 } else {
     $source = catdir(@CONFIG::REPO_PATH);
     $dest   = catdir(@CONFIG::HTML_PATH);
+    $composer = $CONFIG::COMPOSER_PACKAGES;
     @files  = build_file_list($source);
+    push @files, full_recursive_file_list($composer);
     print "Update development code.\n";
     copy_code($source, $dest, @files);
 }
@@ -95,6 +101,26 @@ sub build_file_list {
     }
 
     return @file_list;
+}
+
+# Recursive copy of all files in a directory tree. Intended for Composer files in "vendor".
+# Expected param: start dir for copying files (such as "vendor").
+sub full_recursive_file_list {
+    my $path = shift;
+    my $glob_pattern = catdir(@CONFIG::REPO_PATH, $path, "*");
+    my ($file, @files);
+    foreach (glob $glob_pattern) {
+        next if (!-e $_); # Occasionally glob matches to a non-existent file.  Skip those.
+        $file = fileparse($_);
+        $file = catfile($path, $file);
+        if (-d $_) {
+            push @files, full_recursive_file_list($file);
+        } else {
+            push @files, $file;
+        }
+    }
+
+    return @files;
 }
 
 # Copy all code files (other than config files)

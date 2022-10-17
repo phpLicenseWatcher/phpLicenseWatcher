@@ -319,5 +319,6 @@ sub copy_code {
     print "Copying repository code.\n";
     my @working_path = (@CONFIG::REPO_PATH, "vagrant_provision", "pl");
     my $file = catfile(@working_path, $CONFIG::UPDATE_CODE);
+    exec_cmd("perl ${file} composer-install-packages");
     exec_cmd("perl ${file} full");
 }
