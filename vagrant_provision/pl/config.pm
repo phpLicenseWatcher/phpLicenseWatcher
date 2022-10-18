@@ -29,6 +29,7 @@ our $UPDATE_CODE = "update_code.pl";
 our $LICENSE_UTIL = "license_util.php";
 our $LICENSE_CACHE = "license_cache.php";
 our $COMPOSER_PACKAGES = "vendor";
+our @COMPOSER_CODE_FILES = qw(*);
 
 # Packages needed for phplw.
 our @REQUIRED_PACKAGES = ("apache2", "php", "php-mysql", "mysql-server", "mysql-client", "lsb", "wget", "zip", "unzip");

@@ -20,21 +20,14 @@ print "Root required.\n" and exit 1 if ($> != 0);
 # CLI arg = full:  remove/reinstall all code and dependencies to HTML directory
 # CLI arg = update-composer:  Run update only on composer dependencies
 # No CLI arg:  (default) copy latest development code to HTML directory
-my ($source, $dest, $file, $composer, @files);
 if (defined $ARGV[0] && $ARGV[0] eq "full") {
     clear_html_folder();
-    $source = catdir(@CONFIG::REPO_PATH);
-    $dest   = catdir(@CONFIG::HTML_PATH);
-    $composer = $CONFIG::COMPOSER_PACKAGES;
-    @files = build_file_list($source);
-    push @files, full_recursive_file_list($composer);
-    print "Install development code.\n";
-    copy_code($source, $dest, @files);
+    install_code();
 
     # Config file copy
-    $source = catdir(@CONFIG::CONFIG_PATH);
-    $dest   = catdir(@CONFIG::HTML_PATH);
-    $file   = $CONFIG::CONFIG_FILE;
+    my $source = catdir(@CONFIG::CONFIG_PATH);
+    my $dest   = catdir(@CONFIG::HTML_PATH);
+    my $file   = $CONFIG::CONFIG_FILE;
     print "Install vagrant config file.\n";
     copy_code($source, $dest, $file);
 } elsif (defined $ARGV[0] && $ARGV[0] eq "composer-install-packages") {
@@ -42,19 +35,14 @@ if (defined $ARGV[0] && $ARGV[0] eq "full") {
 } elsif (defined $ARGV[0] && $ARGV[0] eq "composer-update-packages") {
     composer("update");
 } else {
-    $source = catdir(@CONFIG::REPO_PATH);
-    $dest   = catdir(@CONFIG::HTML_PATH);
-    $composer = $CONFIG::COMPOSER_PACKAGES;
-    @files  = build_file_list($source);
-    push @files, full_recursive_file_list($composer);
-    print "Update development code.\n";
-    copy_code($source, $dest, @files);
+    install_code();
 }
 
 # All done!
 exit 0;
 
 # Run composer to either install or update packages.
+# Expected param: either "install" or "update".
 sub composer {
     my $cmd = shift;
     my $dest = catdir(@CONFIG::REPO_PATH);
@@ -64,7 +52,7 @@ sub composer {
         exit 1;
     }
 
-    print "Composer: $cmd done.\n";
+    print "Composer: ${cmd} done.\n";
 }
 
 # Remove everything from HTML directory
@@ -74,16 +62,40 @@ sub clear_html_folder {
     print "Cleared HTML directory.\n";
 }
 
-# Expected param: $root_path (path to start gathering filenames for code copying)
-# Optional param: $sub_path  Additional dirs off of $root_path.  Default: $sub_path = ""
+# Install code or update existing code in working dir (/var/www/html).
+sub install_code {
+    my $source = catdir(@CONFIG::REPO_PATH);
+    my $dest = catdir(@CONFIG::HTML_PATH);
+    my $composer_subpath = $CONFIG::COMPOSER_PACKAGES;
+    my @code_files = @CONFIG::CODE_FILES;
+    my @composer_files = @CONFIG::COMPOSER_CODE_FILES;
+    my $num_code_files = scalar @code_files;
+    my $num_composer_files = scalar @composer_files;
+    # This build_file_list() call lists out phpLW's own code.
+    my @files = build_file_list($num_code_files, @code_files, $source);
+    # This build_file_list() call lists out code provided by composer.
+    push @files, build_file_list($num_composer_files, @composer_files, $source, $composer_subpath);
+    print "Install/Update development code.\n";
+    copy_code($source, $dest, @files);
+}
+
+# Build a list of code files used by phpLW.  This list is to help ensure that
+# the working dir (/var/www/html) is clean from extraneous files in the repo.
+#
+# Expected params: $n = number of elems expected in @code_files
+#                  @code_files = array of glob patterns for building a file list
+#                  $root_path = dir to start glob search
+#                  $sub_path = (optional) additional dirs off of $root_path
+# Return: List of all files (and paths) that make up phpLW's code.
 sub build_file_list {
+    my $n = shift;
+    my @code_files = splice @_, 0, $n;
     my $root_path = shift;
-    my ($sub_path, $search_path, $path, $file, @file_list);
-
     # Get $sub_path, if param exists.
-    $sub_path = scalar @_ > 0 ? shift : "";
+    my $sub_path = scalar @_ > 0 ? shift : "";
+    my ($search_path, $path, $file, @file_list);
 
-    foreach (@CONFIG::CODE_FILES) {
+    foreach (@code_files) {
         $path = catfile($root_path, $sub_path, $_);
         foreach (glob $path) {
             next if (!-e $_); # Occasionally glob matches to a non-existent file.  Skip those.
@@ -91,36 +103,15 @@ sub build_file_list {
             if (-d $_) {
                 # Recurse into directory and push results onto @file_list
                 $search_path = catdir($sub_path, $file);
-                push @file_list, build_file_list($root_path, $search_path);
-                next;
+                push @file_list, build_file_list($n, @code_files, $root_path, $search_path);
+            } else {
+                $file = catfile($sub_path, $file) if ($sub_path ne "");
+                push @file_list, $file;
             }
-
-            $file = catfile($sub_path, $file) if ($sub_path ne "");
-            push @file_list, $file;
         }
     }
 
     return @file_list;
-}
-
-# Recursive copy of all files in a directory tree. Intended for Composer files in "vendor".
-# Expected param: start dir for copying files (such as "vendor").
-sub full_recursive_file_list {
-    my $path = shift;
-    my $glob_pattern = catdir(@CONFIG::REPO_PATH, $path, "*");
-    my ($file, @files);
-    foreach (glob $glob_pattern) {
-        next if (!-e $_); # Occasionally glob matches to a non-existent file.  Skip those.
-        $file = fileparse($_);
-        $file = catfile($path, $file);
-        if (-d $_) {
-            push @files, full_recursive_file_list($file);
-        } else {
-            push @files, $file;
-        }
-    }
-
-    return @files;
 }
 
 # Copy all code files (other than config files)
