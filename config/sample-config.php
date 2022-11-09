@@ -15,11 +15,20 @@ $cache_dir="/var/cache/phplw/";
 $cache_lifetime=7200;
 
 // License expiration alerts are sent to $notify_address.
-// $do_not_reply_address is filled in the reply field.
-// License alert emails are disabled when either is left blank.
+// $reply_address is filled in the from and reply fields.
+// Consider NOT using a "do not reply" address so that errors can be received.
+// $smtp_tls is either "smtps" or "starttls".
+// $smtp_port is usually either "465" (smtps) or "587" (starttls).
+// License alert emails are disabled when $send_email_notifications is set 0.
 // Licenses expiring within $lead_time (in days) are included in the alerts.
+$smtp_host="";
+$smtp_login="";
+$smtp_password="";
+$smtp_tls="";
+$smtp_port="";
 $notify_address="";
-$do_not_reply_address="";
+$reply_address="";
+$send_email_notifications=0;
 $lead_time=30;
 
 // $disable_autorefresh, when set to 1, will halt automatic refresh of certain

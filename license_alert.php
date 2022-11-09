@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 ############################################################################
 # Purpose: This script is used to e-mail alerts on licenses that are
@@ -11,6 +12,13 @@
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/tools.php";
 require_once __DIR__ . "/html_table.php";
+
+if (file_exists(__DIR__ . "/vendor/autoload.php")) {
+    require_once __DIR__ . "/vendor/autoload.php";
+}
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
 
 db_connect($db);
 $servers = db_get_servers($db, array('name', 'label', 'license_manager'));
@@ -34,7 +42,7 @@ $table->add_row($colHeaders, array(), "th");
 
 // Now after the expiration has been built loop through all the fileservers
 for ($i = 0; $i < count($expiration_array); $i++) {
-    if (isset($expiration_array[$i])) {
+    if (array_key_exists($i, $expiration_array)) {
         foreach ($expiration_array[$i] as $key => $myarray) {
             for ($j = 0; $j < sizeof($myarray); $j++) {
                 $bgcolor_class = "";
@@ -79,23 +87,68 @@ Licenses will expire at 23:59 on the day of expiration.
 {$table_html}
 HTML;
 
-// If the table has more than one row (header row will be one) there are
-// expiring licenses alerts to be emailed.
-if ($table->get_rows_count() > 1) {
-    if (isset($notify_address) && isset($do_not_reply_address) && !isset($_GET['nomail'])) {
-        $message .= "Emailing to {$notify_address}\n";
-        $headers[] = 'MIME-Version: 1.0';
-        $headers[] = 'Content-type: text/html; charset=iso-8859-1';
-        $headers[] = "From: {$do_not_reply_address}";
-        $headers[] = "Reply-To: {$do_not_reply_address}";
-        $headers[] = 'X-Mailer: PHP/' . phpversion();
-        mail($notify_address, "ALERT: License expiration within {$lead_time} days", $message, implode("\r\n", $headers));
+// More reliable check to determine if we're running on CLI than php_sapi_name()
+if (empty(preg_grep("/^HTTP_/", array_keys($_SERVER)))) {
+    // Script run from command line.  Send license alerts via email.
+    global $send_email_notifications;  // defined in config.php
+    if ($send_email_notifications) {
+        send_email($message);
+    }
+} else {
+    print_view($message);
+}
+
+exit(0);
+
+
+function send_email($message) {
+    // Check for PHPMailer library before proceeding.
+    if (!class_exists("PHPMailer\PHPMailer\PHPMailer", true)) {
+        fprintf(STDERR, "Cannot mail license alerts.  PHPMailer library not found.\n");
+        exit(1);
+    }
+
+    // globals are defined in config.php
+    global $smtp_host, $smtp_login, $smtp_password, $smtp_tls, $smtp_port, $notify_address, $reply_address, $lead_time;
+
+    $mail = new PHPMailer(true);
+    $mail->isSMTP();
+    $mail->SMTPAuth  = true;
+    $mail->Host      = $smtp_host;
+    $mail->Port      = $smtp_port;
+    $mail->Username  = $smtp_login;
+    $mail->Password  = $smtp_password;
+
+    switch ($smtp_tls) {
+    case "smtps":
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        break;
+    case "starttls":
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        break;
+    default:
+        fprintf(STDERR, "Cannot mail license alerts.\n\$smtp_tls not properly set in config.php\n");
+        exit(1);
+    }
+
+    $mail->setFrom($reply_address, 'phpLicenseWatcher');
+    $mail->addReplyTo($reply_address);
+    $mail->addAddress($notify_address);
+    $mail->isHTML(true);
+
+    $mail->Subject = "ALERT: License expiration within {$lead_time} days";
+    $mail->Body    = $message;
+
+    if (!$mail->send()) {
+        fprintf(STDERR, "Cannot mail license alerts.\nMailer Error: %s", $mail->ErrorInfo);
+        exit(1);
     }
 }
 
-// Print View
-print_header();
-print "<h1>License Alert</h1>\n";
-print $message;
-print_footer();
+function print_view($message) {
+    print_header();
+    print "<h1>License Alert</h1>\n";
+    print $message;
+    print_footer();
+}
 ?>
