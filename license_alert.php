@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 ############################################################################
 # Purpose: This script is used to e-mail alerts on licenses that are
@@ -32,7 +31,6 @@ foreach ($servers as $i => $server) {
     build_license_expiration_array($server, $expiration_array[$i]);
 }
 
-
 $table = new html_table(array('class'=>"table alt-rows-bgcolor"));
 
 $colHeaders = array("Server", "Server label", "Feature expiring", "Expiration date",
@@ -41,10 +39,12 @@ $colHeaders = array("Server", "Server label", "Feature expiring", "Expiration da
 $table->add_row($colHeaders, array(), "th");
 
 // Now after the expiration has been built loop through all the fileservers
-for ($i = 0; $i < count($expiration_array); $i++) {
+$max_expiration_array = count($expiration_array);
+for ($i = 0; $i < $max_expiration_array; $i++) {
     if (array_key_exists($i, $expiration_array)) {
         foreach ($expiration_array[$i] as $key => $myarray) {
-            for ($j = 0; $j < sizeof($myarray); $j++) {
+            $max_myarray = count($myarray);
+            for ($j = 0; $j < $max_myarray; $j++) {
                 $bgcolor_class = "";
                 switch (true) {
                 case $myarray[$j]["days_to_expiration"] === "permanent":
@@ -79,7 +79,7 @@ for ($i = 0; $i < count($expiration_array); $i++) {
 // Dump the table HTML into a variable
 $table_html = $table->get_html();
 
-// View body
+// Message body for either browser view or email.
 $message = <<<HTML
 These licenses will expire within {$lead_time} days.
 Licenses will expire at 23:59 on the day of expiration.
@@ -100,6 +100,7 @@ if (empty(preg_grep("/^HTTP_/", array_keys($_SERVER)))) {
 
 exit(0);
 
+// FUNCTIONS ------------------------------------------------------------------
 
 function send_email($message) {
     // Check for PHPMailer library before proceeding.
@@ -111,8 +112,9 @@ function send_email($message) {
     // globals are defined in config.php
     global $smtp_host, $smtp_login, $smtp_password, $smtp_tls, $smtp_port, $notify_address, $reply_address, $lead_time;
 
-    $mail = new PHPMailer(true);
+    $mail = new PHPMailer();
     $mail->isSMTP();
+    $mail->SMTPDebug = SMTP::DEBUG_OFF;
     $mail->SMTPAuth  = true;
     $mail->Host      = $smtp_host;
     $mail->Port      = $smtp_port;
@@ -140,7 +142,7 @@ function send_email($message) {
     $mail->Body    = $message;
 
     if (!$mail->send()) {
-        fprintf(STDERR, "Cannot mail license alerts.\nMailer Error: %s", $mail->ErrorInfo);
+        fprintf(STDERR, "Cannot mail license alerts.\nMailer Error: %s\n", $mail->ErrorInfo);
         exit(1);
     }
 }
