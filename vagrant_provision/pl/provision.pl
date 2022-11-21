@@ -9,6 +9,7 @@ use autodie;
 use File::Basename qw(fileparse);
 use File::Copy qw(copy);
 use File::Spec::Functions qw(catdir catfile);
+use Digest::file qw(digest_file_hex);
 use FindBin qw($RealBin);
 use lib $RealBin;
 use config;
@@ -26,7 +27,7 @@ setup_database();
 setup_logrotate();
 setup_php();
 setup_apache();
-# setup_composer();  # Composer disabled.
+setup_composer();
 create_symlink();
 copy_code();
 
@@ -255,7 +256,35 @@ sub setup_apache {
 
 # Run composer to retrieve PHP dependencies.  Composer cannot be run as superuser.
 sub setup_composer {
-    exec_cmd("su -c \"composer -d" . catfile(@CONFIG::REPO_PATH) . " install\" $CONFIG::VAGRANT_USER");
+    my $sig_url = $CONFIG::COMPOSER_SIG_URL;
+    my $setup_url = $CONFIG::COMPOSER_SETUP_URL;
+    my $setup_path = catdir(@CONFIG::COMPOSER_SETUP_PATH);
+    my $setup_file = $CONFIG::COMPOSER_SETUP_FILE;
+    my $bin_path = catdir(@CONFIG::COMPOSER_BIN_PATH);
+    my ($sig_hash, $setup_hash, $dest, $permissions);
+
+    print "Setup composer.\n";
+
+    # Get Composer's expected sha-384 hash for setup file.
+    $sig_hash = `wget --quiet --output-document=- ${sig_url}`;
+
+    # Retrieve Composer setup file
+    exec_cmd("wget --directory-prefix=${setup_path} --output-document=${setup_file} ${setup_url}");
+
+    # Get Composer setup file hash
+    $dest = catfile($setup_path, $setup_file);
+    $setup_hash = digest_file_hex($dest, "SHA-384");
+    print "Composer setup file SHA-384 hash\nExpected: ${sig_hash}\nFound:    ${setup_hash}\n";
+
+    # Authenticity check
+    print STDERR "Composer setup file hash mismatch.  Retrieved setup may not be authentic.\nAborting.\n" and exit 1 if ($sig_hash ne $setup_hash);
+
+    # Install Composer
+    $permissions = $CONFIG::COMPOSER_BIN_PERMISSIONS;
+    exec_cmd("php ${dest} --install-dir=${bin_path} --filename=composer");
+    chmod $permissions, $dest;
+
+    print "Composer ready at ${bin_path}/composer\n";
 }
 
 # Create convenient symlink
@@ -273,7 +302,7 @@ sub create_symlink {
     push @scripts, catfile(@CONFIG::HTML_PATH, $CONFIG::LICENSE_UTIL);
     push @scripts, catfile(@CONFIG::HTML_PATH, $CONFIG::LICENSE_CACHE);
     push @scripts, catdir(@CONFIG::DEBUG_PATH);
-    
+
     push @links, catfile(@CONFIG::VAGRANT_HOMEPATH, "update");
     push @links, catfile(@CONFIG::VAGRANT_HOMEPATH, "license_util");
     push @links, catfile(@CONFIG::VAGRANT_HOMEPATH, "license_cache");
@@ -290,5 +319,6 @@ sub copy_code {
     print "Copying repository code.\n";
     my @working_path = (@CONFIG::REPO_PATH, "vagrant_provision", "pl");
     my $file = catfile(@working_path, $CONFIG::UPDATE_CODE);
+    exec_cmd("perl ${file} composer-install-packages");
     exec_cmd("perl ${file} full");
 }

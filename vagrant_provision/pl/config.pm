@@ -12,9 +12,9 @@ our @LMTOOLS_PATH = (rootdir(), "opt", "lmtools");
 our @HTML_PATH = (rootdir(), "var", "www", "html");
 our @LOGROTATE_PATH = (rootdir(), "etc", "logrotate.d");
 our @APACHE_PATH = (rootdir(), "etc", "apache2");
-our @PHP_INI_DEV_PATH = (rootdir(), "usr", "lib", "php", "7.4");
-our @PHP_INI_APACHE_PATH = (rootdir(), "etc", "php", "7.4", "apache2");
-our @PHP_INI_CLI_PATH = (rootdir(), "etc", "php", "7.4", "cli");
+our @PHP_INI_DEV_PATH = (rootdir(), "usr", "lib", "php", "8.1");
+our @PHP_INI_APACHE_PATH = (rootdir(), "etc", "php", "8.1", "apache2");
+our @PHP_INI_CLI_PATH = (rootdir(), "etc", "php", "8.1", "cli");
 our @CACHE_PATH = (rootdir(), "var", "cache", "phplw");
 
 # Relevant files
@@ -29,9 +29,10 @@ our $UPDATE_CODE = "update_code.pl";
 our $LICENSE_UTIL = "license_util.php";
 our $LICENSE_CACHE = "license_cache.php";
 our $COMPOSER_PACKAGES = "vendor";
+our @COMPOSER_CODE_FILES = qw(*);
 
 # Packages needed for phplw.
-our @REQUIRED_PACKAGES = ("apache2", "php", "php-mysql", "mysql-server", "mysql-client", "lsb", "zip", "unzip");
+our @REQUIRED_PACKAGES = ("apache2", "php", "php-mysql", "mysql-server", "mysql-client", "lsb", "wget", "zip", "unzip");
 
 # Non super user account.  Some package systems run better when not as root.
 our $VAGRANT_USER = "vagrant";
@@ -71,6 +72,14 @@ our $DB_CONFIG_FILE = "mysqld.cnf";
 our $DB_NAME = "vagrant";
 our $DB_USER = "vagrant";
 our $DB_PASS = "vagrant";
+
+# Composer
+our $COMPOSER_SIG_URL = "https://composer.github.io/installer.sig";
+our $COMPOSER_SETUP_URL = "https://getcomposer.org/installer";
+our @COMPOSER_SETUP_PATH = @VAGRANT_HOMEPATH;
+our $COMPOSER_SETUP_FILE = "composer_setup.php";
+our @COMPOSER_BIN_PATH = (rootdir(), "usr", "local", "bin");
+our $COMPOSER_BIN_PERMISSIONS = 0755;
 
 # ** -------------------------- END CONFIGURATION --------------------------- **
 

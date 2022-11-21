@@ -3,6 +3,11 @@
 require_once __DIR__ . "/common.php";
 include_once __DIR__ . "/html_table.php";
 
+if (file_exists(__DIR__ . "/vendor/autoload.php")) {
+    require_once __DIR__ . "/vendor/autoload.php";
+}
+use PHPMailer\PHPMailer\PHPMailer;
+
 define("PASS_MARK", "<span class='green-text'>&#10004; GOOD</span>");  // green heavy checkmark
 define("FAIL_MARK", "<span class='red-text'>&#10006; FAIL</span>");    // red cross mark
 define("REQUIRED_PHP", "7.3.0");
@@ -51,10 +56,10 @@ $test = call_user_func(function() {
     global $db_hostname, $db_username, $db_password, $db_database; // from config.php
 
     $err = array();
-    if (!isset($db_hostname)) $err[] = '$db_hostname';
-    if (!isset($db_username)) $err[] = '$db_username';
-    if (!isset($db_password)) $err[] = '$db_password';
-    if (!isset($db_database)) $err[] = '$db_database';
+    if (!isset($db_hostname) || empty($db_hostname)) $err[] = '$db_hostname';
+    if (!isset($db_username) || empty($db_username)) $err[] = '$db_username';
+    if (!isset($db_password) || empty($db_password)) $err[] = '$db_password';
+    if (!isset($db_database) || empty($db_database)) $err[] = '$db_database';
     if (!empty($err)) {
         $err = implode(", ", $err);
         return array(false, "{$err} not set in config.php");
@@ -73,6 +78,13 @@ $test = call_user_func(function() {
 $test_names   = "Database Connectivity";
 $test_values  = $test[0] ? "Connection OK" : $test[1];
 $test_results = $test[0] ? PASS_MARK : FAIL_MARK;
+$table->add_row(array($test_names, $test_values, $test_results));
+
+// Test to see if PHPMailer exists via composer
+$test         = class_exists("PHPMailer\PHPMailer\PHPMailer", true);
+$test_names   = "PHPMailer Library (via Composer)";
+$test_values  = $test ? "Library Found" : "Library NOT Found";
+$test_results = $test ? PASS_MARK : FAIL_MARK;
 $table->add_row(array($test_names, $test_values, $test_results));
 
 // Display view.
