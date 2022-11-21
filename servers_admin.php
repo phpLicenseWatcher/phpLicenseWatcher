@@ -72,18 +72,18 @@ function main_form($alert=null) {
         $table->update_cell($last_row, 0, null, null, "th");
         switch($server['status']) {
         case null:
-            $table->update_cell($last_row, 4, array('class'=>"info"), "Not Polled");
+            $table->update_cell($last_row, 5, array('class'=>"info"), "Not Polled");
             break;
         case SERVER_UP:
             // No table cell update.
             $display_notice = false;
             break;
         case SERVER_VENDOR_DOWN:
-            $table->update_cell($last_row, 4, array('class'=>"warning"));
+            $table->update_cell($last_row, 5, array('class'=>"warning"));
             break;
         case SERVER_DOWN:
         default:
-            $table->update_cell($last_row, 4, array('class'=>"danger"));
+            $table->update_cell($last_row, 5, array('class'=>"danger"));
             break;
         }
     }
