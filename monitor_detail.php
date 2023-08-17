@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . "/common.php";
 
-$feature = preg_replace("/[^a-zA-Z0-9_|]+/", "", htmlspecialchars($_GET['feature'])) ;
+$feature = preg_replace("/[^a-zA-Z0-9_|\-]+/", "", htmlspecialchars($_GET['feature'])) ;
 $label = $feature;
 
 db_connect($db);
