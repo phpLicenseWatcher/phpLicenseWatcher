@@ -6,8 +6,6 @@ services:
             context: ./httpd
         ports:
             - 8080:80
-        networks:
-            - licensewatch
         restart: on-failure:5
     mariadb:
         image: mariadb:10.5.2
@@ -20,16 +18,7 @@ services:
             MYSQL_USER: 'lmutilmon'
             MYSQL_PASSWORD: ''
             MYSQL_DATABASE: 'licenses'
-        networks:
-            - licensewatch
         restart: on-failure:5
 
 volumes:
     mariadb-volume:
-
-
-networks:
-    licensewatch:
-        ipam:
-            config:
-                - subnet: 172.28.0.0/16
