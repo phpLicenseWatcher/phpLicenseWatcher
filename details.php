@@ -188,7 +188,9 @@ function list_licenses_in_use($servers, &$html_body) {
                     ? $license['num_reservations']
                     : 0;
 
-                $licenses_available = $license['num_licenses'] - $licenses_used;
+                $licenses_available = $license['num_licenses'] !== "uncounted" && $licenses_used !== "uncounted"
+                    ? $license['num_licenses'] - $licenses_used
+                    : "uncounted";
 
                 $license_info = "Total of {$license['num_licenses']} licenses, {$licenses_used} currently in use, ";
                 $license_info .= array_key_exists('num_queued', $license) ? "{$license['num_queued']} queued, " : "";
@@ -240,8 +242,8 @@ function list_licenses_in_use($servers, &$html_body) {
                         $table->add_row(array("", "", $html, ""), $class);
                     } // END foreach ($license['reservations'] as $reservation)
                 } // END if (array_key_exists('reservations', $license) && is_countable($license['reservations']))
-             } // END if (!array_key_exists('filter_feature', $_GET) || in_array($license['feature_name'], $_GET['filter_feature']))
-         } // END foreach(array_merge($used_licenses, $unused_licenses) as $i => $license)
+            } // END if (!array_key_exists('filter_feature', $_GET) || in_array($license['feature_name'], $_GET['filter_feature']))
+        } // END foreach(array_merge($used_licenses, $unused_licenses) as $i => $license)
 
         // Display the table
         $html_body .= $table->get_html();
