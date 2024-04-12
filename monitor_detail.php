@@ -1,33 +1,30 @@
 <?php
 require_once __DIR__ . "/common.php";
 
-$feature = preg_replace("/[^a-zA-Z0-9_|\-]+/", "", htmlspecialchars($_GET['feature'])) ;
-$label = $feature;
+$feature = preg_replace("/^(?!(?!\|)[\w\-|]+(?<!\|)$).*+/", "", htmlspecialchars($_GET['feature'] ?? ""));
+$server = preg_replace("/^(?!([\d]+$)).+$/", "", htmlspecialchars($_GET['server']  ?? ""));
 
-db_connect($db);
+print nl2br(var_export($feature, true)."<br>");
+print nl2br(var_export($server, true)."<br>");
 
 $sql = <<<SQL
-SELECT `name`, `label`
-FROM `features`
-WHERE `show_in_lists`=1 AND `name`='{$feature}'
+SELECT `licenses`.`id`, `features`.`label`
+FROM `licenses`
+JOIN `features` ON `licenses`.`feature_id` = `features`.`id`
+JOIN `servers` ON `licenses`.`server_id` = `servers`.`id`
+WHERE `features`.`show_in_lists`=1 AND `features`.`name`=? AND `servers`.`id`=?
 SQL;
 
-$result = $db->query($sql);
-if (!$result) {
-    die ($db->error);
-}
-
-// $row[0] = `name`, $row[1] = `label`
-while ($row = $result->fetch_row()){
-    $label = $row[1];
-    if (empty($label)) {
-        //`label` is NULL, so use `name`, instead.
-        $label = $row[0];
-    }
-}
-
-$result->free();
+db_connect($db);
+$query = $db->prepare($sql);
+$query->bind_param("si", $feature, $server);
+$query->execute();
+$query->bind_result($license_id, $label);
+$query->fetch();
+$query->close();
 $db->close();
+
+if ($label == "") $label = $feature;
 $label = str_replace('|', ' or ', $label);
 
 // Print View.
@@ -58,7 +55,7 @@ print <<<HTML
         };
 
         $.each(charts, function(key, value) {
-            var data_url = "graph_data.php?feature={$feature}&days=" + key;
+            var data_url = "graph_data.php?license={$license_id}&days=" + key;
             var data_div = "chart_div_" + value;
             var json_data = $.ajax({
                 url: data_url,

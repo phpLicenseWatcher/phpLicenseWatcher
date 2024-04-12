@@ -53,7 +53,7 @@ function list_features_and_expirations($servers, &$html_body) {
     <p>This is a list of licenses (features) available on this particular license server.
     If there are multiple entries under "Expiration dates" it means there are different entries for the same license.
     If expiration is in yellow, it means expiration is within {$lead_time} days.  Red indicates expired licenses.</p>
-HTML;
+    HTML;
 
     $today = mktime(0,0,0,date("m"),date("d"),date("Y"));
 
@@ -175,7 +175,7 @@ function list_licenses_in_use($servers, &$html_body) {
         foreach(array_merge($used_licenses, $unused_licenses) as $i => $license) {
             if (!array_key_exists('filter_feature', $_GET) || in_array($license['feature_name'], $_GET['filter_feature'])) {
                 $feature = $license['feature_name'];
-                $graph_url = "monitor_detail.php?feature={$feature}";
+                $graph_url = "monitor_detail.php?feature={$feature}&server={$server['id']}";
 
                 // $license['num_licenses_used'] is the value reported by the license manager, which can include reserved tokens.
                 // $license['num_checkouts'] is the accumulated count of licenses reported to be checked out by all individual users.
