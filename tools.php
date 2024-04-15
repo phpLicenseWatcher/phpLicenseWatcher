@@ -274,7 +274,7 @@ function cache_store($command, $data) {
 /**
  * Interpret a DateInterval object into words.
  *
- * DateInterval's format fnuction doesn't give us the power to exclude a
+ * DateInterval's format function doesn't give us the power to exclude a
  * zero value.  e.g. $dti->format("%y year(s), %m month(s), %d day(s).") will
  * always include years, months, and days even when they are zero.  Same
  * goes for hours, minutes, seconds.  This function will exclude zero values.
