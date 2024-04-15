@@ -3,63 +3,46 @@
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/tools.php";
 
-$license = preg_replace("/^(?!(all|(?!\|)[\d|]+(?<!\|)$)).+$/", "", htmlspecialchars($_GET['license'] ?? ""));
-$days = (int) preg_replace("/^(?!([\d]+$)).+$/", "", htmlspecialchars($_GET['days'] ?? ""));
-
-file_put_contents("/opt/debug/vardump.txt", var_export($license, true));
-file_put_contents("/opt/debug/vardump1.txt", var_export($days, true));
-
-$crit = "";
-if ($license === "all") {
-    $lookup = " TRUE ";
-} else if ($license !== "") {
-    $licenses = [];
-    foreach(explode("|", $license) as $i) {
-        $licenses[] = "'{$i}'";
-    }
-    $licenses = implode(",", $licenses);
-    $lookup = " `license`.`id` IN ({$licenses}) ";
-} else {
-    $lookup = " `features`.`show_in_lists`=1 ";
-}
-
-if ($days < 1) {
-    exit;
-}
+/* URL arg check.  Halt all operation when invalid chars are found.  These
+   regex's invalidate the entire input string when a single invalid
+   char is found by replacing the whole input string with empty string.
+*/
+// Only numeric chars are allowed.
+$license_id = preg_replace("/^(?![\d]+$).*$/", "", htmlspecialchars($_GET['license'] ?? ""));
+// Only numeric chars are allowed.
+$days = preg_replace("/^(?![\d]+$).*$/", "", htmlspecialchars($_GET['days'] ?? ""));
+// If a URL arg is missing or invalid, halt here.
+if ($license === "" || (int) $days === 0) exit;
 
 $sql = <<<SQL
 SELECT `features`.`name`, `usage`.`time`, SUM(`usage`.`num_users`)
 FROM `usage`
 JOIN `licenses` ON `usage`.`license_id`=`licenses`.`id`
 JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-WHERE {$lookup} AND DATE_SUB(NOW(), INTERVAL {$days} DAY) <= DATE(`time`)
-GROUP BY `features`.`name`, `time`
+WHERE `licenses`.`id` = ? AND DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)
+GROUP BY `features`.`name`, `usage`.`time`
 ORDER BY `time` ASC;
 SQL;
 
 db_connect($db);
-$recordset = $db->query($sql, MYSQLI_STORE_RESULT);
-if (!$recordset) {
-    die ($db->error);
-}
+$query = $db->prepare($sql);
+$query->bind_param("ii", $license_id, $days);
+$query->execute();
+$query->bind_result($feature, $time, $usage);
 
 // $row[0] = feature name (aka product).
 // $row[1] = date
 // $row[2] = SUM(num_users)
-while ($row = $recordset->fetch_row()) {
-    $feature = $row[0];
-    $date = $row[1];
-    $usage = $row[2];
-
+while ($query->fetch()) {
     switch($days) {
     case 1:
-        $date = date('H:i', strtotime($date));
+        $date = date('H:i', strtotime($time));
         break;
     case 7:
-        $date = date('Y-m-d H', strtotime($date));
+        $date = date('Y-m-d H', strtotime($time));
         break;
     default:
-        $date = date('Y-m-d', strtotime($date));
+        $date = date('Y-m-d', strtotime($time));
         break;
     }
 
@@ -78,7 +61,7 @@ while ($row = $recordset->fetch_row()) {
     }
 }
 
-$recordset->free();
+$query->close();
 $db->close();
 
 $result = ['cols'=>[], 'rows'=>[]];

@@ -1,12 +1,18 @@
 <?php
 require_once __DIR__ . "/common.php";
 
-$feature = preg_replace("/^(?!(?!\|)[\w\-|]+(?<!\|)$).*+/", "", htmlspecialchars($_GET['feature'] ?? ""));
-$server = preg_replace("/^(?!([\d]+$)).+$/", "", htmlspecialchars($_GET['server']  ?? ""));
+/* URL arg check.  Halt all operation when invalid chars are found.  These
+   regex's invalidate the entire input string when a single invalid
+   char is found by replacing the whole input string with empty string.
+*/
+// Only alphanumeric, underscore, and hyphen chars are allowed.
+$feature = preg_replace("/^(?![\w\-]+$).*$/", "", htmlspecialchars($_GET['feature']) ?? "");
+// Only numeric chars are allowed.
+$server = preg_replace("/^(?![\d]+$).*$/", "", htmlspecialchars($_GET['server']) ?? "");
+// If a URL arg is missing or invalid, halt here.
+if ($feature === "" || $server === "") exit;
 
-print nl2br(var_export($feature, true)."<br>");
-print nl2br(var_export($server, true)."<br>");
-
+// DB lookup for license ID and its associated label
 $sql = <<<SQL
 SELECT `licenses`.`id`, `features`.`label`
 FROM `licenses`
@@ -24,12 +30,11 @@ $query->fetch();
 $query->close();
 $db->close();
 
-if ($label == "") $label = $feature;
-$label = str_replace('|', ' or ', $label);
+// Label will be the feature name when a licence's label is null
+if ($label === "") $label = $feature;
 
-// Print View.
-print_header();
-print <<<HTML
+// Print view
+$html_body = <<<HTML
 <h1>{$label} Usage</h1>
 
 <hr/>
@@ -86,5 +91,7 @@ print <<<HTML
 <div id="chart_div_year"></div>
 HTML;
 
+print_header();
+print $html_body;
 print_footer();
 ?>
