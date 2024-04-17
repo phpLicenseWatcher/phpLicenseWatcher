@@ -1,45 +1,39 @@
 <?php
 require_once __DIR__ . "/common.php";
 
-/* URL arg check.  Halt all operation when invalid chars are found.  These
-   regex's invalidate the entire input string when a single invalid
-   char is found by replacing the whole input string with empty string.
-*/
-// Only alphanumeric, underscore, and hyphen chars are allowed.
-$feature = preg_replace("/^(?![\w\-]+$).*$/", "", htmlspecialchars($_GET['feature']) ?? "");
-// Only numeric chars are allowed.
-$server = preg_replace("/^(?![\d]+$).*$/", "", htmlspecialchars($_GET['server']) ?? "");
-// If a URL arg is missing or invalid, halt here.
-if ($feature === "" || $server === "") exit;
+// URL arg check -- only numeric chars are allowed in $_GET['license']
+// Halt immediately if arg check fails.
+$license_id = htmlspecialchars($_GET['license'] ?? "");
+if (!ctype_digit($license_id)) exit;
 
 // DB lookup for license ID and its associated label
 $sql = <<<SQL
-SELECT `licenses`.`id`, `features`.`label`
+SELECT `features`.`name`, `features`.`label`, `servers`.`name`, `servers`.`label`
 FROM `licenses`
 JOIN `features` ON `licenses`.`feature_id` = `features`.`id`
 JOIN `servers` ON `licenses`.`server_id` = `servers`.`id`
-WHERE `features`.`show_in_lists`=1 AND `features`.`name`=? AND `servers`.`id`=?
+WHERE `licenses`.`id` = ?
 SQL;
 
 db_connect($db);
 $query = $db->prepare($sql);
-$query->bind_param("si", $feature, $server);
+$query->bind_param("i", $license_id);
 $query->execute();
-$query->bind_result($license_id, $label);
+$query->bind_result($feature_name, $feature_label, $server_name, $server_label);
 $query->fetch();
 $query->close();
 $db->close();
+$feature = $feature_label ?? $feature_name;
 
-// Label will be the feature name when a licence's label is null
-if ($label === "") $label = $feature;
 
 // Print view
 $html_body = <<<HTML
-<h1>{$label} Usage</h1>
+<h1>Usage Charts</h1>
+<p class="large-text"><span class="bold-text">Feature:</span> {$feature}<br>
+<span class="bold-text">Server:</span> {$server_name} ({$server_label})
 
 <hr/>
-<p class="a_centre">Data is taken every {$collection_interval} minutes. It shows usage for past day, past week, past month and past year. See the <a href="overview_detail.php?feature={$feature}&days=365">heat map</a> for an hourly overview.
-</p>
+<p class="a_centre">Data is taken every {$collection_interval} minutes. It shows usage for past day, past week, past month and past year. See the <a href="overview_detail.php?license={$license_id}&days=365">heat map</a> for an hourly overview.
 
 <!--Load the AJAX API-->
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -69,12 +63,13 @@ $html_body = <<<HTML
 
             $.ajax(data_url).done (
                 function(json_data) {
+                    console.log(json_data);
                     // Create our data table out of JSON data loaded from server.
                     var data = new google.visualization.DataTable(json_data);
 
                     // Instantiate and draw our chart, passing in some options.
                     var chart = new google.visualization.LineChart(document.getElementById(data_div));
-                    chart.draw(data, {width: 1000, height: 400});
+                    chart.draw(data, {legend: { position: 'none' }, width: 1000, height: 400});
                 }
             );
         });

@@ -3,89 +3,83 @@
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/tools.php";
 
-/* URL arg check.  Halt all operation when invalid chars are found.  These
-   regex's invalidate the entire input string when a single invalid
-   char is found by replacing the whole input string with empty string.
-*/
-// Only numeric chars are allowed.
-$license_id = preg_replace("/^(?![\d]+$).*$/", "", htmlspecialchars($_GET['license'] ?? ""));
-// Only numeric chars are allowed.
-$days = preg_replace("/^(?![\d]+$).*$/", "", htmlspecialchars($_GET['days'] ?? ""));
-// If a URL arg is missing or invalid, halt here.
-if ($license === "" || (int) $days === 0) exit;
+// URL arg check -- only numeric chars are allowed in $_GET['license'] and $_GET['days']
+// Halt immediately if either arg check fails.
+$license_id = htmlspecialchars($_GET['license'] ?? "");
+$days = htmlspecialchars($_GET['days'] ?? "");
+if (!ctype_digit($license_id) || !ctype_digit($days)) exit;
 
-$sql = <<<SQL
-SELECT `features`.`name`, `usage`.`time`, SUM(`usage`.`num_users`)
+// Get $feature label/name from license_id
+$feature_sql = <<<SQL
+SELECT `name`, `label`
+FROM `features`
+JOIN `licenses` ON `licenses`.`feature_id`=`features`.`id`
+WHERE `licenses`.`id` = ?
+SQL;
+
+// Get $usage data from license_id
+$usage_sql = <<<SQL
+SELECT `time`, SUM(`num_users`)
 FROM `usage`
 JOIN `licenses` ON `usage`.`license_id`=`licenses`.`id`
 JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
 WHERE `licenses`.`id` = ? AND DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)
-GROUP BY `features`.`name`, `usage`.`time`
+GROUP BY `time`
 ORDER BY `time` ASC;
 SQL;
 
 db_connect($db);
-$query = $db->prepare($sql);
+
+// Do DB query to get feature label/name for this license
+$query = $db->prepare($feature_sql);
+$query->bind_param("i", $license_id);
+$query->execute();
+$query->bind_result($feature_name, $feature_label);
+$query->fetch();
+$feature = $feature_label ?? $feature_name;
+$query->close();
+
+// Do DB query to get usage data for this license
+$query = $db->prepare($usage_sql);
 $query->bind_param("ii", $license_id, $days);
 $query->execute();
-$query->bind_result($feature, $time, $usage);
+$query->bind_result($time, $usage);
 
-// $row[0] = feature name (aka product).
-// $row[1] = date
-// $row[2] = SUM(num_users)
+$data = [];
 while ($query->fetch()) {
     switch($days) {
     case 1:
-        $date = date('H:i', strtotime($time));
+        $date = date("H:i", strtotime($time));
         break;
     case 7:
-        $date = date('Y-m-d H', strtotime($time));
+        $date = date("Y-m-d H", strtotime($time));
         break;
     default:
-        $date = date('Y-m-d', strtotime($time));
+        // expected -- case is 30 or 365
+        $date = date("Y-m-d", strtotime($time));
         break;
     }
 
-    if (!array_key_exists($feature, $products)) $products[$feature] = $feature;
-    if (!array_key_exists($date, $table)) $table[$date] = [];
-
     // SUM(num_users) has multiple data points throughout a single day.
-    // This ensures the largest SUM(num_users) is set each day within $table[date][product]
-    if (isset($table[$date][$feature])) {
-		//make sure to select the largest value if we are reducing the data by changing the date key
-        if ($usage > $table[$date][$feature]) {
-            $table[$date][$feature] = $usage;
-        }
-    } else {
-        $table[$date][$feature] = $usage;
-    }
+    // This ensures the largest SUM(num_users) is set to $data.
+    if ($usage > ($data[$date] ?? PHP_INT_MIN)) $data[$date] = $usage;
 }
 
+// END of DB operations.
 $query->close();
 $db->close();
 
-$result = ['cols'=>[], 'rows'=>[]];
-$result['cols'][] = ['id' => "", 'label' => "Date", 'pattern' => "", 'type' => "string"];
-$table = [];
-$products = [];
-
-foreach (array_keys($products) as $product) {
-    $result["cols"][] = ['id' => "", 'label' => $product, 'pattern' => "", 'type' => "number"];
-}
-
-foreach (array_keys($table) as $date) {
-    $ta = [];
-    $ta[] = ['v' => $date];
-    foreach (array_keys($products) as $product) {
-        if (array_key_exists($product, $table[$date])) {
-            $ta[] = ['v' => $table[$date][$product]];
-        }
-    }
-
-    $result['rows'][] = ['c' => $ta];
+// Format retrieved data into a JSON formatted data table and return via AJAX.
+$table = ['cols'=>[], 'rows'=>[]];
+$table["cols"][0] = ["id" => "", "label" => "Date", "pattern" => "", "type" => "string"];
+$table["cols"][1] = ['id' => "", 'label' => $feature, 'pattern' => "", 'type' => "number"];
+foreach ($data as $date => $usage) {
+    $row[0] = ['v' => $date];
+    $row[1] = ['v' => $usage];
+    $table['rows'][] = ['c' => $row];
 }
 
 header('Content-Type: application/json');
-echo json_encode($result);
+echo json_encode($table);
 
 ?>
