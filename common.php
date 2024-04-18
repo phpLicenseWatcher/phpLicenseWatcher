@@ -77,6 +77,35 @@ function db_connect(&$db) {
 }
 
 /**
+ * Lookup feature and server name/label by license ID.
+ *
+ * @param $license_id
+ * @return array ['feature_name', 'feature_label', 'server_name', 'server_label']
+ */
+function db_get_license_params(int $license_id) {
+    $results = [];
+
+    $sql = <<<SQL
+    SELECT `features`.`name`, `features`.`label`, `servers`.`name`, `servers`.`label`
+    FROM `licenses`
+    JOIN `features` ON `licenses`.`feature_id` = `features`.`id`
+    JOIN `servers` ON `licenses`.`server_id` = `servers`.`id`
+    WHERE `licenses`.`id` = ?
+    SQL;
+
+    db_connect($db);
+    $query = $db->prepare($sql);
+    $query->bind_param("i", $license_id);
+    $query->execute();
+    $query->bind_result($results['feature_name'], $results['feature_label'], $results['server_name'], $results['server_label']);
+    $query->fetch();
+    $query->close();
+    $db->close();
+
+    return $results;
+}
+
+/**
  * Retrieve details of one or more servers from DB.
  *
  * $cols are the columns queried.  Can be a string or array of strings.

@@ -6,31 +6,16 @@ require_once __DIR__ . "/common.php";
 $license_id = htmlspecialchars($_GET['license'] ?? "");
 if (!ctype_digit($license_id)) exit;
 
-// DB lookup for license ID and its associated label
-$sql = <<<SQL
-SELECT `features`.`name`, `features`.`label`, `servers`.`name`, `servers`.`label`
-FROM `licenses`
-JOIN `features` ON `licenses`.`feature_id` = `features`.`id`
-JOIN `servers` ON `licenses`.`server_id` = `servers`.`id`
-WHERE `licenses`.`id` = ?
-SQL;
-
-db_connect($db);
-$query = $db->prepare($sql);
-$query->bind_param("i", $license_id);
-$query->execute();
-$query->bind_result($feature_name, $feature_label, $server_name, $server_label);
-$query->fetch();
-$query->close();
-$db->close();
-$feature = $feature_label ?? $feature_name;
-
+$license = db_get_license_params($license_id);
+$feature = $license['feature_label'] ?? $license['feature_name'];
+$server_name = $license['server_name'];
+if ($license['server_label'] != "") $server_label = "({$license['server_label']})";
 
 // Print view
 $html_body = <<<HTML
 <h1>Usage Charts</h1>
 <p class="large-text"><span class="bold-text">Feature:</span> {$feature}<br>
-<span class="bold-text">Server:</span> {$server_name} ({$server_label})
+<span class="bold-text">Server:</span> {$server_name} {$server_label}
 
 <hr/>
 <p class="a_centre">Data is taken every {$collection_interval} minutes. It shows usage for past day, past week, past month and past year. See the <a href="overview_detail.php?license={$license_id}&days=365">heat map</a> for an hourly overview.
