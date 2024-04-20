@@ -7,18 +7,10 @@ require_once __DIR__ . "/tools.php";
 // Halt immediately if either arg check fails.
 $license_id = htmlspecialchars($_GET['license'] ?? "");
 $days = htmlspecialchars($_GET['days'] ?? "");
-if (!ctype_digit($license_id) || !ctype_digit($days)) exit;
+if (!ctype_digit($license_id) || !ctype_digit($days)) die;
 
-// Get $feature label/name from license_id
-$feature_sql = <<<SQL
-SELECT `name`, `label`
-FROM `features`
-JOIN `licenses` ON `licenses`.`feature_id`=`features`.`id`
-WHERE `licenses`.`id` = ?
-SQL;
-
-// Get $usage data from license_id
-$usage_sql = <<<SQL
+// SQL for usage data from license_id
+$sql = <<<SQL
 SELECT `time`, SUM(`num_users`)
 FROM `usage`
 JOIN `licenses` ON `usage`.`license_id`=`licenses`.`id`
@@ -30,14 +22,9 @@ SQL;
 
 db_connect($db);
 
-// Do DB query to get feature label/name for this license
-$query = $db->prepare($feature_sql);
-$query->bind_param("i", $license_id);
-$query->execute();
-$query->bind_result($feature_name, $feature_label);
-$query->fetch();
-$feature = $feature_label ?? $feature_name;
-$query->close();
+// Get feature info from license_id
+$feature = db_get_license_params($db, $license_id);
+$feature = $feature['feature_label'] ?? $feature['feature_name'];
 
 // Do DB query to get usage data for this license
 $query = $db->prepare($usage_sql);

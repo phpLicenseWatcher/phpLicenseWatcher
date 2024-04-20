@@ -4,12 +4,16 @@ require_once __DIR__ . "/common.php";
 // URL arg check -- only numeric chars are allowed in $_GET['license']
 // Halt immediately if arg check fails.
 $license_id = htmlspecialchars($_GET['license'] ?? "");
-if (!ctype_digit($license_id)) exit;
+if (!ctype_digit($license_id)) die;
 
-$license = db_get_license_params($license_id);
+// Retrieve license details by license ID
+db_connect($db);
+$license = db_get_license_params($db, $license_id);
+$db->close();
+
 $feature = $license['feature_label'] ?? $license['feature_name'];
 $server_name = $license['server_name'];
-if ($license['server_label'] != "") $server_label = "({$license['server_label']})";
+$server_label = $license['server_label'] != "" ? "({$license['server_label']})" : "";
 
 // Print view
 $html_body = <<<HTML

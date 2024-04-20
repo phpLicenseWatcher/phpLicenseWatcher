@@ -6,18 +6,13 @@ require_once __DIR__ . "/common.php";
 // URL arg check.  Halt immediately if either $_GET['license'] or $_GET['days'] is not all numeric.
 $license_id = htmlspecialchars($_GET['license'] ?? "");
 $days = htmlspecialchars($_GET['days'] ?? "");
-if (!ctype_digit($license_id) || !ctype_digit($days)) exit;
+if (!ctype_digit($license_id) || !ctype_digit($days)) die;
 
 $NEW_LINE="\\n";
 $width = 1000;
 $width_col = ceil($width / $days);
 $width = $width_col * $days;
 $offset_scale = max(30, ceil($width_col * 2));
-
-$license = db_get_license_params($license_id);
-$feature = $license['feature_label'] ?? $license['feature_name'];
-$server_name = $license['server_name'];
-if ($license['server_label'] != "") $server_label = "({$license['server_label']})";
 
 $sql = <<<SQL
 SELECT `time`, MAX(`num_users`), date_format(`time`, '%Y%m%d%H') as hourly
@@ -30,8 +25,14 @@ GROUP BY `hourly`, `time`
 ORDER BY `time` ASC
 SQL;
 
-// Query usage data and build CSV for heatmap.
 db_connect($db);
+// Get feature and server name/labels by license ID
+$license = db_get_license_params($db, $license_id);
+$feature = $license['feature_label'] ?? $license['feature_name'];
+$server_name = $license['server_name'];
+$server_label = $license['server_label'] != "" ? "({$license['server_label']})" : "";
+
+// Query usage data and build CSV for heatmap.
 $query = $db->prepare($sql);
 $query->bind_param("ii", $license_id, $days);
 $query->execute();
@@ -45,7 +46,7 @@ while ($query->fetch()) {
 
 $query->close();
 $db->close();
-// END DB transactions.
+// END of DB operations.
 
 // View
 $title_span = $days != 365 ? "{$days}-Days" : "Yearly";
