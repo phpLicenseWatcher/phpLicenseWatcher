@@ -11,13 +11,11 @@ if (!ctype_digit($license_id) || !ctype_digit($days)) die;
 
 // SQL for usage data from license_id
 $sql = <<<SQL
-SELECT `time`, SUM(`num_users`)
+SELECT `time`, `num_users`
 FROM `usage`
-JOIN `licenses` ON `usage`.`license_id`=`licenses`.`id`
-JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-WHERE `licenses`.`id` = ? AND DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)
-GROUP BY `time`
-ORDER BY `time` ASC;
+WHERE `license_id` = ? AND DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)
+GROUP BY `time`, `num_users`
+ORDER BY `time` ASC
 SQL;
 
 db_connect($db);
@@ -27,7 +25,7 @@ $feature = db_get_license_params($db, $license_id);
 $feature = $feature['feature_label'] ?? $feature['feature_name'];
 
 // Do DB query to get usage data for this license
-$query = $db->prepare($usage_sql);
+$query = $db->prepare($sql);
 $query->bind_param("ii", $license_id, $days);
 $query->execute();
 $query->bind_result($time, $usage);
@@ -47,9 +45,9 @@ while ($query->fetch()) {
         break;
     }
 
-    // SUM(num_users) has multiple data points throughout a single day.
-    // This ensures the largest SUM(num_users) is set to $data.
-    if ($usage > ($data[$date] ?? PHP_INT_MIN)) $data[$date] = $usage;
+    // $usage has multiple data points throughout a single day.
+    // This ensures the largest $usage is set to $data per $date.
+    if ($usage > ($data[$date] ?? PHP_INT_MIN)) $data[$date] = (int) $usage;
 }
 
 // END of DB operations.

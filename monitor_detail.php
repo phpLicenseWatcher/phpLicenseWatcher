@@ -52,7 +52,6 @@ $html_body = <<<HTML
 
             $.ajax(data_url).done (
                 function(json_data) {
-                    console.log(json_data);
                     // Create our data table out of JSON data loaded from server.
                     var data = new google.visualization.DataTable(json_data);
 
