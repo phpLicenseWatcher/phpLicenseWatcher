@@ -36,10 +36,10 @@ $html_body = <<<HTML
 
     function draw_charts() {
         var charts = {
-            "1"  : "day",
-            "7"  : "week",
-            "30" : "month",
-            "365": "year"
+            '1'  : "day",
+            '7'  : "week",
+            '30' : "month",
+            '365': "year"
         };
 
         $.each(charts, function(key, value) {
@@ -57,7 +57,7 @@ $html_body = <<<HTML
 
                     // Instantiate and draw our chart, passing in some options.
                     var chart = new google.visualization.LineChart(document.getElementById(data_div));
-                    chart.draw(data, {legend: { position: 'none' }, width: 1000, height: 400});
+                    chart.draw(data, {'legend.position': "right", width: 1000, height: 400});
                 }
             );
         });

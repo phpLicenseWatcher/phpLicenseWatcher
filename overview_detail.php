@@ -15,13 +15,10 @@ $width = $width_col * $days;
 $offset_scale = max(30, ceil($width_col * 2));
 
 $sql = <<<SQL
-SELECT `time`, MAX(`num_users`), date_format(`time`, '%Y%m%d%H') as hourly
+SELECT `time`, `num_users`
 FROM `usage`
-JOIN `licenses` ON `usage`.`license_id`=`licenses`.`id`
-JOIN `servers` ON `licenses`.`server_id`=`servers`.`id`
-JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-WHERE `licenses`.`id` = ? AND DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)
-GROUP BY `hourly`, `time`
+WHERE `license_id` = ? AND DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)
+GROUP BY `license_id`, `time`
 ORDER BY `time` ASC
 SQL;
 
@@ -36,12 +33,12 @@ $server_label = $license['server_label'] != "" ? "({$license['server_label']})" 
 $query = $db->prepare($sql);
 $query->bind_param("ii", $license_id, $days);
 $query->execute();
-$query->bind_result($time, $users, $hourly);
+$query->bind_result($time, $usage);
 
 $csv_results = "date,users" . $NEW_LINE;
 while ($query->fetch()) {
     $date = date('Y-m-d\TH:00:00', strtotime($time));
-    $csv_results .= "{$date},{$users}" . $NEW_LINE;
+    $csv_results .= "{$date},{$usage}" . $NEW_LINE;
 }
 
 $query->close();

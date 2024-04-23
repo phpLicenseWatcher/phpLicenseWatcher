@@ -14,7 +14,7 @@ $sql = <<<SQL
 SELECT `time`, `num_users`
 FROM `usage`
 WHERE `license_id` = ? AND DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)
-GROUP BY `time`, `num_users`
+GROUP BY `license_id`, `time`
 ORDER BY `time` ASC
 SQL;
 
@@ -29,7 +29,9 @@ $query = $db->prepare($sql);
 $query->bind_param("ii", $license_id, $days);
 $query->execute();
 $query->bind_result($time, $usage);
+$usage = (int) $usage;
 
+// Graph data X-axis = $date, Y-axis = $usage
 $data = [];
 while ($query->fetch()) {
     switch($days) {
@@ -39,15 +41,15 @@ while ($query->fetch()) {
     case 7:
         $date = date("Y-m-d H", strtotime($time));
         break;
-    default:
-        // expected -- case is 30 or 365
+    case 30:
+    case 365:
         $date = date("Y-m-d", strtotime($time));
         break;
     }
 
     // $usage has multiple data points throughout a single day.
     // This ensures the largest $usage is set to $data per $date.
-    if ($usage > ($data[$date] ?? PHP_INT_MIN)) $data[$date] = (int) $usage;
+    if ($usage > ($data[$date] ?? PHP_INT_MIN)) $data[$date] = $usage;
 }
 
 // END of DB operations.
@@ -56,15 +58,15 @@ $db->close();
 
 // Format retrieved data into a JSON formatted data table and return via AJAX.
 $table = ['cols'=>[], 'rows'=>[]];
-$table["cols"][0] = ["id" => "", "label" => "Date", "pattern" => "", "type" => "string"];
+$table["cols"][0] = ['id' => "", 'label' => "Date", 'pattern' => "", 'type' => "string"];
 $table["cols"][1] = ['id' => "", 'label' => $feature, 'pattern' => "", 'type' => "number"];
 foreach ($data as $date => $usage) {
-    $row[0] = ['v' => $date];
-    $row[1] = ['v' => $usage];
+    $row[0] = ['v' => $date];  // Graph X-coordinate
+    $row[1] = ['v' => $usage];  // Graph Y-coordinate
     $table['rows'][] = ['c' => $row];
 }
 
 header('Content-Type: application/json');
-echo json_encode($table);
+print json_encode($table);
 
 ?>
