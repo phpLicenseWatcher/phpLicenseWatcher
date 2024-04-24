@@ -29,7 +29,6 @@ $query = $db->prepare($sql);
 $query->bind_param("ii", $license_id, $days);
 $query->execute();
 $query->bind_result($time, $usage);
-$usage = (int) $usage;
 
 // Graph data X-axis = $date, Y-axis = $usage
 $data = [];
@@ -49,6 +48,7 @@ while ($query->fetch()) {
 
     // $usage has multiple data points throughout a single day.
     // This ensures the largest $usage is set to $data per $date.
+    $usage = (int) $usage;
     if ($usage > ($data[$date] ?? PHP_INT_MIN)) $data[$date] = $usage;
 }
 
