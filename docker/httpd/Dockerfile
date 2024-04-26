@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir -p /usr/local/bin
 COPY lmutil /usr/local/bin/
 RUN chmod 755 /usr/local/bin/lmutil
+# older lmutil need this
+RUN ln -s /lib64/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
 
 WORKDIR /var/www/html
 RUN mkdir /app
