@@ -1,4 +1,4 @@
-FROM php:7.3-apache 
+FROM php:7.3-apache
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 RUN apt-get update \
     && apt-get install -y net-tools iputils-ping vim wget cron git msmtp \
@@ -8,7 +8,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && docker-php-ext-install zip \
     && apt dist-upgrade
-RUN ln -s /lib/x86_64-linux-gnu/ld-2.28.so /lib64/ld-lsb-x86-64.so.3
+
+# Older versions of lmutil needs this.  Future versions of Debian may need this line tweaked.
+RUN ln -s /lib64/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
 
 RUN apt-get update && apt-get install -y \
 		libfreetype6-dev \
@@ -20,8 +22,6 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir -p /usr/local/bin
 COPY lmutil /usr/local/bin/
 RUN chmod 755 /usr/local/bin/lmutil
-# older lmutil need this
-RUN ln -s /lib64/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
 
 WORKDIR /var/www/html
 RUN mkdir /app
