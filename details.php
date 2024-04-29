@@ -53,7 +53,7 @@ function list_features_and_expirations($servers, &$html_body) {
     <p>This is a list of licenses (features) available on this particular license server.
     If there are multiple entries under "Expiration dates" it means there are different entries for the same license.
     If expiration is in yellow, it means expiration is within {$lead_time} days.  Red indicates expired licenses.</p>
-HTML;
+    HTML;
 
     $today = mktime(0,0,0,date("m"),date("d"),date("Y"));
 
@@ -119,7 +119,6 @@ HTML;
  * @param &$html_body data view to build
  */
 function list_licenses_in_use($servers, &$html_body) {
-
     $html_body .= "<p>Following is the list of licenses currently being used.";
 
     // If person is filtering for certain features
@@ -131,6 +130,19 @@ function list_licenses_in_use($servers, &$html_body) {
 
         $html_body .= "</span>";
     }
+
+    // For looking up license_id based on server/feature provided by lmtools object.
+    $license_id_sql = <<<SQL
+    SELECT `licenses`.`id`
+    FROM `licenses`
+    JOIN `features` ON `licenses`.`feature_id` = `features`.`id`
+    JOIN `servers` ON `licenses`.`server_id` = `servers`.`id`
+    WHERE `features`.`name` = ? AND `servers`.`id` = ?
+    SQL;
+
+    db_connect($db);
+    $license_id_query = $db->prepare($license_id_sql);
+    $license_id_query->bind_result($license_id);
 
     // Loop through the available servers
     foreach ($servers as $server) {
@@ -174,8 +186,13 @@ function list_licenses_in_use($servers, &$html_body) {
 
         foreach(array_merge($used_licenses, $unused_licenses) as $i => $license) {
             if (!array_key_exists('filter_feature', $_GET) || in_array($license['feature_name'], $_GET['filter_feature'])) {
-                $feature = $license['feature_name'];
-                $graph_url = "monitor_detail.php?feature={$feature}";
+                // Get license ID of server/feature.  We do not get this from lmtools object.
+                $license_id_query->bind_param("si", $license['feature_name'], $server['id']);
+                $license_id_query->execute();
+                $license_id_query->fetch();
+                // $license_id now has a license ID number for this feature name and server ID
+
+                $graph_url = "monitor_detail.php?license={$license_id}";
 
                 // $license['num_licenses_used'] is the value reported by the license manager, which can include reserved tokens.
                 // $license['num_checkouts'] is the accumulated count of licenses reported to be checked out by all individual users.
@@ -244,6 +261,10 @@ function list_licenses_in_use($servers, &$html_body) {
                 } // END if (array_key_exists('reservations', $license) && is_countable($license['reservations']))
             } // END if (!array_key_exists('filter_feature', $_GET) || in_array($license['feature_name'], $_GET['filter_feature']))
         } // END foreach(array_merge($used_licenses, $unused_licenses) as $i => $license)
+
+        // Cleanup DB connection.
+        $license_id_query->close();
+        $db->close();
 
         // Display the table
         $html_body .= $table->get_html();

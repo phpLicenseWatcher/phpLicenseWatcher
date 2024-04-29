@@ -1,43 +1,28 @@
 <?php
 require_once __DIR__ . "/common.php";
 
-$feature = preg_replace("/[^a-zA-Z0-9_|\-]+/", "", htmlspecialchars($_GET['feature'])) ;
-$label = $feature;
+// URL arg check -- only numeric chars are allowed in $_GET['license']
+// Halt immediately if arg check fails.
+$license_id = htmlspecialchars($_GET['license'] ?? "");
+if (!ctype_digit($license_id)) die;
 
+// Retrieve license details by license ID
 db_connect($db);
-
-$sql = <<<SQL
-SELECT `name`, `label`
-FROM `features`
-WHERE `show_in_lists`=1 AND `name`='{$feature}'
-SQL;
-
-$result = $db->query($sql);
-if (!$result) {
-    die ($db->error);
-}
-
-// $row[0] = `name`, $row[1] = `label`
-while ($row = $result->fetch_row()){
-    $label = $row[1];
-    if (empty($label)) {
-        //`label` is NULL, so use `name`, instead.
-        $label = $row[0];
-    }
-}
-
-$result->free();
+$license = db_get_license_params($db, $license_id);
 $db->close();
-$label = str_replace('|', ' or ', $label);
 
-// Print View.
-print_header();
-print <<<HTML
-<h1>{$label} Usage</h1>
+$feature = $license['feature_label'] ?? $license['feature_name'];
+$server_name = $license['server_name'];
+$server_label = $license['server_label'] != "" ? "({$license['server_label']})" : "";
+
+// Print view
+$html_body = <<<HTML
+<h1>Usage Charts</h1>
+<p class="large-text"><span class="bold-text">Feature:</span> {$feature}<br>
+<span class="bold-text">Server:</span> {$server_name} {$server_label}
 
 <hr/>
-<p class="a_centre">Data is taken every {$collection_interval} minutes. It shows usage for past day, past week, past month and past year. See the <a href="overview_detail.php?feature={$feature}&days=365">heat map</a> for an hourly overview.
-</p>
+<p class="a_centre">Data is taken every {$collection_interval} minutes. It shows usage for past day, past week, past month and past year. See the <a href="overview_detail.php?license={$license_id}&days=365">heat map</a> for an hourly overview.
 
 <!--Load the AJAX API-->
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -51,14 +36,14 @@ print <<<HTML
 
     function draw_charts() {
         var charts = {
-            "1"  : "day",
-            "7"  : "week",
-            "30" : "month",
-            "365": "year"
+            '1'  : "day",
+            '7'  : "week",
+            '30' : "month",
+            '365': "year"
         };
 
         $.each(charts, function(key, value) {
-            var data_url = "graph_data.php?feature={$feature}&days=" + key;
+            var data_url = "graph_data.php?license={$license_id}&days=" + key;
             var data_div = "chart_div_" + value;
             var json_data = $.ajax({
                 url: data_url,
@@ -72,7 +57,7 @@ print <<<HTML
 
                     // Instantiate and draw our chart, passing in some options.
                     var chart = new google.visualization.LineChart(document.getElementById(data_div));
-                    chart.draw(data, {width: 1000, height: 400});
+                    chart.draw(data, {'legend.position': "right", width: 1000, height: 400});
                 }
             );
         });
@@ -89,5 +74,7 @@ print <<<HTML
 <div id="chart_div_year"></div>
 HTML;
 
+print_header();
+print $html_body;
 print_footer();
 ?>

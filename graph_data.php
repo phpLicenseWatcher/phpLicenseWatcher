@@ -3,103 +3,70 @@
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/tools.php";
 
-$feature = preg_replace("/[^a-zA-Z0-9_|\-]+/", "", htmlspecialchars($_GET['feature'])) ;
-$days = intval($_GET['days']);
+// URL arg check -- only numeric chars are allowed in $_GET['license'] and $_GET['days']
+// Halt immediately if either arg check fails.
+$license_id = htmlspecialchars($_GET['license'] ?? "");
+$days = htmlspecialchars($_GET['days'] ?? "");
+if (!ctype_digit($license_id) || !ctype_digit($days)) die;
 
-$crit = "";
-if ($feature === "all") {
-    $crit = " TRUE ";
-} else if ($feature !== "") {
-    $features = array() ;
-    foreach(explode('|', $feature ) as $i) {
-        $features[] = "'{$i}'";
-    }
-
-    $crit = " `features`.`name` IN ( " . implode(',', $features) . " ) ";
-} else {
-    $crit = " show_in_lists=1 ";
-}
-
-if ($days <= 0) {
-    $days = 7;
-}
+// SQL for usage data from license_id
+$sql = <<<SQL
+SELECT `time`, `num_users`
+FROM `usage`
+WHERE `license_id` = ? AND DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)
+GROUP BY `license_id`, `time`
+ORDER BY `time` ASC
+SQL;
 
 db_connect($db);
 
-$result = array("cols"=>array(), "rows"=>array() );
-$result["cols"][] = array("id" => "", "label" => "Date", "pattern" => "", "type" => "string");
-$table = array();
-$products = array();
+// Get feature info from license_id
+$feature = db_get_license_params($db, $license_id);
+$feature = $feature['feature_label'] ?? $feature['feature_name'];
 
-$sql = <<<SQL
-SELECT `features`.`name`, `time`, SUM(`num_users`)
-FROM `usage`
-JOIN `licenses` ON `usage`.`license_id`=`licenses`.`id`
-JOIN `features` ON `licenses`.`feature_id`=`features`.`id`
-WHERE {$crit} AND DATE_SUB(NOW(), INTERVAL $days DAY) <= DATE(`time`)
-GROUP BY `features`.`name`, `time`
-ORDER BY `time` ASC;
-SQL;
+// Do DB query to get usage data for this license
+$query = $db->prepare($sql);
+$query->bind_param("ii", $license_id, $days);
+$query->execute();
+$query->bind_result($time, $usage);
 
-$recordset = $db->query($sql, MYSQLI_STORE_RESULT);
-if (!$recordset) {
-    die ($db->error);
+// Graph data X-axis = $date, Y-axis = $usage
+$data = [];
+while ($query->fetch()) {
+    switch($days) {
+    case 1:
+        $date = date("H:i", strtotime($time));
+        break;
+    case 7:
+        $date = date("Y-m-d H", strtotime($time));
+        break;
+    case 30:
+    case 365:
+        $date = date("Y-m-d", strtotime($time));
+        break;
+    }
+
+    // $usage has multiple data points throughout a single day.
+    // This ensures the largest $usage is set to $data per $date.
+    $usage = (int) $usage;
+    if ($usage > ($data[$date] ?? PHP_INT_MIN)) $data[$date] = $usage;
 }
 
-// $row[0] = feature name (aka product).
-// $row[1] = date
-// $row[2] = SUM(num_users)
-while ($row = $recordset->fetch_row()){
-    $date = $row[1];
-
-    if ($days == 1) {
-        $date = date('H:i', strtotime($date));
-    } else if ($days <= 7) {
-        $date = date('Y-m-d H', strtotime($date));
-    } else {
-        $date = date('Y-m-d', strtotime($date));
-    }
-
-    if (!array_key_exists($row[0], $products)) {
-        $products[$row[0]] = $row[0];
-    }
-
-    if (!array_key_exists($date, $table)) {
-        $table[$date] = array();
-    }
-
-    // SUM(num_users) has multiple data points throughout a single day.
-    // This ensures the largest SUM(num_users) is set each day within $table[date][product]
-    if (isset($table[$date][$row[0]])) {
-		//make sure to select the largest value if we are reducing the data by changing the date key
-        if ($row[2] > $table[$date][$row[0]]) {
-            $table[$date][$row[0]] = $row[2];
-        }
-    } else {
-        $table[$date][$row[0]] = $row[2];
-    }
-}
-
-$recordset->free();
+// END of DB operations.
+$query->close();
 $db->close();
 
-foreach (array_keys($products) as $product) {
-    $result["cols"][] = array("id" => "", "label" => $product, "pattern" => "", "type" => "number");
-}
-
-foreach (array_keys($table) as $date){
-    $ta = array();
-    $ta[] = array('v' => $date);
-    foreach (array_keys($products) as $product) {
-        if (array_key_exists($product, $table[$date])) {
-            $ta[] = array('v' => $table[$date][$product]);
-        }
-    }
-
-    $result['rows'][] = array('c' => $ta);
+// Format retrieved data into a JSON formatted data table and return via AJAX.
+$table = ['cols'=>[], 'rows'=>[]];
+$table["cols"][0] = ['id' => "", 'label' => "Date", 'pattern' => "", 'type' => "string"];
+$table["cols"][1] = ['id' => "", 'label' => $feature, 'pattern' => "", 'type' => "number"];
+foreach ($data as $date => $usage) {
+    $row[0] = ['v' => $date];  // Graph X-coordinate
+    $row[1] = ['v' => $usage];  // Graph Y-coordinate
+    $table['rows'][] = ['c' => $row];
 }
 
 header('Content-Type: application/json');
-echo json_encode($result);
+print json_encode($table);
 
 ?>

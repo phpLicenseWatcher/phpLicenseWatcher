@@ -49,7 +49,7 @@ function clean_post() {
 /**
  * Open persistent mysqli DB connection.
  *
- * @param &$db DB connection object.
+ * @param &$db Database connection object.
  */
 function db_connect(&$db) {
     // From config.php
@@ -64,16 +64,44 @@ function db_connect(&$db) {
         die ("Check database configuration.");
     }
 
-    // Using persistent connection as denoted by 'p:' in host string.
-    $db = new mysqli("p:{$db_hostname}", $db_username, $db_password, $db_database);
-    if (!is_null($db->connect_error)) {
-        die("Database Connect Error {$db->connect_errno}: {$db->connect_error}");
-    }
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-    // ensure we are using utf8mb4 character set
-    if (!$db->set_charset("utf8mb4")) {
-        die("DB Error: Could not set client character set.");
+    try {
+        // Using persistent connection as denoted by 'p:' in host string.
+        $db = new mysqli("p:{$db_hostname}", $db_username, $db_password, $db_database);
+        $db->set_charset("utf8mb4");
+    } catch (mysqli_sql_exception $e) {
+        error_log($e);
+        die("DB Connection Error: {$e->getMessage()}");
     }
+}
+
+/**
+ * Database lookup for feature and server name/label by license ID.
+ *
+ * @param object &$db Database connection object.
+ * @param int $license_id
+ * @return array ['feature_name', 'feature_label', 'server_name', 'server_label']
+ */
+function db_get_license_params(object &$db, int $license_id) {
+    $results = [];
+
+    $sql = <<<SQL
+    SELECT `features`.`name`, `features`.`label`, `servers`.`name`, `servers`.`label`
+    FROM `licenses`
+    JOIN `features` ON `licenses`.`feature_id` = `features`.`id`
+    JOIN `servers` ON `licenses`.`server_id` = `servers`.`id`
+    WHERE `licenses`.`id` = ?
+    SQL;
+
+    $query = $db->prepare($sql);
+    $query->bind_param("i", $license_id);
+    $query->execute();
+    $query->bind_result($results['feature_name'], $results['feature_label'], $results['server_name'], $results['server_label']);
+    $query->fetch();
+    $query->close();
+
+    return $results;
 }
 
 /**
