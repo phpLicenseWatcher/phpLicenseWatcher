@@ -3,17 +3,45 @@
 require_once __DIR__ . "/common.php";
 require_once __DIR__ . "/tools.php";
 
-// URL arg check -- only numeric chars are allowed in $_GET['license'] and $_GET['days']
-// Halt immediately if either arg check fails.
+// URL arg check.  Halt immediately if any arg check fails.
 $license_id = htmlspecialchars($_GET['license'] ?? "");
-$days = htmlspecialchars($_GET['days'] ?? "");
-if (!ctype_digit($license_id) || !ctype_digit($days)) die;
+$range = htmlspecialchars($_GET['range'] ?? "");
 
-// SQL for usage data from license_id
+// Validate $_GET['license'].  Only numeric chars are allowed in $_GET['license'].
+if (!ctype_digit($license_id)) die;
+
+// Validate $_GET['range'] and setup data parameters as needed.
+switch ($range) {
+case "day":
+    $daterange_sql = "AND DATE_SUB(NOW(), INTERVAL 1 DAY) <= DATE(`time`)";
+    $datestamp = "H:i";
+    break;
+case "week":
+    $daterange_sql = "AND DATE_SUB(NOW(), INTERVAL 1 WEEK) <= DATE(`time`)";
+    $datestamp = "Y-m-d H";
+    break;
+case "month":
+    $daterange_sql = "AND DATE_SUB(NOW(), INTERVAL 1 MONTH) <= DATE(`time`)";
+    $datestamp = "Y-m-d";
+    break;
+case "year":
+    $daterange_sql = "AND DATE_SUB(NOW(), INTERVAL 1 YEAR) <= DATE(`time`)";
+    $datestamp = "Y-m-d";
+    break;
+case "yearly":
+    $daterange_sql = "";
+    $datestamp = "Y";
+    break;
+default:
+    // $_GET['days'] invalid.  Halt immediately.
+    die;
+}
+
+// SQL for usage data by license_id
 $sql = <<<SQL
 SELECT `time`, `num_users`
 FROM `usage`
-WHERE `license_id` = ? AND DATE_SUB(NOW(), INTERVAL ? DAY) <= DATE(`time`)
+WHERE `license_id` = ? {$daterange_sql}
 GROUP BY `license_id`, `time`
 ORDER BY `time` ASC
 SQL;
@@ -26,25 +54,14 @@ $feature = $feature['feature_label'] ?? $feature['feature_name'];
 
 // Do DB query to get usage data for this license
 $query = $db->prepare($sql);
-$query->bind_param("ii", $license_id, $days);
+$query->bind_param("i", $license_id);
 $query->execute();
 $query->bind_result($time, $usage);
 
 // Graph data X-axis = $date, Y-axis = $usage
 $data = [];
 while ($query->fetch()) {
-    switch($days) {
-    case 1:
-        $date = date("H:i", strtotime($time));
-        break;
-    case 7:
-        $date = date("Y-m-d H", strtotime($time));
-        break;
-    case 30:
-    case 365:
-        $date = date("Y-m-d", strtotime($time));
-        break;
-    }
+    $date = date($datestamp, strtotime($time));
 
     // $usage has multiple data points throughout a single day.
     // This ensures the largest $usage is set to $data per $date.

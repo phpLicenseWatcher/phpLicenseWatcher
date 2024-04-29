@@ -35,15 +35,9 @@ $html_body = <<<HTML
     google.charts.setOnLoadCallback(draw_charts);
 
     function draw_charts() {
-        var charts = {
-            '1'  : "day",
-            '7'  : "week",
-            '30' : "month",
-            '365': "year"
-        };
-
+        var charts = ["day", "week", "month", "year", "yearly"];
         $.each(charts, function(key, value) {
-            var data_url = "graph_data.php?license={$license_id}&days=" + key;
+            var data_url = "graph_data.php?license={$license_id}&range=" + value;
             var data_div = "chart_div_" + value;
             var json_data = $.ajax({
                 url: data_url,
@@ -72,6 +66,9 @@ $html_body = <<<HTML
 <div id="chart_div_month"></div>
 <h2>Past Year</h2>
 <div id="chart_div_year"></div>
+<h2>Yearly</h2>
+<div id="chart_div_yearly"></div>
+
 HTML;
 
 print_header();
