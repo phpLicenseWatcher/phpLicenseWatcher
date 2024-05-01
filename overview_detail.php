@@ -27,7 +27,7 @@ db_connect($db);
 $license = db_get_license_params($db, $license_id);
 $feature = $license['feature_label'] ?? $license['feature_name'];
 $server_name = $license['server_name'];
-$server_label = $license['server_label'] != "" ? "({$license['server_label']})" : "";
+$server_label = "({$license['server_label']})";
 
 // Query usage data and build CSV for heatmap.
 $query = $db->prepare($sql);
