@@ -48,7 +48,7 @@ print <<< HTML
 <h1>License Usage Monitoring</h1>
 
 <hr/>
-<p>Following links will show usage graphs for different licenses.  Data is being collected every {$collection_interval} minutes.
+<p>The following links will show usage graphs for different licenses.  Data is being collected every {$collection_interval} minutes.
 <p>A feature can be associated with more than one server, and each pairing is a separately tracked license.
 {$table->get_html()}
 HTML;
