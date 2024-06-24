@@ -13,7 +13,7 @@ $db->close();
 
 $feature = $license['feature_label'] ?? $license['feature_name'];
 $server_name = $license['server_name'];
-$server_label = $license['server_label'] != "" ? "({$license['server_label']})" : "";
+$server_label = "({$license['server_label']})";
 
 // Print view
 $html_body = <<<HTML
