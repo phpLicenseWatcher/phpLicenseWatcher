@@ -16,7 +16,7 @@ function db_process() {
     case preg_match("/^\d+$|^new$/", $id):
         return array('msg' => "Invalid server ID \"{$id}\"", 'lvl' => "failure");
     case validate_server_name($name):
-        return array('msg' => "Server name MUST be in form <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>. Port is optional.", 'lvl' => "failure");
+        return array('msg' => "Server name MUST be in form: <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>. Port is optional. You can also specify multiple servers with <code>port@domain1.tld,port@domain2.tld,port@domain3.tld</code>, etc.", 'lvl' => "failure");
     // $label cannot be blank
     case !empty($label):
         return array('msg' => "Server's label cannot be blank", 'lvl' => "failure");
