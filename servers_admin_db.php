@@ -3,7 +3,7 @@
 /** DB operation to either add or edit a form, based on $_POST['id'] */
 function db_process() {
     $id = $_POST['submit_id'];
-    $name = $_POST['name'];
+    $name = trim($_POST['name']);
     $label = $_POST['label'];
     $license_manager = $_POST['license_manager'];
     // checkboxes are not included in POST when unchecked.
