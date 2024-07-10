@@ -162,7 +162,7 @@ function validate_server_name(string $name) : bool {
                     return false;
                 }
             }
-            break;
+            continue;
             // return true;
         default:
             // No regex matches mean $name is definitely invalid.
