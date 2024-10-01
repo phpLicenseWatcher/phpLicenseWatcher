@@ -13,6 +13,6 @@ Run this command from the `docker` directory.
 # Setup MariaDB DB
 Run these commands from the `database` directory.
 
-1. `docker cp phplicensewatcher.maria.sql docker_mariadb_1:/app`
-2. `docker exec -ti docker_mariadb_1 bash`
+1. `docker cp phplicensewatcher.maria.sql docker-mariadb-1:/app`
+2. `docker exec -ti docker-mariadb-1 bash`
 3. `mysql -f licenses -p < app`
