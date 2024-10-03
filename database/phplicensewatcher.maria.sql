@@ -31,7 +31,7 @@ DROP TABLE IF EXISTS `servers` ;
 
 CREATE TABLE IF NOT EXISTS `servers` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(50) NOT NULL,
+  `name` VARCHAR(160) NOT NULL,
   `label` VARCHAR(100) NOT NULL,
   `is_active` TINYINT NOT NULL DEFAULT 1,
   `lm_default_usage_reporting` TINYINT NOT NULL DEFAULT 1,

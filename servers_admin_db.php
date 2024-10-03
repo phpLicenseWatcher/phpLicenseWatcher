@@ -3,7 +3,7 @@
 /** DB operation to either add or edit a form, based on $_POST['id'] */
 function db_process() {
     $id = $_POST['submit_id'];
-    $name = $_POST['name'];
+    $name = trim($_POST['name']);
     $label = $_POST['label'];
     $license_manager = $_POST['license_manager'];
     // checkboxes are not included in POST when unchecked.
@@ -16,7 +16,7 @@ function db_process() {
     case preg_match("/^\d+$|^new$/", $id):
         return array('msg' => "Invalid server ID \"{$id}\"", 'lvl' => "failure");
     case validate_server_name($name):
-        return array('msg' => "Server name MUST be in form <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>. Port is optional.", 'lvl' => "failure");
+        return array('msg' => "Server name MUST be in form: <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>. Port is optional. You can also specify multiple servers with <code>port@domain1.tld,port@domain2.tld,port@domain3.tld</code>, etc.", 'lvl' => "failure");
     // $label cannot be blank
     case !empty($label):
         return array('msg' => "Server's label cannot be blank", 'lvl' => "failure");
@@ -144,27 +144,31 @@ function db_import_servers_json($json) {
  * @return bool TRUE when $name is valid, FALSE otherwise.
  */
 function validate_server_name(string $name) : bool {
-    // Regex checks are order of: (1) port@domain.tld  (2) port@hostname  (3) port@ipv4
-    switch (true) {
-    case preg_match("/^(?:(?<port>\d{1,5})@)?(?:(?!\-)[a-z0-9\-]+(?<!\-)\.)+[a-z\-]{2,}$/i", $name, $matches, PREG_UNMATCHED_AS_NULL) === 1:
-    case preg_match("/^(?:(?<port>\d{1,5})@)?(?!\-)[a-z0-9\-]+(?<!\-)$/i", $name, $matches, PREG_UNMATCHED_AS_NULL) === 1:
-    case preg_match("/^(?:(?<port>\d{1,5})@)?(?<octet1>\d{1,3})\.(?<octet2>\d{1,3})\.(?<octet3>\d{1,3})\.(?<octet4>\d{1,3})$/", $name, $matches, PREG_UNMATCHED_AS_NULL) === 1:
-        // Port is optional since Mathematica doesn't specify a port.
-        if (!is_null($matches['port']) && ((int) $matches['port'] < 1024 || (int) $matches['port'] > 65535)) {
-            return false;
-        }
-        // Octets only exist in third regex check (for valid ipv4).
-        // $octet array keys only exist when matching the third regex.
-        foreach (array('octet1', 'octet2', 'octet3', 'octet4') as $octet) {
-            if (array_key_exists($octet, $matches) && ((int) $matches[$octet] < 0 || (int) $matches[$octet] > 255)) {
+    $name_arr = preg_split ("/\,/", $name);
+    foreach ($name_arr as $name) {
+        // Regex checks are order of: (1) port@domain.tld  (2) port@hostname  (3) port@ipv4
+        switch (true) {
+        case preg_match("/^(?:(?<port>\d{1,5})@)?(?:(?!\-)[a-z0-9\-]+(?<!\-)\.)+[a-z\-]{2,}$/i", $name, $matches, PREG_UNMATCHED_AS_NULL) === 1:
+        case preg_match("/^(?:(?<port>\d{1,5})@)?(?!\-)[a-z0-9\-]+(?<!\-)$/i", $name, $matches, PREG_UNMATCHED_AS_NULL) === 1:
+        case preg_match("/^(?:(?<port>\d{1,5})@)?(?<octet1>\d{1,3})\.(?<octet2>\d{1,3})\.(?<octet3>\d{1,3})\.(?<octet4>\d{1,3})$/", $name, $matches, PREG_UNMATCHED_AS_NULL) === 1:
+            // Port is optional since Mathematica doesn't specify a port.
+            if (!is_null($matches['port']) && ((int) $matches['port'] < 1024 || (int) $matches['port'] > 65535)) {
                 return false;
             }
+            // Octets only exist in third regex check (for valid ipv4).
+            // $octet array keys only exist when matching the third regex.
+            foreach (array('octet1', 'octet2', 'octet3', 'octet4') as $octet) {
+                if (array_key_exists($octet, $matches) && ((int) $matches[$octet] < 0 || (int) $matches[$octet] > 255)) {
+                    return false;
+                }
+            }
+            continue;
+            // return true;
+        default:
+            // No regex matches mean $name is definitely invalid.
+            return false;
         }
-
-        return true;
-    default:
-        // No regex matches mean $name is definitely invalid.
-        return false;
     }
+    return true;
 } // END function validate_server_name()
 ?>

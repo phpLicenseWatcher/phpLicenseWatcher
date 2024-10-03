@@ -127,7 +127,7 @@ function main_form($alert=null) {
     <script src="servers_admin_jquery.js"></script>
     <h1>Server Administration</h1>
     <p>You may edit an existing server's name, label, active status, or add a new server to the database.<br>
-    Server names must be unique and in the form of <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>.  Port is optional, but must be unprivileged.
+    Server names must be unique and in the form of <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>.  Port is optional, but must be unprivileged.  You can also specify multiple servers with <code>port@domain1.tld,port@domain2.tld,port@domain3.tld</code>, etc.
     {$alert_html}
     {$control_panel_html}
     <form id='server_list' action='servers_admin.php' method='POST'>
