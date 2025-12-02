@@ -1,7 +1,7 @@
 <?php
 // Author: Peter Bailie (pbailie@gihtub)
 namespace PhpLicenseWatcher\Reports\Ajax;
-require_once __DIR__ . "../utils/autocomplete.php";
+require_once __DIR__ . "/../utils/autocomplete.php";
 use PhpLicenseWatcher\Reports\utils\autocomplete;
 
 // Sanitize $_GET to guard against XSS.
@@ -14,9 +14,8 @@ case "autocomplete":
     break;
 
 default:
-    $msg = "Unknown AJAX request: {$a}";
-    error_log($msg);
-    die($msg);
+    error_log("Unknown AJAX request: {$a}");
+    die();
 }
 
 header('Content-Type: application/json');

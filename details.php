@@ -193,6 +193,7 @@ function list_licenses_in_use($servers, &$html_body) {
                 // $license_id now has a license ID number for this feature name and server ID
 
                 $graph_url = "monitor_detail.php?license={$license_id}";
+                $academic_report_url = "reports.php?type=academic&license={$license_id}";
 
                 // $license['num_licenses_used'] is the value reported by the license manager, which can include reserved tokens.
                 // $license['num_checkouts'] is the accumulated count of licenses reported to be checked out by all individual users.
@@ -209,10 +210,16 @@ function list_licenses_in_use($servers, &$html_body) {
                     ? $license['num_licenses'] - $licenses_used
                     : "uncounted";
 
-                $license_info = "Total of {$license['num_licenses']} licenses, {$licenses_used} currently in use, ";
-                $license_info .= array_key_exists('num_queued', $license) ? "{$license['num_queued']} queued, " : "";
-                $license_info .= $licenses_reserved > 0 ? "{$license['num_reservations']} reserved, " : "";
-                $license_info .= "<br><span class='bold-text'>{$licenses_available} available</span><br><a href='{$graph_url}'>Historical Usage</a>";
+                $license_info = "<div class='row col-md-12'>Total of {$license['num_licenses']} licenses, {$licenses_used} currently in use";
+                $license_info .= array_key_exists('num_queued', $license) ? ", {$license['num_queued']} queued" : "";
+                $license_info .= $licenses_reserved > 0 ? ", {$license['num_reservations']} reserved</div>" : "</div>";
+                $license_info .= <<<HTML
+                <div class='row col-md-12'><span class='bold-text'>{$licenses_available} available</span></div>
+                <div class='row'>
+                    <div class='col-md-4'><a href='{$graph_url}'>Historical Usage</a></div>
+                    <div class='col-md-4'><a href='{$academic_report_url}'>Academic Report</a></div>
+                </div>
+                HTML;
 
                 // Used licenses have a blue tinted background to differentiate from unused licenses.
                 if ($licenses_used > 0) {

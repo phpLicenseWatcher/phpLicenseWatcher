@@ -175,3 +175,8 @@ table#install-check {
     margin-left: 20%;
     margin-right: 20%;
 }
+
+/* Reports CSS */
+.rpt-row {
+    margin-top: 1em;
+}
