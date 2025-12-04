@@ -10,11 +10,10 @@ use mysqli_sql_exception;
  * @author Peter Bailie (pbailie@github)
  */
 final class db {
-    private static $db = null;
-    private static $stmt = null;
+    static private $db = null;
+    static private $stmt = null;
 
     public static function query(string $sql, string $param_map, ...$params) {
-        self::connect();
         $fetch = null;
         $data = [];
 
@@ -35,11 +34,10 @@ final class db {
             die("DB query error: {$msg}");
         }
 
-        self::close();
         return $data;
     }
 
-    private static function connect() {
+    public static function connect() {
         // From config.php
         global $db_hostname, $db_username, $db_password, $db_database;
 
@@ -56,7 +54,7 @@ final class db {
         }
     }
 
-    private static function close() {
+    public static function close() {
         if (self::$stmt instanceof mysqli_stmt) mysqli_stmt_close(self::$stmt);
         if (self::$db instanceof mysqli) mysqli_close(self::$db);
     }
