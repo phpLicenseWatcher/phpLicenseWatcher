@@ -52,12 +52,15 @@ class model extends controller {
 
         $sql = <<<SQL
         SELECT
+            WEEK(time) AS week,
             MIN(num_users) AS minimum,
             ROUND(AVG(num_users), 2) AS average,
             MAX(num_users) AS maximum,
-            ROUND(STD(num_users), 2) AS standard_deviation
+            ROUND(VAR_POP(num_users), 2) AS population_variance,
+            ROUND(STDDEV_POP(num_users), 2) AS standard_deviation
         FROM `usage`
         WHERE `license_id` = ? AND `time` BETWEEN ? AND ?
+        GROUP BY week
         SQL;
 
         $param_map = "iss";
