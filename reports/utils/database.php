@@ -37,14 +37,14 @@ final class db {
         return $data;
     }
 
-    public static function connect() {
+    public static function open() {
         // From config.php
         global $db_hostname, $db_username, $db_password, $db_database;
 
         if (!(self::$db instanceof mysqli)) {
             mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
             try {
-                self::$db = mysqli_connect("{$db_hostname}", $db_username, $db_password, $db_database);
+                self::$db = mysqli_connect($db_hostname, $db_username, $db_password, $db_database);
                 mysqli_set_charset(self::$db, "utf8mb4");
             } catch (mysqli_sql_exception $e) {
                 $msg = $e->getMessage();
