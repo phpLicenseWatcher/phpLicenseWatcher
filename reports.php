@@ -1,11 +1,14 @@
 <?php
 // Author: Peter Bailie (pbailie@github).
+
+require_once __DIR__ . "/config.php";
 require_once __DIR__ . "/reports/academic_reports/controller.php";
 use PhpLicenseWatcher\Reports\AcademicReports\controller as academic_reports;
 
-// Sanitize $_GET and $_POST to guard against XSS.  Please do not use $_REQUEST.
+// Sanitize $_GET, $_POST, and $_REQUEST to guard against XSS.
 array_walk_recursive($_GET, function(&$v) { $v = htmlspecialchars($v); });
 array_walk_recursive($_POST, function(&$v) { $v = htmlspecialchars($v); });
+array_walk_recursive($_REQUEST, function(&$v) { $v = htmlspecialchars($v); });
 
 $type = $_GET['type'] ?? "N/A";
 $license_id = $_GET['license'] ?? -1;

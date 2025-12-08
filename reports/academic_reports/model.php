@@ -20,8 +20,8 @@ class model extends controller {
         }
 
         $license = model::lookup_server_and_feature();
-        controller::$server = $license['server'];
-        controller::$feature = $license['feature'];
+        controller::$server = $license[0]['server'];
+        controller::$feature = $license[0]['feature'];
 
         db::close();
     }
@@ -59,7 +59,8 @@ class model extends controller {
 
         $sql = <<<SQL
         SELECT
-            CONCAT(YEAR(time), ' - ', WEEK(time)) as week,
+            WEEK(time, 6) as week,
+            FROM_UNIXTIME(MIN(UNIX_TIMESTAMP(time)), '%a %b %d') as date,
             MIN(num_users) AS minimum,
             ROUND(AVG(num_users), 2) AS average,
             MAX(num_users) AS maximum,
@@ -71,9 +72,9 @@ class model extends controller {
         GROUP BY week
         SQL;
 
-        $param_map = "iss";
+        $typedefs = "iss";
         $params = [controller::$license_id, $start, $end];
-        $stats = db::query($sql, $param_map, $params);
+        $stats = db::query($sql, $typedefs, $params);
         $label = "{$term} {$year}";
         return ['label' => $label, 'stats' => $stats];
     }
@@ -87,9 +88,9 @@ class model extends controller {
         WHERE l.`id` = ?
         SQL;
 
-        $param_map = "i";
+        $typedef = "i";
         $params = [controller::$license_id];
-        return db::query($sql, $param_map, $params);
+        return db::query($sql, $typedef, $params);
     }
 
 

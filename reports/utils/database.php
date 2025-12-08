@@ -1,8 +1,5 @@
 <?php
 namespace PhpLicenseWatcher\Reports\Utils;
-use mysqli;
-use mysqli_stmt;
-use mysqli_sql_exception;
 
 /**
  * `mysqli` database wrapper class.
@@ -10,27 +7,29 @@ use mysqli_sql_exception;
  * @author Peter Bailie (pbailie@github)
  */
 final class db {
-    static private $db = null;
+    static private $mysqli = null;
     static private $stmt = null;
+    static private $result = null;
 
-    public static function query(string $sql, string $param_map, ...$params) {
-        $fetch = null;
-        $data = [];
-
+    public static function query(string $sql, string $params_typedef, array $params_values) {
         try {
-            self::$stmt = mysqli_prepare(self::$db, $sql);
-            mysqli_stmt_bind_result(self::$stmt, $fetch);
-            mysqli_stmt_bind_param(self::$stmt, $param_map, $params);
+            self::$stmt = mysqli_stmt_init(self::$mysqli);
+            mysqli_stmt_prepare(self::$stmt, $sql);
+            mysqli_stmt_bind_param(self::$stmt, $params_typedef, ...$params_values);
             mysqli_stmt_execute(self::$stmt);
-            mysqli_stmt_store_result(self::$stmt);
 
-            while (mysqli_stmt_fetch(self::$stmt))
-                $data[] = $fetch;
-        } catch (mysqli_sql_exception $e) {
+            if (mysqli_stmt_result_metadata(self::$stmt) !== false) {
+                self::$result = mysqli_stmt_get_result(self::$stmt);
+                $data = mysqli_fetch_all(self::$result, MYSQLI_ASSOC);
+                mysqli_free_result(self::$result);
+            }
+
+            mysqli_stmt_close(self::$stmt);
+        } catch (\Throwable $e) {
             $msg = $e->getMessage();
             error_log($msg);
             error_log("SQL: {$sql}");
-            error_log("Params: " . print_r($params, true));
+            error_log("Params: " . var_export($params_values, true));
             die("DB query error: {$msg}");
         }
 
@@ -41,21 +40,28 @@ final class db {
         // From config.php
         global $db_hostname, $db_username, $db_password, $db_database;
 
-        if (!(self::$db instanceof mysqli)) {
-            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-            try {
-                self::$db = mysqli_connect($db_hostname, $db_username, $db_password, $db_database);
-                mysqli_set_charset(self::$db, "utf8mb4");
-            } catch (mysqli_sql_exception $e) {
-                $msg = $e->getMessage();
-                error_log($msg);
-                die("DB Connection Error: {$msg}");
-            }
+        switch(true) {
+        case is_null($db_hostname):
+        case is_null($db_username):
+        case is_null($db_password):
+        case is_null($db_database):
+            $msg = "Missing database connection parameters.  Check config.php.";
+            error_log($msg);
+            die($msg);
+        }
+
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+        try {
+            self::$mysqli = mysqli_connect($db_hostname, $db_username, $db_password, $db_database);
+            mysqli_set_charset(self::$mysqli, "utf8mb4");
+        } catch (\Throwable $e) {
+            $msg = $e->getMessage();
+            error_log($msg);
+            die("DB Connection Error: {$msg}");
         }
     }
 
     public static function close() {
-        if (self::$stmt instanceof mysqli_stmt) mysqli_stmt_close(self::$stmt);
-        if (self::$db instanceof mysqli) mysqli_close(self::$db);
+        mysqli_close(self::$mysqli);
     }
 }
