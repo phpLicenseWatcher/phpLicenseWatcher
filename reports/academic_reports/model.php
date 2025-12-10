@@ -59,8 +59,8 @@ class model extends controller {
 
         $sql = <<<SQL
         SELECT
-            WEEK(time, 6) as week,
-            FROM_UNIXTIME(MIN(UNIX_TIMESTAMP(time)), '%a %b %d') as date,
+            WEEK(time, 6) AS week,
+            DATE_FORMAT(MIN(time), '%a %b %d') AS date,
             MIN(num_users) AS minimum,
             ROUND(AVG(num_users), 2) AS average,
             MAX(num_users) AS maximum,
@@ -92,17 +92,6 @@ class model extends controller {
         $params = [controller::$license_id];
         return db::query($sql, $typedef, $params);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
+
+// EOF

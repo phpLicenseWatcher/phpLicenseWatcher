@@ -27,12 +27,7 @@ class controller {
     }
 
     public static function get_and_show_report(int $license_id) {
-        if ($license_id < 1) {
-            $msg = "Academic Report recieved improper license id: " . var_export($license_id, true);
-            throw new \Exception($msg);
-        }
-
-        controller::$license_id = $license_id;
+        controller::validate_license_id($license_id);
         model::get_report_data();
 
         $view = file_get_contents(__DIR__ . "/../../header.html");
@@ -40,4 +35,24 @@ class controller {
         $view .= file_get_contents(__DIR__ . "/../../footer.html");
         print $view;
     }
+
+    /** Typically called by ajax_fetch.php to retrieve data for graphs. */
+    public static function fetch_graphing_data(int $license_id) {
+        controller::validate_license_id($license_id);
+        model::get_report_data();
+
+        return controller::$data;
+    }
+
+    private static function validate_license_id(int $license_id) {
+        if ($license_id < 1) {
+            $var_export = var_export($license_id, true);
+            $msg = "Academic Report recieved improper license id: {$var_export}";
+            throw new \UnexpectedValueException($msg);
+        }
+
+        controller::$license_id = $license_id;
+    }
 }
+
+// EOF

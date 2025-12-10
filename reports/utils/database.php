@@ -65,3 +65,5 @@ final class db {
         mysqli_close(self::$mysqli);
     }
 }
+
+// EOF

@@ -26,3 +26,5 @@ final class autocomplete {
         return db::query($sql, "si", $term, $server_id);
     }
 }
+
+// EOF
