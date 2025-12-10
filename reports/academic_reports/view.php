@@ -121,13 +121,6 @@ class view extends controller {
 
             function drawChart() {
                 const license_id = new URLSearchParams(window.location.search).get('license');
-                // let data = google.visualization.arrayToDataTable([
-                //     ['Year', 'Sales', 'Expenses'],
-                //     ['2013', 1000, 400],
-                //     ['2014', 1170, 460],
-                //     ['2015', 660,  1120],
-                //     ['2016', 1030, 540]
-                // ]);
 
                 const options = {
                     hAxis: {title: 'Week',  titleTextStyle: {color: '#000'}},
@@ -135,11 +128,8 @@ class view extends controller {
                 };
 
                 $.getJSON('ajax_fetch.php', {a: 'graphs', b: 'academic', license: license_id}, function(data) {
-                    // const chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+                    // const chart = new google.visualization.AreaChart(document.getElementById('graph_'));
                     // chart.draw(data, options);
-                    console.log("foo");
-                    console.log(options);
-                    console.log(data);
                 });
             }
         </script>
