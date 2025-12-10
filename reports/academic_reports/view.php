@@ -43,11 +43,14 @@ class view extends controller {
 
         // Build data views by term
         foreach (controller::$data as $i => $term_data) {
-            $table = new html_table(['class' => "table table-striped"]);
-            $table->add_row(["Week", "Min", "Avg", "Max", "PV", "SD"], null, "th");
-            $table->update_cell(0, 0, ['colspan' => '2'], null, null);
+            $label = trim($term_data['label']);
+            $id = str_replace(" ", "_", $label);
 
             if (count($term_data['stats']) > 0) {
+                $table = new html_table(['class' => "table table-striped"]);
+                $table->add_row(["Week", "Min", "Avg", "Max", "PV", "SD"], null, "th");
+                $table->update_cell(0, 0, ['colspan' => '2'], null, null);
+
                 foreach($term_data['stats'] as $j => $stats) {
                     $table->add_row([
                         $stats['week'],
@@ -62,24 +65,33 @@ class view extends controller {
                     // 'Week' column should be treated as a header column.
                     $table->update_cell($j+1, 0, null, null, "th");
                 }
-            } else {
-                $table->add_row(["", "", "No data on record"]);
-                $table->update_cell(1, 2, ['colspan' => '5'], null, null);
-            }
 
-            $table_html = $table->get_html();
-            $label = $term_data['label'];
+                $table_html = $table->get_html();
+                $data_html = <<<HTML
+                <div class='row'>
+                    <div class='col-md-12' id='graph_${id}'></div>
+                </div>
+                <div class='row rpt-row'>
+                    <div class='col-md-6 col-md-offset-3'>
+                        {$table_html}
+                    </div>
+                </div>
+                HTML;
+            } else {
+                $data_html = <<<HTML
+                <div class='row rpt-row'>
+                    <div class='col-md-12 text-center'>
+                        <span class='large-text'>No Data On Record</span>
+                    </div>
+                </div>
+                HTML;
+            }
 
             $views[$i] = <<<HTML
             <div class='row'>
-                <div class='col-lg-12'><h2>{$label}</h2></div>
+                <div class='col-md-12'><h2>{$label}</h2></div>
             </div>
-            <div class='row rpt-row'>
-                <div class='col-lg-6' id='graph_{$label}'></div>
-                <div class='col-lg-6'>
-                    {$table_html}
-                </div>
-            </div>\n
+            {$data_html}
             HTML;
         }
 
@@ -113,27 +125,46 @@ class view extends controller {
     }
 
     private static function graphs_jquery() {
-        return <<<JS
+        return <<<HTML
         <script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>
         <script type='text/javascript'>
             google.charts.load('current', {'packages':['corechart']});
-            google.charts.setOnLoadCallback(drawChart);
+            google.charts.setOnLoadCallback(draw_charts);
 
-            function drawChart() {
+            function draw_charts() {
                 const license_id = new URLSearchParams(window.location.search).get('license');
-
-                const options = {
-                    hAxis: {title: 'Week',  titleTextStyle: {color: '#000'}},
-                    vAxis: {minValue: 0}
+                let data, graph_div, graph_data, week
+                let options = {
+                    hAxis: {title: 'Week',  titleTextStyle: {color: '#333'}},
+                    vAxis: {minValue: 0},
+                    height: 480
                 };
-
                 $.getJSON('ajax_fetch.php', {a: 'graphs', b: 'academic', license: license_id}, function(data) {
-                    // const chart = new google.visualization.AreaChart(document.getElementById('graph_'));
-                    // chart.draw(data, options);
+                    for (const subset of data) {
+                        if (subset['stats'].length > 0) {
+                            graph_div = 'graph_' + subset['label'].trim().replace(" ", "_");
+                            graph_data = [['Week', 'Mininum', 'Average', 'Maximum', 'Population Variance', 'Standard Deviation']];
+
+                            for (const rows of subset['stats']) {
+                                week = '(' + rows['week'] + ') ' + rows['date'].substring(4);
+                                graph_data.push([
+                                    week,
+                                    +rows['minimum'],
+                                    +rows['average'],
+                                    +rows['maximum'],
+                                    +rows['population_variance'],
+                                    +rows['standard_deviation']
+                                ]);
+                            }
+
+                            graph_data = google.visualization.arrayToDataTable(graph_data);
+                            new google.visualization.LineChart(document.getElementById(graph_div)).draw(graph_data, options);
+                        }
+                    }
                 });
             }
         </script>
-        JS;
+        HTML;
     }
 }
 

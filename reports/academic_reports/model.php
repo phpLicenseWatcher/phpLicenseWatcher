@@ -29,8 +29,8 @@ class model extends controller {
     /** `$term` should be one of "spring", "summer", or "fall" (case insensitive) */
     private static function lookup_term_data(string $year, string $term) {
         if (preg_match("/^20\d{2}$/", $year) !== 1) {
-            error_log("Bad year: " . var_export($year, true));
-            die();
+            $msg = "Report year fails validation: " . var_export($year, true);
+            throw new \UnexpectedValueException($msg);
         }
 
         switch (strtolower($term)) {
@@ -50,10 +50,11 @@ class model extends controller {
             break;
 
         default:
-            error_log("Improper term: " . var_export($term, true));
-            die();
+            $msg = "Improper term: " . var_export($term, true);
+            throw new \UnexpectedValueException($msg);
         }
 
+        // These "return values" are reference parameters.
         $start = "{$year}-{$start} 00:00:00";
         $end = "{$year}-{$end} 23:59:59";
 
@@ -75,6 +76,7 @@ class model extends controller {
         $typedefs = "iss";
         $params = [controller::$license_id, $start, $end];
         $stats = db::query($sql, $typedefs, $params);
+        error_log(var_export($stats, true));
         $label = "{$term} {$year}";
         return ['label' => $label, 'stats' => $stats];
     }
