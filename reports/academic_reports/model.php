@@ -76,9 +76,8 @@ class model extends controller {
         $typedefs = "iss";
         $params = [controller::$license_id, $start, $end];
         $stats = db::query($sql, $typedefs, $params);
-        error_log(var_export($stats, true));
         $label = "{$term} {$year}";
-        return ['label' => $label, 'stats' => $stats];
+        return ['label' => $label, 'stats' => $stats, 'start' => $start, 'end' => $end];
     }
 
     private static function lookup_server_and_feature() {

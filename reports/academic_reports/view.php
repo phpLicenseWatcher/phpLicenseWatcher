@@ -87,9 +87,17 @@ class view extends controller {
                 HTML;
             }
 
+            $start = date_format(date_create_immutable_from_format("Y-m-d G:i:s", $term_data['start']), "M j");
+            $end = date_format(date_create_immutable_from_format("Y-m-d G:i:s", $term_data['end']), "M j");
+
             $views[$i] = <<<HTML
             <div class='row'>
-                <div class='col-md-12'><h2>{$label}</h2></div>
+                <div class='col-md-12'>
+                    <h2>
+                        {$label}<br>
+                        <small>{$start} &mdash; {$end}</small>
+                    </h2>
+                </div>
             </div>
             {$data_html}
             HTML;
