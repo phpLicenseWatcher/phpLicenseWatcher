@@ -25,7 +25,7 @@ RUN chmod 755 /usr/local/bin/lmutil
 
 WORKDIR /var/www/html
 RUN mkdir /app
-RUN git clone https://github.com/rpi-dotcio/phpLicenseWatcher.git /app
+RUN git clone https://github.com/phpLicenseWatcher/phpLicenseWatcher.git /app
 RUN cp -R /app/* /var/www/html
 COPY config.php /var/www/html
 

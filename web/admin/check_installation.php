@@ -1,10 +1,10 @@
 <?php
 
-require_once __DIR__ . "/common.php";
-include_once __DIR__ . "/html_table.php";
+require_once __DIR__ . "/../../code/common.php";
+include_once __DIR__ . "/../../code/html_table.php";
 
-if (file_exists(__DIR__ . "/vendor/autoload.php")) {
-    require_once __DIR__ . "/vendor/autoload.php";
+if (file_exists(__DIR__ . "/../../code/vendor/autoload.php")) {
+    require_once __DIR__ . "/../../code/vendor/autoload.php";
 }
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -33,7 +33,7 @@ $test_results = $test ? PASS_MARK : FAIL_MARK;
 $table->add_row(array($test_names, $test_values, $test_results));
 
 // TO DO: Expand this test to validate config.php values.
-$test         = is_readable("config.php");
+$test         = is_readable("../../config.php");
 $test_names   = "config.php";
 $test_values  = $test ? "Readable" : "Not Readable";
 $test_results = $test ? PASS_MARK : FAIL_MARK;

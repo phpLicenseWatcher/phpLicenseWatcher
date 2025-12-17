@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/html_table.php";
+require_once __DIR__ . "/../code/common.php";
+require_once __DIR__ . "/../code/html_table.php";
 
 $table = new html_table(['class' => "table alt-rows-bgcolor"]);
 $heading = ["Feature", "Server Name", "Server Label"];

@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . "/tools.php";
-require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/lmtools.php";
+require_once __DIR__ . "/../../code/tools.php";
+require_once __DIR__ . "/../../code/common.php";
+require_once __DIR__ . "/../../code/lmtools.php";
 
 db_connect($db);
 $servers = db_get_servers($db, array('name', 'license_manager', 'lm_default_usage_reporting'));
@@ -76,7 +76,7 @@ function update_licenses(&$db, $servers) {
     // Populate feature, if needed.
     // ? = $lmdata['feature']
     $sql = <<<SQL
-    INSERT IGNORE INTO `features` (`name`, `show_in_lists`, `is_tracked`) VALUES (?, 1, 1);
+    INSERT IGNORE INTO `features` (`name`, `show_in_lists`, `is_tracked`) VALUES (?, ?, ?);
     SQL;
     $queries['features'] = $db->prepare($sql);
 
@@ -143,8 +143,20 @@ function update_licenses(&$db, $servers) {
                 // and licenses and re-run usage query.
                 // 'INSERT IGNORE' in queries prevents unique key collisions.
                 if ($db->affected_rows < 1) {
+                    
+                    //Set defaults for feature
+                    $def_show_in_lists = 1;
+                    $def_is_tracked = 1;
+                    if( defined('DEFAULT_FEATURE_SETTINGS') ){ 
+                        if( in_array ($feature, array_keys( DEFAULT_FEATURE_SETTINGS ) ) ){
+                            //Defaults for this feature exist
+                            $def_show_in_lists = DEFAULT_FEATURE_SETTINGS[$feature]['show'] ?? $def_show_in_lists;
+                            $def_is_tracked = DEFAULT_FEATURE_SETTINGS[$feature]['track'] ?? $def_is_tracked ;
+                        }
+                    }
+                    
                     // Features table
-                    $queries['features']->bind_param("s", $feature);
+                    $queries['features']->bind_param("sii", $feature , $def_show_in_lists , $def_is_tracked ); //bind_param
                     $queries['features']->execute();
 
                     // Licenses table

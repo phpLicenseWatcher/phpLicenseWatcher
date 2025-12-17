@@ -10,6 +10,12 @@ To help administrators analyze trends, the software offers charts of historical 
 * E-mails alerts of licenses that will expire within certain time period ie. within next 10 days.
 * Provides charts of historical license usage
 
+> [!WARNING]  
+> Version 2.4.251216 introduces a breaking change to the folder structure and urls.  We have resisted making this change for years but the root folder was becoming too cluttered and security best practices encourage placing most php code files outside the web root.  As such we have made the following changes.
+> * A sub folder named "web" now contains the web root.  Your server should be configured to serve this folder.  ie. /var/www/phplm/web instead of /var/www/phplm.
+> * Additionally all admin interface file are in a "admin" folder to make it easier for those that prefer different permissions on this part of the system.
+> * The license_util.php , license_cache.php, license_alert.php files have been moved into web/admin/ so your cron jobs will need to be updated.
+
 > [!IMPORTANT]  
 > We are soliciting feedback on what features or improvements would be of interest to users of this software.  We are particularily curious of any installation, or initial use challenges you may have faced as a primary goal is to make initial install as simple as possible.
 > Please open an issue to provide feedback.
@@ -56,13 +62,13 @@ To help administrators analyze trends, the software offers charts of historical 
    mysqladmin create licenses
    mysql -f licenses < phplicensewatcher.sql
    ```
-6. Edit "config.php" for the proper values for your setup, typically just the database username, and password.  Brief instructions are provided within the file as code comments.
+6. Rename "sample-config.php" to "config.php" and set the proper values for your site, typically just the database username, and password.  Brief instructions are provided within the file as code comments.
 
 7. Setup cron to run scheduled tasks
    ```
-   0,10,20,30,40,50 * * * * php /var/www/html/license_util.php >> /dev/null
-   15 0 * * 1  php /var/www/html/license_cache.php >> /dev/null
-   0 6 * * 1 php /var/www/html/license_alert.php >> /dev/null
+   0,10,20,30,40,50 * * * * php /var/www/html/web/admin/license_util.php >> /dev/null
+   15 0 * * 1  php /var/www/html/web/admin/license_cache.php >> /dev/null
+   0 6 * * 1 php /var/www/html/web/admin/license_alert.php >> /dev/null
    ```
 8. You should use your web server's built in capabilities to password protect your site.  See some example configurations in our [https://github.com/phpLicenseWatcher/phpLicenseWatcher/wiki/Example-Apache-Configurations](example apache configurations wiki page).
 9. Install PHP packages using composer.

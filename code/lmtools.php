@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/config.php";
+require_once __DIR__ . "/../config.php";
 require_once __DIR__ . "/lmtools_lib.php";
 require_once __DIR__ . "/common.php";
 

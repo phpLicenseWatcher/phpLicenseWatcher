@@ -74,5 +74,6 @@ nbdist/
 composer
 composer.phar
 /vendor/
+/code/vendor/
 !composer.lock
 !composer.json

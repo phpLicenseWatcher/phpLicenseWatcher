@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/tools.php";
-require_once __DIR__ . "/html_table.php";
-require_once __DIR__ . "/lmtools.php";
-require_once __DIR__ . "/servers_admin_db.php";
+require_once __DIR__ . "/../../code/common.php";
+require_once __DIR__ . "/../../code/tools.php";
+require_once __DIR__ . "/../../code/html_table.php";
+require_once __DIR__ . "/../../code/lmtools.php";
+require_once __DIR__ . "/../../code/servers_admin_db.php";
 
 switch(true) {
 case isset($_POST['submit_id']):
@@ -56,7 +56,7 @@ function main_form($alert=null) {
     $display_notice = count($server_list) > 0 ? true : false;
     foreach($server_list as $i => $server) {
         $row = array(
-            $server['name'],
+            format_server_names($server['name']),
             $server['label'],
             ucwords($server['license_manager']),
             $server['is_active'] === "1" ? "True" : "False",
@@ -124,7 +124,7 @@ function main_form($alert=null) {
 
     print <<<HTML
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script src="servers_admin_jquery.js"></script>
+    <script src="/assets/js/servers_admin_jquery.js"></script>
     <h1>Server Administration</h1>
     <p>You may edit an existing server's name, label, active status, or add a new server to the database.<br>
     Server names must be unique and in the form of <code>port@domain.tld</code>, <code>port@hostname</code>, or <code>port@ipv4</code>.  Port is optional, but must be unprivileged.  You can also specify multiple servers with <code>port@domain1.tld,port@domain2.tld,port@domain3.tld</code>, etc.
@@ -203,7 +203,7 @@ function edit_form() {
             {$delete_button}
         </div>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-        <script src="servers_edit_jquery.js"></script>
+        <script src="/assets/js/servers_edit_jquery.js"></script>
     </form>
     HTML;
 

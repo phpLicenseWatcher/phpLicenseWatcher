@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/common.php";
+require_once __DIR__ . "/../code/common.php";
 
 // URL arg check -- only numeric chars are allowed in $_GET['license']
 // Halt immediately if arg check fails.

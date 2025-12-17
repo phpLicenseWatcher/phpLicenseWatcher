@@ -1,7 +1,7 @@
 <?php
 
-require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/tools.php";
+require_once __DIR__ . "/../code/common.php";
+require_once __DIR__ . "/../code/tools.php";
 
 // URL arg check.  Halt immediately if any arg check fails.
 $license_id = htmlspecialchars($_GET['license'] ?? "");

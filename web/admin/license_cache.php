@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/lmtools.php";
+require_once __DIR__ . "/../../code/common.php";
+require_once __DIR__ . "/../../code/lmtools.php";
 
 db_connect($db);
 

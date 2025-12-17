@@ -1,8 +1,8 @@
 <?php
 
-require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/tools.php";
-require_once __DIR__ . "/html_table.php";
+require_once __DIR__ . "/../code/common.php";
+require_once __DIR__ . "/../code/tools.php";
+require_once __DIR__ . "/../code/html_table.php";
 
 // Retrieve server list.  All columns.  All IDs.
 db_connect($db);
@@ -52,7 +52,7 @@ foreach ($servers as $server) {
 
     $table->add_row(array(
         $server['label'],
-        $server['name'],
+        format_server_names( $server['name'] ),
         $server['status'],
         $detail_link,
         $listing_expiration_link,

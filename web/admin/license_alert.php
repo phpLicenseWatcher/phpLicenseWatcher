@@ -8,12 +8,12 @@
 #          expiration ie. 10 days before license expires.
 ############################################################################
 
-require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/tools.php";
-require_once __DIR__ . "/html_table.php";
+require_once __DIR__ . "/../../code/common.php";
+require_once __DIR__ . "/../../code/tools.php";
+require_once __DIR__ . "/../../code/html_table.php";
 
-if (file_exists(__DIR__ . "/vendor/autoload.php")) {
-    require_once __DIR__ . "/vendor/autoload.php";
+if (file_exists(__DIR__ . "/../../code/vendor/autoload.php")) {
+    require_once __DIR__ . "/../../code/vendor/autoload.php";
 }
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;

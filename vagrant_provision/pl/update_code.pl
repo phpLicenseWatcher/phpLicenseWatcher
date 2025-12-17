@@ -36,6 +36,13 @@ if (defined $ARGV[0] && $ARGV[0] eq "full") {
     composer("update");
 } else {
     install_code();
+
+    # Config file copy
+    my $source = catdir(@CONFIG::CONFIG_PATH);
+    my $dest   = catdir(@CONFIG::HTML_PATH);
+    my $file   = $CONFIG::CONFIG_FILE;
+    print "Install vagrant config file.\n";
+    copy_code($source, $dest, $file);
 }
 
 # All done!
@@ -45,7 +52,9 @@ exit 0;
 # Expected param: either "install" or "update".
 sub composer {
     my $cmd = shift;
-    my $dest = catdir(@CONFIG::REPO_PATH);
+    my $dest = catdir(@CONFIG::REPO_PATH) . "/code" ;
+
+    print "XX: {$dest} ";
 
     if ((system "su -c \"composer -d$dest $cmd\" $CONFIG::VAGRANT_USER") != 0) {
         print STDERR "composer exited ", $? >> 8, "\n";

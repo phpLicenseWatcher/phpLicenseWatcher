@@ -1,9 +1,9 @@
 <?php
 
-require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/tools.php";
-require_once __DIR__ . "/html_table.php";
-require_once __DIR__ . "/lmtools.php";
+require_once __DIR__ . "/../code/common.php";
+require_once __DIR__ . "/../code/tools.php";
+require_once __DIR__ . "/../code/html_table.php";
+require_once __DIR__ . "/../code/lmtools.php";
 
 if (isset($_GET['refresh']) && $_GET['refresh'] > 0 && ! $disable_autorefresh) {
     echo('<meta http-equiv="refresh" content="' . intval($_GET['refresh']) . '"/>');
@@ -131,6 +131,10 @@ function list_licenses_in_use($servers, &$html_body) {
         $html_body .= "</span>";
     }
 
+    db_connect($db);
+    $show_features = get_feature_to_list($db);
+    $db->close();
+    
     // For looking up license_id based on server/feature provided by lmtools object.
     $license_id_sql = <<<SQL
     SELECT `licenses`.`id`
@@ -147,6 +151,17 @@ function list_licenses_in_use($servers, &$html_body) {
     // Loop through the available servers
     foreach ($servers as $server) {
         $used_licenses = lmtools::get_license_usage_array($server['license_manager'], $server['name'], 2);
+        
+        
+        if (!array_key_exists('force_show_all', $_GET) ){
+            //Skip any feature that is not set to "Show In Lists"
+            foreach($used_licenses as $key=>$value) {
+                if( !in_array( $value['feature_name'] , $show_features)   ){
+                    unset($used_licenses[$key]);
+                }
+            }
+        }
+        
         if (empty($used_licenses)) {
             // when $used_licenses is empty, no licenses are in use
             $html_body .= get_alert_html("No licenses are currently being used on {$server['name']} ({$server['label']})", "info");

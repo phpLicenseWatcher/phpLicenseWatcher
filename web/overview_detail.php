@@ -1,7 +1,7 @@
 <?php
 // Strongly inspired by https://developers.google.com/chart/interactive/docs/gallery/vegachart_examples?hl=ja
 // select your own colour scheme: https://vega.github.io/vega/docs/schemes/
-require_once __DIR__ . "/common.php";
+require_once __DIR__ . "/../code/common.php";
 
 // URL arg check.  Halt immediately if either $_GET['license'] or $_GET['days'] is not all numeric.
 $license_id = htmlspecialchars($_GET['license'] ?? "");

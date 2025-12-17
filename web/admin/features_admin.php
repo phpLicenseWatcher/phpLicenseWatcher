@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . "/common.php";
-require_once __DIR__ . "/features_admin_db.php";
-require_once __DIR__ . "/features_admin_func.php";
+require_once __DIR__ . "/../../code/common.php";
+require_once __DIR__ . "/../../code/features_admin_db.php";
+require_once __DIR__ . "/../../code/features_admin_func.php";
 
 // Process paths
 switch (true) {
@@ -72,7 +72,7 @@ function main_form($alert=null) {
 
     print <<<HTML
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script src="features_admin_jquery.js"></script>
+    <script src="/assets/js/features_admin_jquery.js"></script>
     <h1>Features Administration</h1>
     <p>You may edit an existing feature's name, label, boolean statuses, or add a new feature to the database.
     {$alert_html}
