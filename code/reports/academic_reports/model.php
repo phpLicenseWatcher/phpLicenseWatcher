@@ -1,6 +1,6 @@
 <?php
 namespace phpLicenseWatcher\Reports\AcademicReports;
-use PhpLicenseWatcher\Reports\Utils\db;
+use phpLicenseWatcher\Reports\Utils\db;
 
 /** @author Peter Bailie (pbailie@github) */
 class model extends controller {
