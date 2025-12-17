@@ -1,5 +1,5 @@
 <?php
-namespace PhpLicenseWatcher\Reports\AcademicReports;
+namespace phpLicenseWatcher\Reports\AcademicReports;
 use PhpLicenseWatcher\Reports\Utils\db;
 
 /** @author Peter Bailie (pbailie@github) */

@@ -1,5 +1,5 @@
 <?php
-namespace PhpLicenseWatcher\Reports\AcademicReports;
+namespace phpLicenseWatcher\Reports\AcademicReports;
 require_once __DIR__ . "/model.php";
 require_once __DIR__ . "/view.php";
 require_once __DIR__ . "/../utils/database.php";

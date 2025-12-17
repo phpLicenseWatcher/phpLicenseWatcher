@@ -1,5 +1,5 @@
 <?php
-namespace PhpLicenseWatcher\Reports\Utils;
+namespace phpLicenseWatcher\Reports\Utils;
 require_once __DIR__ . "/database.php";
 
 /** @author Peter Bailie (pbailie@github) */

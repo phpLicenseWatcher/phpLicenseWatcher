@@ -1,11 +1,11 @@
 <?php
 // Author: Peter Bailie (pbailie@gihtub)
-namespace PhpLicenseWatcher;
-require_once __DIR__ . "/config.php";
-require_once __DIR__ . "/reports/academic_reports/controller.php";
-require_once __DIR__ . "/reports/utils/autocomplete.php";
-use PhpLicenseWatcher\Reports\AcademicReports\controller as academic_reports;
-use PhpLicenseWatcher\Reports\Utils\autocomplete;
+namespace phpLicenseWatcher;
+require_once __DIR__ . "/../config.php";
+require_once __DIR__ . "/../code/reports/academic_reports/controller.php";
+require_once __DIR__ . "/../code/reports/utils/autocomplete.php";
+use phpLicenseWatcher\Reports\AcademicReports\controller as academic_reports;
+use phpLicenseWatcher\Reports\Utils\autocomplete;
 
 // Sanitize $_GET to guard against XSS.
 array_walk_recursive($_GET, function(&$v) { $v = htmlspecialchars($v); });

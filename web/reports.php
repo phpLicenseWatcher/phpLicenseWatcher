@@ -1,10 +1,10 @@
 <?php
 // Author: Peter Bailie (pbailie@github).
-namespace PhpLicenseWatcher;
+namespace phpLicenseWatcher;
 
-require_once __DIR__ . "/config.php";
-require_once __DIR__ . "/reports/academic_reports/controller.php";
-use PhpLicenseWatcher\Reports\AcademicReports\controller as academic_reports;
+require_once __DIR__ . "/../config.php";
+require_once __DIR__ . "/../code/reports/academic_reports/controller.php";
+use phpLicenseWatcher\Reports\AcademicReports\controller as academic_reports;
 
 // Sanitize $_GET, $_POST, and $_REQUEST to guard against XSS.
 array_walk_recursive($_GET, function(&$v) { $v = htmlspecialchars($v); });

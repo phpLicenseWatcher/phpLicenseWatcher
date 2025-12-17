@@ -1,5 +1,5 @@
 <?php
-namespace PhpLicenseWatcher\Reports\AcademicReports;
+namespace phpLicenseWatcher\Reports\AcademicReports;
 use html_table;
 
 /** @author Peter Bailie (pbailie@github) */

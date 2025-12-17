@@ -1,5 +1,5 @@
 <?php
-namespace PhpLicenseWatcher\Reports\Utils;
+namespace phpLicenseWatcher\Reports\Utils;
 
 /**
  * `mysqli` database wrapper class.
