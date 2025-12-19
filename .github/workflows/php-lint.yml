@@ -2,9 +2,9 @@ name: PHP Lint
 
 on:
   push:
-    branches: [ "master","mcglow2-new-CICD" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "master","mcglow2-new-CICD" ]
+    branches: [ "master" ]
   workflow_dispatch:
 
 permissions:
