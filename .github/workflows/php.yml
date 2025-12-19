@@ -19,7 +19,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Validate composer.json and composer.lock
-      run: composer validate
+      run: composer validate --no-check-publish
       working-directory: ./code 
       
     - name: Cache Composer packages
