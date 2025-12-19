@@ -1,0 +1,15 @@
+name: PHP Lint
+on: [push, pull_request,commit]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3' # Specify your required PHP version
+      - name: Run PHP Lint
+        run: |
+          find . -name '*.php' -print0 | xargs -0 -n1 -P4 php -l
