@@ -1,5 +1,14 @@
 name: PHP Lint
-on: [push, pull_request,commit]
+
+on:
+  push:
+    branches: [ "master","mcglow2-new-CICD" ]
+  pull_request:
+    branches: [ "master","mcglow2-new-CICD" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   lint:
