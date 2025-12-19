@@ -12,7 +12,7 @@ on:
   schedule:
     - cron: '44 2 * * 2'
   push:
-    branches: [ "master" ]
+    branches: [ "master" ,"mcglow2-new-CICD" ]
   workflow_dispatch:
   
 # Declare default permissions as read only.
