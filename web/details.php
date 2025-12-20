@@ -119,6 +119,17 @@ function list_features_and_expirations($servers, &$html_body) {
  * @param &$html_body data view to build
  */
 function list_licenses_in_use($servers, &$html_body) {
+    global $license_details_show_user, $license_details_show_computer;
+    
+    //Setup default values if settings were not specificied in the config file
+    if( !isset($license_details_show_user) ){
+        $license_details_show_user = Visibility::Show;
+    }
+    
+    if( !isset($license_details_show_computer) ){
+        $license_details_show_computer = Visibility::Show;
+    }   
+    
     $html_body .= "<p>Following is the list of licenses currently being used.";
 
     // If person is filtering for certain features
@@ -251,8 +262,12 @@ function list_licenses_in_use($servers, &$html_body) {
                         $time_difference = get_readable_timespan($checkout['timespan']);
 
                         // Output the user line
-                        $html = "User: {$checkout['user']}<br>";
-                        $html .= "Computer: {$checkout['host']}<br>";
+                        if($license_details_show_user != Visibility::Hide ){
+                            $html = "User: ".format_computer_name($checkout['user'])."<br>";
+                        }
+                        if($license_details_show_computer != Visibility::Hide ){
+                            $html .= "Computer: ".format_computer_name($checkout['host'])."<br>";
+                        }
                         $html .= "Licenses: {$checkout['num_licenses']}";
                         $table->add_row(array("", "", $html, $time_difference), $class);
                     } // END foreach ($license['checkouts'] as $checkout)
@@ -260,8 +275,12 @@ function list_licenses_in_use($servers, &$html_body) {
 
                 if (array_key_exists('queued', $license) && is_countable($license['queued'])) {
                     foreach ($license['queued'] as $queued) {
-                        $html = "User: {$queued['user']}<br>";
-                        $html .= "Computer: {$queued['host']}<br>";
+                        if( $license_details_show_user != Visibility::Hide ){
+                            $html = "User: ".format_user_name($queued['user'])."<br>";
+                        }
+                        if( $license_details_show_computer != Visibility::Hide ){
+                            $html .= "Computer: ".format_computer_name($queued['host'])."<br>";
+                        }
                         $html .= "Licenses queued: {$queued['num_queued']}";
                         $table->add_row(array("", "", $html, ""), $class);
                     } // END foreach ($license['queued'] as $queued)
@@ -328,4 +347,59 @@ function get_features_and_licenses($server_id) {
 
     return $results;
 }
-?>
+
+function format_computer_name( $string ){
+        global  $license_details_show_computer;
+        $result = "";
+            
+        switch ($license_details_show_computer) {
+            case Visibility::Hide :
+                $result = "";
+                break;
+            case Visibility::Obfuscate:
+                $result = format_obfuscate($string);
+                break;
+            case Visibility::Show :
+            case '' :
+            case null: 
+            default:
+                $result = $string;
+                break;
+        }
+        return $result;
+}
+
+function format_user_name( $string ){
+        global $license_details_show_user;
+        
+          $result = "";
+            
+        switch ($license_details_show_user) {
+            case Visibility::Hide :
+                $result = "";
+                break;
+            case Visibility::Obfuscate:
+                $result = format_obfuscate($string);
+                break;
+            case Visibility::Show :
+            case '' :
+            case null: 
+            default:
+                $result = $string;
+                break;
+        }
+        return $result;  
+}
+
+/**
+ * 
+ * @param string $string
+ * @return string
+ */
+function format_obfuscate( $string ){
+    $new_string = base64_encode($string);
+    $new_string = preg_replace('/[^a-z0-9]/i', '', $new_string);
+    $new_string = strtoupper($new_string);
+    
+    return substr($new_string, 0, 8);
+}
