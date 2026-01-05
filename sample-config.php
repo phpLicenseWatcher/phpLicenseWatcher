@@ -38,6 +38,11 @@ $smtp_debug=false;
 $disable_autorefresh=0;
 $collection_interval=10;
 
+//Sets visibility of computer and user names on the license detail view page
+//Value of visibility enum, Visibility::Show , Visibility::Hide or Visibility::Obfuscate
+$license_details_show_user = Visibility::Show ;
+$license_details_show_computer = Visibility::Show ;
+
 // Database information.  Note that only the mysqli driver is suppoprted.
 $db_hostname="localhost";
 $db_username="phplw";
