@@ -1,6 +1,8 @@
 <?php
 // Author: Peter Bailie (pbailie@gihtub)
 namespace phpLicenseWatcher;
+
+require_once __DIR__ . "/../code/init.php";
 require_once __DIR__ . "/../config.php";
 require_once __DIR__ . "/../code/reports/academic_reports/controller.php";
 require_once __DIR__ . "/../code/reports/utils/autocomplete.php";

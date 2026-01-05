@@ -2,6 +2,7 @@
 // Author: Peter Bailie (pbailie@github).
 namespace phpLicenseWatcher;
 
+require_once __DIR__ . "/../code/init.php";
 require_once __DIR__ . "/../config.php";
 require_once __DIR__ . "/../code/reports/academic_reports/controller.php";
 use phpLicenseWatcher\Reports\AcademicReports\controller as academic_reports;
