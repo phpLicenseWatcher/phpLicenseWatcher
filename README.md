@@ -44,7 +44,7 @@ To help administrators analyze trends, the software offers charts of historical 
    ```
 2. Clone repository locally using git
    ```
-   git clone https://github.com/rpi-dotcio/phpLicenseWatcher.git /var/www/html/
+   git clone https://github.com/phpLicenseWatcher/phpLicenseWatcher.git /var/www/html/
    ```
 3. Install the monitoring binaries for the vendors you wish to monitor.  Recommended location is /opt/lmtools/ . These should have come from the vendor with the software you are looking to monitor.  The FlexLM lmtuil from any of the vendors will work with others.
 
@@ -97,10 +97,10 @@ There are CLI scripts that need to be executed on a regular basis ie. license_ut
 
 
 ## Example Screenshots
-![Alt text](https://github.com/rpi-dotcio/phpLicenseWatcher/raw/assets/screenshot1.png?raw=true "List of license servers")
-![Alt text](https://github.com/rpi-dotcio/phpLicenseWatcher/raw/assets/screenshot2.png?raw=true "List of features and licenses in use")
-![Alt text](https://github.com/rpi-dotcio/phpLicenseWatcher/raw/assets/screenshot3.png?raw=true "License usage statistics")
-![Alt text](https://github.com/rpi-dotcio/phpLicenseWatcher/raw/assets/screenshot4.png?raw=true "License usage statistics")
+![Alt text](https://github.com/phpLicenseWatcher/phpLicenseWatcher/raw/assets/screenshot1.png?raw=true "List of license servers")
+![Alt text](https://github.com/phpLicenseWatcher/phpLicenseWatcher/raw/assets/screenshot2.png?raw=true "List of features and licenses in use")
+![Alt text](https://github.com/phpLicenseWatcher/phpLicenseWatcher/raw/assets/screenshot3.png?raw=true "License usage statistics")
+![Alt text](https://github.com/phpLicenseWatcher/phpLicenseWatcher/raw/assets/screenshot4.png?raw=true "License usage statistics")
 
 
 ## Warning
