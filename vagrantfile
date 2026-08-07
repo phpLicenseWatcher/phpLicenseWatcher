@@ -9,11 +9,6 @@ PROV_LOG       = "logs/provision.log"
 Vagrant.require_version ">= 2.2.0"
 
 Vagrant.configure(2) do |config|
-    config.vagrant.plugins = "vagrant-vbguest"
-    # Vagrant box is likely to report its version of vbguest incorrectly.
-    # This will prevent unnecessary updating of vbguest and improve bootup time.
-    config.vbguest.auto_update = false
-
     config.vm.provider "virtualbox" do |virtualbox|
         virtualbox.cpus = 1
         virtualbox.memory = 2048
@@ -35,7 +30,16 @@ Vagrant.configure(2) do |config|
         ssh.insert_key = true
     end
 
-    config.vm.synced_folder ".", REPO_PATH, create: true, owner: "vagrant", group: "vagrant", mount_options: ['dmode=775', 'fmode=664']
+    config.vm.synced_folder ".", REPO_PATH, create: true, type: "rsync", rsync__auto: true, rsync__exclude: [".git/", ".idea/"]
+
+    # Define the rsync trigger to run before any provisioner command.
+    # Needed to force rsync before provision-with update
+    config.trigger.before :provisioner_run, type: :hook do |trigger|
+      trigger.info = "Running rsync before provisioner"
+      # The 'vagrant rsync' command is run on the host machine
+      trigger.run = {inline: "vagrant rsync"}
+    end
+
     config.vm.provision "shell", inline: "perl #{REPO_PATH}/#{PROV_SCRIPT} |& tee #{REPO_PATH}/#{PROV_LOG}", privileged: true, run: "once"
     config.vm.provision "update", type: "shell", inline: "perl #{REPO_PATH}/#{UPDATE_SCRIPT}", privileged: true, run: "never"
     config.vm.provision "composer-install", type: "shell", inline: "perl #{REPO_PATH}/#{UPDATE_SCRIPT} composer-install-packages ", privileged: true, run: "never"
